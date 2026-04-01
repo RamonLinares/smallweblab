@@ -963,11 +963,11 @@ button {
   }
 
   .hero__visual {
-    order: -1;
+    order: initial;
     min-height: 16rem;
     max-width: none;
     width: 100%;
-    margin: 0 0 1rem;
+    margin: 1.1rem 0 0;
   }
 
   .hero-panel {
