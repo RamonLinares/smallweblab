@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Small Web Lab | Shipped sites, games, and AI experiments</title>
+    <meta
+      name="description"
+      content="Small Web Lab is a home for shipped web products: editorial sites, browser games, and AI experiments that are live on the open web."
+    />
+    <link rel="canonical" href="https://smallweblab.com/" />
+    <meta name="theme-color" content="#0d1622" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Small Web Lab | Shipped sites, games, and AI experiments" />
+    <meta
+      property="og:description"
+      content="A growing collection of small internet products built fast, published live, and refined in public."
+    />
+    <meta property="og:url" content="https://smallweblab.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Small Web Lab | Shipped sites, games, and AI experiments" />
+    <meta
+      name="twitter:description"
+      content="A growing collection of small internet products built fast, published live, and refined in public."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230d1622'/%3E%3Cpath d='M24 28h12v44H24zm20 0h12v44H44zm20 0h12v44H64z' fill='%2317b7a3'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-noise" aria-hidden="true"></div>
+    <div class="scroll-line" data-scroll-line aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="#top">Small Web Lab</a>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="#projects">Projects</a>
+          <a href="#method">Method</a>
+          <a href="#next">Next</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero__inner">
+          <div class="hero__copy">
+            <p class="eyebrow">smallweblab.com</p>
+            <h1>
+              Shipped sites, games,
+              <span class="serif">and AI experiments.</span>
+            </h1>
+            <p class="hero__lede">
+              A growing collection of small internet products built fast,
+              tested live, and improved over time.
+            </p>
+            <div class="hero__actions">
+              <a class="button button--solid" href="#projects">View projects</a>
+              <a class="button button--ghost" href="#next">See what&apos;s next</a>
+            </div>
+            <ul class="hero__facts" aria-label="Small Web Lab snapshot">
+              <li>3 live products</li>
+              <li>Media, gaming, and AI</li>
+              <li>Built for the open web</li>
+            </ul>
+          </div>
+
+          <div class="hero__visual" data-hero-visual>
+            <a
+              class="hero-panel hero-panel--lens tilt-surface"
+              href="https://lensdigest.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open LensDigest"
+            >
+              <div class="hero-panel__label">LensDigest</div>
+              <div class="lens-panel">
+                <img
+                  class="lens-panel__mark"
+                  src="./assets/lensdigest-mark.png"
+                  alt=""
+                  loading="lazy"
+                />
+                <div class="lens-panel__copy">
+                  <p>Daily photography and videography digest.</p>
+                  <ul>
+                    <li>Search-shaped publishing</li>
+                    <li>Fast editorial packaging</li>
+                    <li>Evergreen and daily flow</li>
+                  </ul>
+                </div>
+              </div>
+            </a>
+
+            <a
+              class="hero-panel hero-panel--breakshot tilt-surface"
+              href="https://breakshot3d.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open Breakshot 3D"
+            >
+              <img
+                src="./assets/breakshot3d-cover.jpg"
+                alt="Breakshot 3D pool table preview"
+                loading="eager"
+              />
+              <div class="hero-panel__overlay">
+                <div class="hero-panel__label">Breakshot 3D</div>
+                <p>Browser pool with 3D physics and playable guides.</p>
+              </div>
+            </a>
+
+            <a
+              class="hero-panel hero-panel--arcana tilt-surface"
+              href="https://arcanamuse.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open Arcana Muse"
+            >
+              <img
+                src="./assets/arcanamuse-cover.jpg"
+                alt="Arcana Muse tarot guidance preview"
+                loading="lazy"
+              />
+              <div class="hero-panel__overlay">
+                <div class="hero-panel__label">Arcana Muse</div>
+                <p>AI tarot guidance with rituals, memory, and follow-up context.</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="support reveal">
+        <div class="support__inner">
+          <p class="section-kicker">Why this exists</p>
+          <div class="support__grid">
+            <h2>One place for the launches that made it past prototype stage.</h2>
+            <div class="support__body">
+              <p>
+                This is not a gallery of concepts. Everything here points to a
+                live product with its own audience, behavior, and constraints.
+              </p>
+              <div class="support__tags" aria-label="Project categories">
+                <span>Editorial systems</span>
+                <span>Browser games</span>
+                <span>AI product loops</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="projects" id="projects">
+        <div class="section-head reveal">
+          <p class="section-kicker">Featured builds</p>
+          <h2>Three different products, one shared bias toward shipping.</h2>
+        </div>
+
+        <article class="project reveal">
+          <div class="project__index">01</div>
+          <div class="project__content">
+            <p class="project__eyebrow">Media / SEO / Photography</p>
+            <h3>LensDigest</h3>
+            <p class="project__summary">
+              A daily photography and videography digest built for search,
+              reading flow, and fast publishing.
+            </p>
+            <p class="project__note">
+              Interesting because it turns a broad camera niche into a
+              high-frequency editorial system with clear packaging and crisp
+              intent.
+            </p>
+            <ul class="project__tags" aria-label="LensDigest tags">
+              <li>SEO</li>
+              <li>Static site</li>
+              <li>Editorial UX</li>
+            </ul>
+            <a
+              class="project__link"
+              href="https://lensdigest.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit LensDigest
+            </a>
+          </div>
+          <div class="project__visual-wrap">
+            <div class="project__visual project__visual--lens tilt-surface">
+              <div class="lens-sheet">
+                <img src="./assets/lensdigest-mark.png" alt="" loading="lazy" />
+                <div>
+                  <p class="lens-sheet__label">Latest rhythm</p>
+                  <ul class="lens-sheet__stories">
+                    <li>Hands-on gear review</li>
+                    <li>Camera release quick take</li>
+                    <li>Outdoor creator feature</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="project project--reverse reveal">
+          <div class="project__index">02</div>
+          <div class="project__content">
+            <p class="project__eyebrow">Browser game / 3D</p>
+            <h3>Breakshot 3D</h3>
+            <p class="project__summary">
+              A playable 3D pool game in the browser with local matches, CPU
+              play, and rules-driven support pages.
+            </p>
+            <p class="project__note">
+              Interesting because the product is both the game itself and the
+              search layer around it: rules, aiming, spin, and play modes.
+            </p>
+            <ul class="project__tags" aria-label="Breakshot 3D tags">
+              <li>3D</li>
+              <li>Game physics</li>
+              <li>Search capture</li>
+            </ul>
+            <a
+              class="project__link"
+              href="https://breakshot3d.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Play Breakshot 3D
+            </a>
+          </div>
+          <div class="project__visual-wrap">
+            <div class="project__visual project__visual--image tilt-surface">
+              <img
+                src="./assets/breakshot3d-cover.jpg"
+                alt="Breakshot 3D table and cue ball"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </article>
+
+        <article class="project reveal">
+          <div class="project__index">03</div>
+          <div class="project__content">
+            <p class="project__eyebrow">AI product / Tarot</p>
+            <h3>Arcana Muse</h3>
+            <p class="project__summary">
+              An AI tarot experience focused on reflection, rituals, and
+              practical guidance instead of vague fortune telling.
+            </p>
+            <p class="project__note">
+              Interesting because the value is not only the reading output. It
+              is the framing, continuity, and feeling of returning to a ritual.
+            </p>
+            <ul class="project__tags" aria-label="Arcana Muse tags">
+              <li>AI UX</li>
+              <li>Prompt design</li>
+              <li>Consumer ritual</li>
+            </ul>
+            <a
+              class="project__link"
+              href="https://arcanamuse.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit Arcana Muse
+            </a>
+          </div>
+          <div class="project__visual-wrap">
+            <div class="project__visual project__visual--image tilt-surface">
+              <img
+                src="./assets/arcanamuse-cover.jpg"
+                alt="Arcana Muse tarot card preview"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="method reveal" id="method">
+        <div class="method__inner">
+          <p class="section-kicker section-kicker--light">How the lab works</p>
+          <div class="method__intro">
+            <h2>Build fast, publish live, let reality edit the idea.</h2>
+            <p>
+              AI speeds up the production loop, but the useful signal comes
+              after launch: search behavior, play patterns, repeat visits, and
+              whether the product earns another iteration.
+            </p>
+          </div>
+          <ol class="method__steps">
+            <li>
+              <span>01</span>
+              <h3>Prototype fast</h3>
+              <p>Start with the smallest form that can be published credibly.</p>
+            </li>
+            <li>
+              <span>02</span>
+              <h3>Ship in public</h3>
+              <p>Real pages, real links, real users, and measurable behavior.</p>
+            </li>
+            <li>
+              <span>03</span>
+              <h3>Keep only what earns attention</h3>
+              <p>Refine the projects that prove they deserve a longer life.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="next reveal" id="next">
+        <div class="section-head">
+          <p class="section-kicker">Open slots</p>
+          <h2>The lab stays deliberately incomplete.</h2>
+        </div>
+        <div class="next__rows">
+          <div class="next__row">
+            <div>
+              <p class="next__status">In progress</p>
+              <h3>Next launch slot</h3>
+            </div>
+            <p>
+              Reserved for the next site that survives the prototype stage and
+              earns a real home.
+            </p>
+          </div>
+          <div class="next__row">
+            <div>
+              <p class="next__status">Always open</p>
+              <h3>New category slot</h3>
+            </div>
+            <p>
+              The portfolio is intentionally broad. If the next thing is useful,
+              weird, or sticky enough, it belongs here.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="callout reveal">
+        <div class="callout__inner">
+          <p class="section-kicker section-kicker--light">Live links only</p>
+          <h2>Every route out of this page goes somewhere real.</h2>
+          <div class="callout__links">
+            <a href="https://lensdigest.com/" target="_blank" rel="noreferrer">LensDigest</a>
+            <a href="https://breakshot3d.com/" target="_blank" rel="noreferrer">Breakshot 3D</a>
+            <a href="https://arcanamuse.com/" target="_blank" rel="noreferrer">Arcana Muse</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>Small Web Lab</p>
+        <p>smallweblab.com</p>
+      </div>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
