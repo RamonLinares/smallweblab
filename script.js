@@ -15,6 +15,7 @@ const consentModal = document.querySelector("[data-consent-modal]");
 const consentBackdrop = document.querySelector("[data-consent-backdrop]");
 const consentActionButtons = document.querySelectorAll("[data-consent-action]");
 const openConsentButtons = document.querySelectorAll("[data-open-consent]");
+const consentPrimaryButton = document.querySelector('[data-consent-action="accept"]');
 
 let ticking = false;
 let analyticsConfigured = false;
@@ -54,10 +55,28 @@ const setConsentModalState = (isOpen, { mandatory = false } = {}) => {
   }
 
   consentModalMandatory = mandatory;
-  consentModal.hidden = !isOpen;
-  consentBackdrop.hidden = !isOpen;
-  consentModal.setAttribute("aria-hidden", String(!isOpen));
-  document.body.classList.toggle("consent-modal-open", isOpen);
+
+  if (isOpen) {
+    consentModal.hidden = false;
+    consentBackdrop.hidden = false;
+    consentModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("consent-modal-open");
+
+    window.requestAnimationFrame(() => {
+      consentPrimaryButton?.focus();
+    });
+
+    return;
+  }
+
+  if (consentModal.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
+
+  consentModal.hidden = true;
+  consentBackdrop.hidden = true;
+  consentModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("consent-modal-open");
 };
 
 const openConsentModal = (options = {}) => {

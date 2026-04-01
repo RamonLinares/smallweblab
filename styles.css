@@ -807,6 +807,11 @@ button {
   padding: 1.25rem;
 }
 
+.consent-backdrop[hidden],
+.consent-modal[hidden] {
+  display: none !important;
+}
+
 .consent-modal__panel {
   width: min(100%, 33rem);
   padding: 1.5rem;
