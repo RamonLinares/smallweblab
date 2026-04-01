@@ -104,58 +104,45 @@ const getConsentPayload = (analyticsStorage) => ({
   analytics_storage: analyticsStorage
 });
 
-const sendPageView = () => {
-  if (typeof window.gtag !== "function") {
-    return;
-  }
-
-  window.gtag("event", "page_view", {
-    page_title: document.title,
-    page_location: window.location.href,
-    page_path: `${window.location.pathname}${window.location.search}`
-  });
-};
-
-const applyAnalyticsConsent = (analyticsStorage, { sendInitialPageView = false } = {}) => {
+const applyAnalyticsConsent = (analyticsStorage) => {
   if (typeof window.gtag !== "function" || !analyticsMeasurementId) {
     return;
   }
 
-  const consentPayload = getConsentPayload(analyticsStorage);
-
-  if (!analyticsConfigured) {
-    window.gtag("consent", "default", consentPayload);
-    window.gtag("config", analyticsMeasurementId, {
-      send_page_view: sendInitialPageView
-    });
-    analyticsConfigured = true;
-    return;
-  }
-
-  window.gtag("consent", "update", consentPayload);
-
-  if (analyticsStorage === CONSENT_GRANTED && sendInitialPageView) {
-    sendPageView();
-  }
+  window.gtag("consent", "update", getConsentPayload(analyticsStorage));
 };
 
-const ensureGoogleAnalytics = () => {
+const ensureGoogleAnalytics = (initialAnalyticsStorage = CONSENT_DENIED) => {
   if (!isAnalyticsConfigured) {
     return Promise.resolve(false);
+  }
+
+  if (!analyticsConfigured) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      function gtag() {
+        window.dataLayer.push(arguments);
+      };
+
+    window.gtag("consent", "default", getConsentPayload(CONSENT_DENIED));
+    window.gtag("set", "ads_data_redaction", true);
+
+    if (initialAnalyticsStorage === CONSENT_GRANTED) {
+      window.gtag("consent", "update", getConsentPayload(CONSENT_GRANTED));
+    }
+
+    window.gtag("js", new Date());
+    window.gtag("config", analyticsMeasurementId, {
+      send_page_view: true
+    });
+
+    analyticsConfigured = true;
   }
 
   if (analyticsLoadPromise) {
     return analyticsLoadPromise;
   }
-
-  window.dataLayer = window.dataLayer || [];
-  window.gtag =
-    window.gtag ||
-    function gtag() {
-      window.dataLayer.push(arguments);
-    };
-
-  window.gtag("js", new Date());
 
   analyticsLoadPromise = new Promise((resolve, reject) => {
     const analyticsScript = document.createElement("script");
@@ -182,21 +169,13 @@ const handleConsentChoice = async (nextState) => {
   updateConsentUi(nextState);
   setConsentModalState(false);
 
-  if (nextState === CONSENT_GRANTED) {
-    const didLoadAnalytics = await ensureGoogleAnalytics();
+  const didLoadAnalytics = await ensureGoogleAnalytics(consentState);
 
-    if (didLoadAnalytics) {
-      applyAnalyticsConsent(CONSENT_GRANTED, {
-        sendInitialPageView: previousState !== CONSENT_GRANTED
-      });
-    }
-
+  if (!didLoadAnalytics || previousState === nextState) {
     return;
   }
 
-  if (analyticsConfigured && previousState === CONSENT_GRANTED) {
-    applyAnalyticsConsent(CONSENT_DENIED);
-  }
+  applyAnalyticsConsent(nextState);
 };
 
 const initializeConsent = async () => {
@@ -211,19 +190,9 @@ const initializeConsent = async () => {
     return;
   }
 
-  if (consentState === CONSENT_GRANTED) {
-    const didLoadAnalytics = await ensureGoogleAnalytics();
+  void ensureGoogleAnalytics(consentState);
 
-    if (didLoadAnalytics) {
-      applyAnalyticsConsent(CONSENT_GRANTED, {
-        sendInitialPageView: true
-      });
-    }
-
-    return;
-  }
-
-  if (consentState === CONSENT_DENIED) {
+  if (consentState === CONSENT_GRANTED || consentState === CONSENT_DENIED) {
     return;
   }
 
