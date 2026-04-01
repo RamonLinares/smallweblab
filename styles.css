@@ -964,7 +964,7 @@ button {
 
   .hero__visual {
     order: -1;
-    min-height: 11.2rem;
+    min-height: 16rem;
     max-width: none;
     width: 100%;
     margin: 0 0 1rem;
@@ -976,24 +976,13 @@ button {
   }
 
   .hero-panel--lens {
-    left: 0.8rem;
-    bottom: 0.8rem;
-    top: auto;
-    width: 11rem;
-    min-height: auto;
-    padding: 0.85rem 0.95rem;
-    z-index: 2;
-    border-radius: 20px;
-    backdrop-filter: blur(12px);
-    background:
-      linear-gradient(180deg, rgba(23, 183, 163, 0.18), transparent 60%),
-      rgba(9, 18, 28, 0.76);
+    display: none;
   }
 
   .hero-panel--breakshot {
     inset: 0;
     width: 100%;
-    min-height: 11.2rem;
+    min-height: 16rem;
   }
 
   .hero-panel--breakshot img {
@@ -1004,24 +993,22 @@ button {
     display: none;
   }
 
-  .hero-panel--lens .lens-panel {
-    gap: 0;
+  .hero-panel--breakshot .hero-panel__overlay {
+    display: block;
+    padding: 0.95rem 1rem 1rem;
+    background: linear-gradient(180deg, transparent, rgba(7, 13, 20, 0.88));
   }
 
-  .hero-panel--lens .lens-panel__mark,
-  .hero-panel--lens .lens-panel__copy ul {
-    display: none;
+  .hero-panel--breakshot .hero-panel__label {
+    font-size: 0.69rem;
+    letter-spacing: 0.12em;
   }
 
-  .hero-panel--lens .lens-panel__copy p {
-    margin: 0;
-    max-width: none;
+  .hero-panel--breakshot .hero-panel__overlay p {
+    margin-top: 0.45rem;
+    max-width: 15rem;
     font-size: 0.92rem;
     line-height: 1.35;
-  }
-
-  .hero-panel--breakshot .hero-panel__overlay {
-    display: none;
   }
 
   .hero__copy h1 {
