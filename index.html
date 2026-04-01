@@ -366,7 +366,7 @@
         <div class="site-footer__meta">
           <p>smallweblab.com</p>
           <button class="site-footer__privacy" type="button" data-open-consent hidden>
-            Privacy choices
+            Privacy preferences
           </button>
         </div>
       </div>
@@ -377,33 +377,28 @@
       class="consent-modal"
       data-consent-modal
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-hidden="true"
       aria-labelledby="consent-title"
       hidden
     >
       <div class="consent-modal__panel">
-        <p class="consent-modal__eyebrow">Privacy choices</p>
-        <h2 id="consent-title">Allow site analytics?</h2>
+        <h2 id="consent-title">Privacy preferences</h2>
         <p class="consent-modal__copy">
-          Small Web Lab can use Google Analytics to understand which sections
-          get visits, which links get opened, and how the homepage performs.
-          Analytics stays off unless you allow it.
+          We only load Google Analytics if you accept. That helps us understand
+          aggregate traffic, popular links, and page performance.
         </p>
-        <ul class="consent-modal__list" aria-label="Analytics consent summary">
-          <li>Accept: enables Google Analytics 4 traffic measurement.</li>
-          <li>Decline: the site still works normally without analytics cookies.</li>
-        </ul>
         <p class="consent-modal__note">
-          Your choice is saved in this browser and can be changed later from
-          the footer.
+          Reject optional keeps the site fully functional without analytics
+          cookies. You can change this later from Privacy preferences in the
+          footer.
         </p>
         <div class="consent-modal__actions">
-          <button class="button button--solid" type="button" data-consent-action="accept">
-            Accept analytics
-          </button>
           <button class="button button--ghost" type="button" data-consent-action="decline">
-            Decline
+            Reject optional
+          </button>
+          <button class="button button--solid" type="button" data-consent-action="accept">
+            Accept optional
           </button>
         </div>
       </div>

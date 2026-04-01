@@ -50,7 +50,7 @@ const updateConsentUi = (value) => {
 };
 
 const setConsentModalState = (isOpen, { mandatory = false } = {}) => {
-  if (!consentModal || !consentBackdrop) {
+  if (!consentModal) {
     return;
   }
 
@@ -58,9 +58,10 @@ const setConsentModalState = (isOpen, { mandatory = false } = {}) => {
 
   if (isOpen) {
     consentModal.hidden = false;
-    consentBackdrop.hidden = false;
+    if (consentBackdrop) {
+      consentBackdrop.hidden = true;
+    }
     consentModal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("consent-modal-open");
 
     window.requestAnimationFrame(() => {
       consentPrimaryButton?.focus();
@@ -74,9 +75,10 @@ const setConsentModalState = (isOpen, { mandatory = false } = {}) => {
   }
 
   consentModal.hidden = true;
-  consentBackdrop.hidden = true;
+  if (consentBackdrop) {
+    consentBackdrop.hidden = true;
+  }
   consentModal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("consent-modal-open");
 };
 
 const openConsentModal = (options = {}) => {
