@@ -8,6 +8,8 @@
       name="description"
       content="Small Web Lab is a home for shipped web products: editorial sites, browser games, and AI experiments that are live on the open web."
     />
+    <!-- Replace with your GA4 Measurement ID, for example G-XXXXXXXXXX, to enable analytics. -->
+    <meta name="google-analytics-id" content="G-FK26SXGK9F" />
     <link rel="canonical" href="https://smallweblab.com/" />
     <meta name="theme-color" content="#0d1622" />
     <meta property="og:type" content="website" />
@@ -361,9 +363,51 @@
     <footer class="site-footer">
       <div class="site-footer__inner">
         <p>Small Web Lab</p>
-        <p>smallweblab.com</p>
+        <div class="site-footer__meta">
+          <p>smallweblab.com</p>
+          <button class="site-footer__privacy" type="button" data-open-consent hidden>
+            Privacy choices
+          </button>
+        </div>
       </div>
     </footer>
+
+    <div class="consent-backdrop" data-consent-backdrop hidden></div>
+    <section
+      class="consent-modal"
+      data-consent-modal
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="consent-title"
+      hidden
+    >
+      <div class="consent-modal__panel">
+        <p class="consent-modal__eyebrow">Privacy choices</p>
+        <h2 id="consent-title">Allow site analytics?</h2>
+        <p class="consent-modal__copy">
+          Small Web Lab can use Google Analytics to understand which sections
+          get visits, which links get opened, and how the homepage performs.
+          Analytics stays off unless you allow it.
+        </p>
+        <ul class="consent-modal__list" aria-label="Analytics consent summary">
+          <li>Accept: enables Google Analytics 4 traffic measurement.</li>
+          <li>Decline: the site still works normally without analytics cookies.</li>
+        </ul>
+        <p class="consent-modal__note">
+          Your choice is saved in this browser and can be changed later from
+          the footer.
+        </p>
+        <div class="consent-modal__actions">
+          <button class="button button--solid" type="button" data-consent-action="accept">
+            Accept analytics
+          </button>
+          <button class="button button--ghost" type="button" data-consent-action="decline">
+            Decline
+          </button>
+        </div>
+      </div>
+    </section>
 
     <script src="./script.js"></script>
   </body>
