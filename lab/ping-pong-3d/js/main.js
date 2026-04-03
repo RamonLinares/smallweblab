@@ -1,4 +1,4 @@
-const { Scene, PerspectiveCamera, WebGLRenderer, AmbientLight, PointLight, SpotLight, Vector3, Clock, BufferGeometry, LineBasicMaterial, Line, ShadowMaterial, AudioListener, Audio, AudioLoader, PlaneGeometry, MeshStandardMaterial, Mesh, BoxGeometry, SphereGeometry } = THREE;
+const { Scene, PerspectiveCamera, WebGLRenderer, AmbientLight, PointLight, SpotLight, Vector2, Vector3, Clock, BufferGeometry, LineBasicMaterial, Line, ShadowMaterial, AudioListener, Audio, AudioLoader, PlaneGeometry, MeshStandardMaterial, Mesh, BoxGeometry, SphereGeometry } = THREE;
 
 const BALL_INITIAL_VELOCITY = new Vector3(1, 6.0, 3.0); // Initial velocity towards the player with an angle
 const GRAVITY = new Vector3(0, -9.8, 0); // Realistic gravity
@@ -16,13 +16,70 @@ const MAX_HEIGHT_VELOCITY = 5; // Maximum height velocity
 const ANGLE_ADJUSTMENT_FACTOR = 2; // Adjusted factor for better gameplay
 const MAX_BALL_SPEED = 15; // Maximum speed for the ball
 const MAX_BALL_HEIGHT = 4; // Maximum height for the ball
-const SPIN_EFFECT_FACTOR = 0.5; // Spin effect factor
+const BALL_SPIN_CURVE_FACTOR = 0.95;
+const BALL_TOPSPIN_DIP_FACTOR = 1.05;
+const BALL_SPIN_DECAY_PER_FRAME = 0.985;
+const BALL_BOUNCE_SPIN_TRANSFER = 0.16;
+const PADDLE_VELOCITY_CLAMP = 18;
 
 // Paddle boundaries
 const PADDLE_BOUNDARY_Z_MIN = 2; // Player paddle cannot move closer than 2 units from the net
 const PADDLE_BOUNDARY_Z_MAX = TABLE_BOUNDARY + 1; // Allow the paddle to move slightly beyond the table edge
 const COMPUTER_PADDLE_BOUNDARY_Z_MIN = -TABLE_BOUNDARY - 1; // Allow the computer paddle to move slightly beyond the table edge
 const COMPUTER_PADDLE_BOUNDARY_Z_MAX = -4; // Computer paddle should stay further back from the net
+const BALL_RADIUS = 0.2;
+const PADDLE_HALF_DEPTH = 0.3;
+const SOUND_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-sfx-enabled';
+const DIFFICULTY_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-difficulty';
+const CAMERA_ZOOM_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-camera-zoom';
+
+const DIFFICULTY_SETTINGS = {
+    easy: {
+        label: 'Easy',
+        trackLerpX: 0.068,
+        trackLerpZ: 0.06,
+        readyLerpX: 0.045,
+        readyLerpZ: 0.04,
+        anticipation: 0.58,
+        maxErrorX: 0.65,
+        maxErrorZ: 0.34,
+        errorRefreshMs: 780,
+        readyXBias: 0.18,
+        readyZ: -4.8
+    },
+    normal: {
+        label: 'Normal',
+        trackLerpX: 0.1,
+        trackLerpZ: 0.085,
+        readyLerpX: 0.065,
+        readyLerpZ: 0.055,
+        anticipation: 0.82,
+        maxErrorX: 0.28,
+        maxErrorZ: 0.16,
+        errorRefreshMs: 520,
+        readyXBias: 0.3,
+        readyZ: -5.15
+    },
+    hard: {
+        label: 'Hard',
+        trackLerpX: 0.14,
+        trackLerpZ: 0.12,
+        readyLerpX: 0.095,
+        readyLerpZ: 0.08,
+        anticipation: 1.05,
+        maxErrorX: 0.08,
+        maxErrorZ: 0.06,
+        errorRefreshMs: 320,
+        readyXBias: 0.48,
+        readyZ: -5.5
+    }
+};
+
+const CAMERA_ZOOM_SETTINGS = {
+    tight: { label: 'Tight', positionY: -0.4, positionZ: -0.8, lookAtY: 0.06, lookAtZ: -0.16, fov: -3 },
+    default: { label: 'Default', positionY: 0, positionZ: 0, lookAtY: 0, lookAtZ: 0, fov: 0 },
+    wide: { label: 'Wide', positionY: 0.65, positionZ: 1.25, lookAtY: -0.04, lookAtZ: 0.16, fov: 4 }
+};
 
 class PingPongGame {
     constructor() {
@@ -36,29 +93,116 @@ class PingPongGame {
         this.touchStartY = 0;
         this.touchEndX = 0;
         this.touchEndY = 0;
+        this.activeTouchId = null;
+        this.soundEnabled = this.loadSoundPreference();
+        this.difficulty = this.loadDifficultyPreference();
+        this.cameraZoom = this.loadCameraZoomPreference();
+        this.isPointAnnouncementActive = false;
+        this.computerAimOffset = new Vector2(0, 0);
+        this.nextComputerAimRefresh = 0;
 
         this.init();
         window.addEventListener('resize', () => this.onWindowResize());
-        window.addEventListener('wheel', (event) => this.onMouseWheel(event));
-        document.addEventListener('mousedown', (event) => this.onMouseDown(event));
-        document.addEventListener('mousemove', (event) => this.onMouseMove(event));
-        document.addEventListener('mouseup', (event) => this.onMouseUp(event));
-        document.addEventListener('keydown', (event) => this.onKeyDown(event));
         document.getElementById('startButton').addEventListener('click', () => this.startGame()); // Add click event for 'Start' button
         document.getElementById('restartButton').addEventListener('click', () => this.startGame()); // Add click event for 'Restart' button
         document.getElementById('pauseButton').addEventListener('click', () => this.togglePause()); // Add click event for 'Pause' button
-        document.addEventListener('touchstart', (event) => this.onTouchStart(event));
-        document.addEventListener('touchmove', (event) => this.onTouchMove(event));
-        document.addEventListener('touchend', (event) => this.onTouchEnd(event));
+        document.getElementById('soundButton').addEventListener('click', () => this.toggleSound());
+        document.getElementById('pointAnnouncement').addEventListener('click', () => this.resumeAfterPointAnnouncement());
+        document.getElementById('resumeButton').addEventListener('click', () => this.togglePause(false));
+        document.getElementById('restartMatchButton').addEventListener('click', () => this.restartMatchFromPause());
+        document.querySelectorAll('[data-setting="difficulty"]').forEach((button) => {
+            button.addEventListener('click', () => this.setDifficulty(button.dataset.value));
+        });
+        document.querySelectorAll('[data-setting="cameraZoom"]').forEach((button) => {
+            button.addEventListener('click', () => this.setCameraZoom(button.dataset.value));
+        });
+        document.querySelectorAll('[data-setting="sound"]').forEach((button) => {
+            button.addEventListener('click', () => this.setSoundEnabled(button.dataset.value === 'on'));
+        });
         
         this.animate();
     }
 
-    togglePause() {
-        this.isPaused = !this.isPaused;
-        document.getElementById('pauseButton').innerText = this.isPaused ? 'Resume' : 'Pause';
-        if (!this.isPaused) {
+    togglePause(forceState = null) {
+        if (!this.isGameStarted || this.isPointAnnouncementActive || this.isOverlayVisible(this.gameOverScreen) || this.isOverlayVisible(this.startScreen)) {
+            return;
+        }
+
+        const shouldPause = forceState === null ? !this.isPaused : forceState;
+        this.isPaused = shouldPause;
+        this.setPauseButtonLabel();
+
+        if (this.isPaused) {
+            this.showPauseScreen();
+        } else {
+            this.hidePauseScreen();
             this.animate();
+        }
+    }
+
+    toggleSound() {
+        this.setSoundEnabled(!this.soundEnabled);
+    }
+
+    setSoundEnabled(enabled) {
+        this.soundEnabled = enabled;
+        this.saveSoundPreference();
+        this.setSoundButtonState();
+        this.syncSettingsPanel();
+
+        if (!this.soundEnabled && this.hitSound && this.hitSound.isPlaying) {
+            this.hitSound.stop();
+        }
+    }
+
+    loadSoundPreference() {
+        try {
+            const storedValue = window.localStorage.getItem(SOUND_PREFERENCE_STORAGE_KEY);
+            return storedValue === null ? true : storedValue === 'true';
+        } catch (error) {
+            return true;
+        }
+    }
+
+    saveSoundPreference() {
+        try {
+            window.localStorage.setItem(SOUND_PREFERENCE_STORAGE_KEY, String(this.soundEnabled));
+        } catch (error) {
+            // Ignore storage failures and keep the in-memory preference.
+        }
+    }
+
+    loadDifficultyPreference() {
+        try {
+            const storedValue = window.localStorage.getItem(DIFFICULTY_PREFERENCE_STORAGE_KEY);
+            return DIFFICULTY_SETTINGS[storedValue] ? storedValue : 'normal';
+        } catch (error) {
+            return 'normal';
+        }
+    }
+
+    saveDifficultyPreference() {
+        try {
+            window.localStorage.setItem(DIFFICULTY_PREFERENCE_STORAGE_KEY, this.difficulty);
+        } catch (error) {
+            // Ignore storage failures and keep the in-memory preference.
+        }
+    }
+
+    loadCameraZoomPreference() {
+        try {
+            const storedValue = window.localStorage.getItem(CAMERA_ZOOM_PREFERENCE_STORAGE_KEY);
+            return CAMERA_ZOOM_SETTINGS[storedValue] ? storedValue : 'default';
+        } catch (error) {
+            return 'default';
+        }
+    }
+
+    saveCameraZoomPreference() {
+        try {
+            window.localStorage.setItem(CAMERA_ZOOM_PREFERENCE_STORAGE_KEY, this.cameraZoom);
+        } catch (error) {
+            // Ignore storage failures and keep the in-memory preference.
         }
     }
 
@@ -72,14 +216,17 @@ class PingPongGame {
             this.audioContext.resume();
         }
 
-        if (startScreen.style.display === 'block' || gameOverScreen.style.display === 'block') {
+        if (this.isOverlayVisible(startScreen) || this.isOverlayVisible(gameOverScreen)) {
             this.isGameStarted = true; // Set game as started
+            this.isPaused = false;
+            this.hidePointAnnouncement();
+            this.hidePauseScreen();
             this.hideStartScreen();
             this.hideGameOverScreen();
             this.resetGame();
             this.isAnimating = false;
-            this.camera.position.copy(this.normalCameraPosition);
-            this.camera.lookAt(this.normalCameraLookAt);
+            this.refreshGameplayCamera(true);
+            this.setPauseButtonLabel();
             this.spawnPowerUp(); // Start spawning power-ups
             this.spawnObstacle(); // Start spawning obstacles
             console.log("Game started");
@@ -87,6 +234,18 @@ class PingPongGame {
     }
 
     onKeyDown(event) {
+        if (this.isPointAnnouncementActive && (event.code === 'Enter' || event.code === 'Space')) {
+            event.preventDefault();
+            this.resumeAfterPointAnnouncement();
+            return;
+        }
+
+        if (event.code === 'Escape' && this.isPaused) {
+            event.preventDefault();
+            this.togglePause(false);
+            return;
+        }
+
         this.keys[event.code] = true;
 
         if (event.code === 'Enter') {
@@ -99,30 +258,59 @@ class PingPongGame {
     }
 
     onTouchStart(event) {
-        this.touchStartX = event.touches[0].clientX;
-        this.touchStartY = event.touches[0].clientY;
+        const touch = event.changedTouches[0];
+
+        if (!touch) {
+            return;
+        }
+
+        if (event.cancelable) {
+            event.preventDefault();
+        }
+
+        this.activeTouchId = touch.identifier;
+        this.touchStartX = touch.clientX;
+        this.touchStartY = touch.clientY;
+        this.setPaddlePositionFromPointer(touch.clientX, touch.clientY);
+    }
+
+    getActiveTouch(event) {
+        if (this.activeTouchId === null) {
+            return null;
+        }
+
+        return Array.from(event.touches).find((touch) => touch.identifier === this.activeTouchId) || null;
     }
 
     onTouchMove(event) {
-        event.preventDefault(); // Prevent default behavior like scrolling
-        const touch = event.touches[0];
-    
-        const deltaX = (touch.clientX - this.touchStartX) / window.innerWidth * PADDLE_MOVE_SPEED * 50;
-        const deltaY = (touch.clientY - this.touchStartY) / window.innerHeight * PADDLE_MOVE_SPEED * 50;
-    
-        this.paddle.position.x += deltaX;
-        this.paddle.position.z += deltaY; // Corrected direction for moving up and down
-    
-        // Enforce paddle boundaries
-        this.paddle.position.x = Math.max(Math.min(this.paddle.position.x, WALL_BOUNDARY), -WALL_BOUNDARY);
-        this.paddle.position.z = Math.max(Math.min(this.paddle.position.z, PADDLE_BOUNDARY_Z_MAX), PADDLE_BOUNDARY_Z_MIN);
-    
+        const touch = this.getActiveTouch(event);
+
+        if (!touch) {
+            return;
+        }
+
+        if (event.cancelable) {
+            event.preventDefault();
+        }
+
+        this.setPaddlePositionFromPointer(touch.clientX, touch.clientY);
         this.touchStartX = touch.clientX;
         this.touchStartY = touch.clientY;
     }
     
     
     onTouchEnd(event) {
+        const activeTouchEnded = Array.from(event.changedTouches).some((touch) => touch.identifier === this.activeTouchId);
+
+        if (!activeTouchEnded) {
+            return;
+        }
+
+        if (event.cancelable) {
+            event.preventDefault();
+        }
+
+        this.activeTouchId = null;
         this.touchStartX = null;
         this.touchStartY = null;
     }
@@ -130,16 +318,14 @@ class PingPongGame {
     init() {
         this.scene = new Scene();
         this.camera = new PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.normalCameraPosition = new Vector3(0, 8, 11); // Adjusted normal camera position for higher view
+        this.normalCameraPosition = new Vector3(0, 8, 11);
         this.normalCameraLookAt = new Vector3(0, 0.5, 0);
-        this.camera.position.copy(this.normalCameraPosition);
-        this.camera.lookAt(this.normalCameraLookAt);
-        this.camera.fov = 50; // Adjusted field of view for a more balanced perspective
-        this.camera.updateProjectionMatrix();
+        this.refreshGameplayCamera(true);
         this.renderer = new WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true; // Enable shadow maps
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Use soft shadows
+        this.renderer.domElement.style.touchAction = 'none';
         document.body.appendChild(this.renderer.domElement);
 
         this.initLighting();
@@ -165,18 +351,29 @@ class PingPongGame {
         this.ball.castShadow = true; // Ensure the ball casts shadow
         this.scene.add(this.ball);
 
+        this.score = 0;
+        this.computerScore = 0;
+        this.pointer = new Vector2();
+        this.raycaster = new THREE.Raycaster();
+        this.dragPlane = new THREE.Plane(new Vector3(0, 1, 0), -0.4);
+        this.dragIntersection = new Vector3();
+
         this.initTrail();
         this.initControls();
         this.initScoreboard();
         this.loadSounds();
         this.showStartScreen();
 
-        this.score = 0;
-        this.computerScore = 0;
         this.ballVelocity = BALL_INITIAL_VELOCITY.clone(); // Initialize ball velocity
+        this.ballSpin = new Vector2(0, 0);
+        this.previousBallPosition = this.ball.position.clone();
         this.lastBounceTime = this.clock.getElapsedTime();
         this.playerPaddleBounceTime = -Infinity; // Initialize with a very old time
         this.computerPaddleBounceTime = -Infinity; // Initialize with a very old time
+        this.playerPaddleVelocity = new Vector3();
+        this.computerPaddleVelocity = new Vector3();
+        this.previousPlayerPaddlePosition = this.paddle.position.clone();
+        this.previousComputerPaddlePosition = this.computerPaddle.position.clone();
         this.ballOnPlayerSide = true;
         this.isDragging = false;
         this.tableCenter = new Vector3(0, 0, 0); // Ensure tableCenter is defined as a Vector3
@@ -208,8 +405,8 @@ class PingPongGame {
     }
 
     initTrail() {
-        const trailLength = 50;
-        const trailMaterial = new LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+        const trailLength = 42;
+        const trailMaterial = new LineBasicMaterial({ color: 0xffef99, transparent: true, opacity: 0.38 });
         const trailGeometry = new BufferGeometry();
         const positions = new Float32Array(trailLength * 3);
         trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -227,7 +424,7 @@ class PingPongGame {
     }
 
     showStartScreen() {
-        document.getElementById('startScreen').style.display = 'block';
+        document.getElementById('startScreen').style.display = 'flex';
         this.startAnimation();
     }
 
@@ -235,9 +432,22 @@ class PingPongGame {
         document.getElementById('startScreen').style.display = 'none';
     }
 
+    showPauseScreen() {
+        this.pauseScreen.style.display = 'flex';
+        this.syncSettingsPanel();
+    }
+
+    hidePauseScreen() {
+        this.pauseScreen.style.display = 'none';
+    }
+
     showGameOverScreen() {
-        document.getElementById('finalScore').innerText = `${this.score} - ${this.computerScore}`;
-        document.getElementById('gameOverScreen').style.display = 'block';
+        document.getElementById('finalScore').innerText = `${this.score} : ${this.computerScore}`;
+        this.finalOutcome.innerText = this.score > this.computerScore
+            ? 'You took the match. Queue another round and keep the pressure on.'
+            : 'The CPU closed it out. Reset the table and answer back.';
+        document.getElementById('gameOverScreen').style.display = 'flex';
+        this.setPauseButtonLabel();
         this.startAnimation();
         this.stopSpawning(); // Stop spawning power-ups and obstacles
     }
@@ -246,9 +456,310 @@ class PingPongGame {
         document.getElementById('gameOverScreen').style.display = 'none';
     }
 
+    restartMatchFromPause() {
+        this.isPaused = false;
+        this.hidePauseScreen();
+        this.hidePointAnnouncement();
+        this.isGameStarted = true;
+        this.resetGame();
+        this.isAnimating = false;
+        this.refreshGameplayCamera(true);
+        this.setPauseButtonLabel();
+    }
+
     stopSpawning() {
         this.isGameStarted = false; // Reset game start flag
         console.log("Spawning stopped");
+    }
+
+    isOverlayVisible(element) {
+        return window.getComputedStyle(element).display !== 'none';
+    }
+
+    showPointAnnouncement(side) {
+        if (!this.pointAnnouncement) {
+            return;
+        }
+
+        clearTimeout(this.pointAnnouncementTimeout);
+
+        this.isPointAnnouncementActive = true;
+        this.pointAnnouncement.dataset.side = side;
+        this.pointAnnouncementTitle.textContent = side === 'player' ? 'You Scored' : 'CPU Scored';
+        this.pointAnnouncement.classList.add('is-visible');
+        this.pointAnnouncement.setAttribute('aria-hidden', 'false');
+
+        this.pointAnnouncementTimeout = setTimeout(() => {
+            this.resumeAfterPointAnnouncement();
+        }, 1000);
+    }
+
+    hidePointAnnouncement() {
+        clearTimeout(this.pointAnnouncementTimeout);
+        this.isPointAnnouncementActive = false;
+
+        if (!this.pointAnnouncement) {
+            return;
+        }
+
+        this.pointAnnouncement.classList.remove('is-visible');
+        this.pointAnnouncement.setAttribute('aria-hidden', 'true');
+        delete this.pointAnnouncement.dataset.side;
+    }
+
+    resumeAfterPointAnnouncement() {
+        if (!this.isPointAnnouncementActive) {
+            return;
+        }
+
+        this.hidePointAnnouncement();
+    }
+
+    isMobileViewport() {
+        return window.innerWidth <= 760 || window.matchMedia('(pointer: coarse)').matches;
+    }
+
+    refreshGameplayCamera(resetView = false) {
+        const zoomConfig = CAMERA_ZOOM_SETTINGS[this.cameraZoom];
+
+        if (this.isMobileViewport()) {
+            this.normalCameraPosition.set(0, 8.9 + zoomConfig.positionY, 12.8 + zoomConfig.positionZ);
+            this.normalCameraLookAt.set(0, 0.45 + zoomConfig.lookAtY, 0.3 + zoomConfig.lookAtZ);
+            this.camera.fov = 56 + zoomConfig.fov;
+        } else {
+            this.normalCameraPosition.set(0, 8 + zoomConfig.positionY, 11 + zoomConfig.positionZ);
+            this.normalCameraLookAt.set(0, 0.5 + zoomConfig.lookAtY, 0 + zoomConfig.lookAtZ);
+            this.camera.fov = 50 + zoomConfig.fov;
+        }
+
+        this.camera.updateProjectionMatrix();
+
+        if (resetView) {
+            this.camera.position.copy(this.normalCameraPosition);
+            this.camera.lookAt(this.normalCameraLookAt);
+        }
+    }
+
+    setPauseButtonLabel() {
+        this.pauseButton.innerText = this.isPaused ? 'Resume' : 'Pause';
+        this.pauseButton.setAttribute('aria-label', this.isPaused ? 'Resume match' : 'Pause match');
+        this.pauseButton.dataset.state = this.isPaused ? 'resume' : 'pause';
+    }
+
+    setSoundButtonState() {
+        this.soundButton.dataset.muted = this.soundEnabled ? 'false' : 'true';
+        this.soundButton.setAttribute('aria-label', this.soundEnabled ? 'Mute sound effects' : 'Unmute sound effects');
+        this.soundButton.setAttribute('aria-pressed', this.soundEnabled ? 'false' : 'true');
+    }
+
+    setDifficulty(difficulty) {
+        if (!DIFFICULTY_SETTINGS[difficulty]) {
+            return;
+        }
+
+        this.difficulty = difficulty;
+        this.saveDifficultyPreference();
+        this.refreshComputerAimOffset(true);
+        this.syncSettingsPanel();
+    }
+
+    setCameraZoom(cameraZoom) {
+        if (!CAMERA_ZOOM_SETTINGS[cameraZoom]) {
+            return;
+        }
+
+        this.cameraZoom = cameraZoom;
+        this.saveCameraZoomPreference();
+        this.refreshGameplayCamera(true);
+        this.syncSettingsPanel();
+    }
+
+    syncSettingsPanel() {
+        if (!this.pauseScreen) {
+            return;
+        }
+
+        this.difficultyValue.textContent = DIFFICULTY_SETTINGS[this.difficulty].label;
+        this.cameraZoomValue.textContent = CAMERA_ZOOM_SETTINGS[this.cameraZoom].label;
+        this.pauseSfxValue.textContent = this.soundEnabled ? 'On' : 'Off';
+
+        this.difficultyButtons.forEach((button) => {
+            button.classList.toggle('is-selected', button.dataset.value === this.difficulty);
+            button.setAttribute('aria-pressed', button.dataset.value === this.difficulty ? 'true' : 'false');
+        });
+
+        this.cameraZoomButtons.forEach((button) => {
+            button.classList.toggle('is-selected', button.dataset.value === this.cameraZoom);
+            button.setAttribute('aria-pressed', button.dataset.value === this.cameraZoom ? 'true' : 'false');
+        });
+
+        this.soundButtons.forEach((button) => {
+            const shouldSelect = (button.dataset.value === 'on') === this.soundEnabled;
+            button.classList.toggle('is-selected', shouldSelect);
+            button.setAttribute('aria-pressed', shouldSelect ? 'true' : 'false');
+        });
+    }
+
+    getDifficultyConfig() {
+        return DIFFICULTY_SETTINGS[this.difficulty] || DIFFICULTY_SETTINGS.normal;
+    }
+
+    refreshComputerAimOffset(force = false) {
+        const config = this.getDifficultyConfig();
+        const now = performance.now();
+
+        if (!force && now < this.nextComputerAimRefresh) {
+            return;
+        }
+
+        this.computerAimOffset.set(
+            (Math.random() * 2 - 1) * config.maxErrorX,
+            (Math.random() * 2 - 1) * config.maxErrorZ
+        );
+        this.nextComputerAimRefresh = now + config.errorRefreshMs;
+    }
+
+    pulseScoreboard() {
+        this.scoreboard.classList.remove('score-pop');
+        void this.scoreboard.offsetWidth;
+        this.scoreboard.classList.add('score-pop');
+
+        clearTimeout(this.scoreboardPulseTimeout);
+        this.scoreboardPulseTimeout = setTimeout(() => {
+            this.scoreboard.classList.remove('score-pop');
+        }, 220);
+    }
+
+    showFeedback(message, tone = 'good') {
+        if (!this.feedbackToast) {
+            return;
+        }
+
+        this.feedbackToast.textContent = message;
+        this.feedbackToast.dataset.tone = tone;
+        this.feedbackToast.classList.add('is-visible');
+
+        clearTimeout(this.feedbackToastTimeout);
+        this.feedbackToastTimeout = setTimeout(() => {
+            this.feedbackToast.classList.remove('is-visible');
+        }, 900);
+    }
+
+    pulsePaddle(paddle) {
+        if (!paddle) {
+            return;
+        }
+
+        const targetScale = {
+            x: paddle.scale.x,
+            y: paddle.scale.y,
+            z: paddle.scale.z
+        };
+
+        if (paddle.pulseTween) {
+            paddle.pulseTween.stop();
+        }
+
+        paddle.scale.set(targetScale.x * 1.06, targetScale.y * 1.06, targetScale.z * 1.06);
+        paddle.pulseTween = new TWEEN.Tween(paddle.scale)
+            .to(targetScale, 120)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+    }
+
+    updatePaddleMotion(delta) {
+        const safeDelta = Math.max(delta, 1 / 120);
+        const maxSpeed = PADDLE_VELOCITY_CLAMP;
+
+        this.playerPaddleVelocity
+            .copy(this.paddle.position)
+            .sub(this.previousPlayerPaddlePosition)
+            .divideScalar(safeDelta);
+
+        if (this.playerPaddleVelocity.length() > maxSpeed) {
+            this.playerPaddleVelocity.setLength(maxSpeed);
+        }
+
+        this.computerPaddleVelocity
+            .copy(this.computerPaddle.position)
+            .sub(this.previousComputerPaddlePosition)
+            .divideScalar(safeDelta);
+
+        if (this.computerPaddleVelocity.length() > maxSpeed) {
+            this.computerPaddleVelocity.setLength(maxSpeed);
+        }
+
+        this.previousPlayerPaddlePosition.copy(this.paddle.position);
+        this.previousComputerPaddlePosition.copy(this.computerPaddle.position);
+    }
+
+    applyPaddleShot({ paddle, paddleVelocity, hitPosition, returnDirection, randomHeightIncrement, randomVelocityIncrement, isPlayer }) {
+        const clamp = THREE.MathUtils.clamp;
+        const impactSpeed = paddleVelocity.length();
+        const lateralMotion = paddleVelocity.x;
+        const forwardMotion = paddleVelocity.z * returnDirection;
+        const sideSpin = clamp(lateralMotion * (0.26 + impactSpeed * 0.015), -3.1, 3.1);
+        const topspin = clamp(forwardMotion * 0.42, -2.4, 2.9);
+        const speedBoost = clamp(impactSpeed * 0.11, 0, 1.95);
+        const driveBoost = clamp(forwardMotion * 0.18, -0.35, 1.35);
+        const loftBoost = clamp(-forwardMotion * 0.24, 0, 1.45);
+        const smash = impactSpeed > 4.6 && forwardMotion > 2.2 && Math.abs(hitPosition) < 0.48;
+        const nextForwardSpeed = clamp(
+            Math.abs(this.ballVelocity.z) * randomVelocityIncrement + speedBoost + driveBoost + (smash ? 1.3 : 0),
+            3.6,
+            MAX_BALL_SPEED
+        );
+
+        this.ballVelocity.z = returnDirection * nextForwardSpeed;
+        this.ballVelocity.x += hitPosition * ANGLE_ADJUSTMENT_FACTOR + sideSpin * 0.3;
+
+        const baseLift = Math.abs(this.ballVelocity.y) * randomHeightIncrement;
+        let nextLift = baseLift + 0.35 + loftBoost - (speedBoost + Math.max(driveBoost, 0)) * 0.22;
+
+        if (smash) {
+            nextLift *= 0.54;
+        }
+
+        this.ballVelocity.y = clamp(nextLift, MIN_BOUNCE_VELOCITY, MAX_HEIGHT_VELOCITY);
+        this.ballSpin.set(sideSpin, topspin);
+
+        if (isPlayer && smash) {
+            this.showFeedback('Smash', 'good');
+        }
+    }
+
+    getPowerUpFeedback(type) {
+        switch (type) {
+            case 'speed':
+                return 'Speed Boost';
+            case 'extend':
+                return 'Paddle Extended';
+            case 'slow':
+                return 'Ball Slowed';
+            case 'doublePoints':
+                return 'Double Points';
+            case 'shield':
+                return 'Shield Ready';
+            default:
+                return 'Power-Up';
+        }
+    }
+
+    getObstacleFeedback(type) {
+        switch (type) {
+            case 'barrier':
+                return 'Barrier Hit';
+            case 'paddle':
+                return 'Deflection';
+            case 'wall':
+                return 'Wall Bounce';
+            case 'bouncePad':
+                return 'Bounce Pad';
+            case 'shrinkZone':
+                return 'Shrink Zone';
+            default:
+                return 'Obstacle';
+        }
     }
 
     spawnPowerUp() {
@@ -300,7 +811,9 @@ class PingPongGame {
     initTable() {
         const tableTexture = new THREE.TextureLoader().load('img/pingpongtable1.webp'); // Load new table texture
         const tableGeometry = new PlaneGeometry(5, 10);
-        const tableMaterial = new MeshStandardMaterial({ map: tableTexture });
+        const tableMaterial = new MeshStandardMaterial({
+            map: tableTexture,
+        });
         this.table = new Mesh(tableGeometry, tableMaterial);
         this.table.rotation.x = -Math.PI / 2;
         this.table.receiveShadow = true;
@@ -360,50 +873,82 @@ class PingPongGame {
     }
 
     initControls() {
-        document.addEventListener('touchstart', (event) => this.onTouchStart(event));
-        document.addEventListener('touchmove', (event) => this.onTouchMove(event));
+        this.keys = {};
+
+        window.addEventListener('wheel', (event) => this.onMouseWheel(event));
+        this.renderer.domElement.addEventListener('mousedown', (event) => this.onMouseDown(event));
+        this.renderer.domElement.addEventListener('mousemove', (event) => this.onMouseMove(event));
+        window.addEventListener('mouseup', (event) => this.onMouseUp(event));
+        this.renderer.domElement.addEventListener('touchstart', (event) => this.onTouchStart(event), { passive: false });
+        this.renderer.domElement.addEventListener('touchmove', (event) => this.onTouchMove(event), { passive: false });
+        this.renderer.domElement.addEventListener('touchend', (event) => this.onTouchEnd(event), { passive: false });
+        this.renderer.domElement.addEventListener('touchcancel', (event) => this.onTouchEnd(event), { passive: false });
         document.addEventListener('keydown', (event) => this.onKeyDown(event));
         document.addEventListener('keyup', (event) => this.onKeyUp(event));
-        this.keys = {};
     }
 
     initScoreboard() {
         this.scoreboard = document.getElementById('scoreboard');
+        this.playerScore = document.getElementById('playerScore');
+        this.computerScoreLabel = document.getElementById('computerScore');
+        this.feedbackToast = document.getElementById('feedbackToast');
+        this.pointAnnouncement = document.getElementById('pointAnnouncement');
+        this.pointAnnouncementTitle = document.getElementById('pointAnnouncementTitle');
+        this.pauseButton = document.getElementById('pauseButton');
+        this.soundButton = document.getElementById('soundButton');
+        this.pauseScreen = document.getElementById('pauseScreen');
+        this.startScreen = document.getElementById('startScreen');
         this.gameOverScreen = document.getElementById('gameOverScreen');
         this.finalScore = document.getElementById('finalScore');
+        this.finalOutcome = document.getElementById('finalOutcome');
+        this.difficultyValue = document.getElementById('difficultyValue');
+        this.cameraZoomValue = document.getElementById('cameraZoomValue');
+        this.pauseSfxValue = document.getElementById('pauseSfxValue');
+        this.difficultyButtons = Array.from(document.querySelectorAll('[data-setting="difficulty"]'));
+        this.cameraZoomButtons = Array.from(document.querySelectorAll('[data-setting="cameraZoom"]'));
+        this.soundButtons = Array.from(document.querySelectorAll('[data-setting="sound"]'));
+        this.setPauseButtonLabel();
+        this.setSoundButtonState();
+        this.syncSettingsPanel();
+        this.updateScore();
     }
 
     onMouseDown(event) {
+        if (event.button !== 0) {
+            return;
+        }
+
         this.isDragging = true;
-        this.previousMousePosition = {
-            x: event.clientX,
-            y: event.clientY
-        };
+        this.setPaddlePositionFromPointer(event.clientX, event.clientY);
     }
 
     onMouseMove(event) {
         if (this.isDragging) {
-            const deltaMove = {
-                x: event.clientX - this.previousMousePosition.x,
-                y: event.clientY - this.previousMousePosition.y
-            };
-
-            this.cameraAngleX += deltaMove.x * 0.01;
-            this.cameraAngleY += deltaMove.y * 0.01;
-
-            this.cameraAngleY = Math.max(Math.PI / 6, Math.min(Math.PI / 3, this.cameraAngleY)); // Clamp the vertical angle
-
-            this.updateCameraPosition();
-
-            this.previousMousePosition = {
-                x: event.clientX,
-                y: event.clientY
-            };
+            this.setPaddlePositionFromPointer(event.clientX, event.clientY);
         }
     }
 
     onMouseUp(event) {
         this.isDragging = false;
+    }
+
+    setPaddlePositionFromPointer(clientX, clientY) {
+        if (!this.isGameStarted || this.isPaused || this.isPointAnnouncementActive) {
+            return;
+        }
+
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.pointer, this.camera);
+
+        if (!this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
+            return;
+        }
+
+        this.paddle.position.x = Math.max(Math.min(this.dragIntersection.x, WALL_BOUNDARY), -WALL_BOUNDARY);
+        this.paddle.position.z = Math.max(Math.min(this.dragIntersection.z, PADDLE_BOUNDARY_Z_MAX), PADDLE_BOUNDARY_Z_MIN);
     }
 
     updateCameraPosition() {
@@ -434,21 +979,54 @@ class PingPongGame {
     }
 
     moveComputerPaddle() {
-        const targetX = this.ball.position.x;
-        const directionX = targetX - this.computerPaddle.position.x;
-        this.computerPaddle.position.x += directionX * 0.1;
+        const config = this.getDifficultyConfig();
+        const ballComingToComputer = this.ballVelocity.z < -0.05;
+
+        this.refreshComputerAimOffset();
+
+        let targetX;
+        let targetZ;
+        let lerpX;
+        let lerpZ;
+
+        if (ballComingToComputer) {
+            const interceptZ = Math.max(Math.min(this.ball.position.z - 0.35, COMPUTER_PADDLE_BOUNDARY_Z_MAX), COMPUTER_PADDLE_BOUNDARY_Z_MIN);
+            const timeToIntercept = Math.max(0, (interceptZ - this.ball.position.z) / this.ballVelocity.z);
+            const predictedX = this.ball.position.x + this.ballVelocity.x * timeToIntercept * config.anticipation;
+
+            targetX = predictedX + this.computerAimOffset.x;
+            targetZ = interceptZ + this.computerAimOffset.y;
+            lerpX = config.trackLerpX;
+            lerpZ = config.trackLerpZ;
+        } else {
+            targetX = this.ball.position.x * config.readyXBias + this.computerAimOffset.x * 0.35;
+            targetZ = config.readyZ;
+            lerpX = config.readyLerpX;
+            lerpZ = config.readyLerpZ;
+        }
+
+        targetX = Math.max(Math.min(targetX, WALL_BOUNDARY), -WALL_BOUNDARY);
+        targetZ = Math.max(Math.min(targetZ, COMPUTER_PADDLE_BOUNDARY_Z_MAX), COMPUTER_PADDLE_BOUNDARY_Z_MIN);
+
+        this.computerPaddle.position.x += (targetX - this.computerPaddle.position.x) * lerpX;
+        this.computerPaddle.position.z += (targetZ - this.computerPaddle.position.z) * lerpZ;
 
         // Enforce computer paddle boundaries
         this.computerPaddle.position.z = Math.max(Math.min(this.computerPaddle.position.z, COMPUTER_PADDLE_BOUNDARY_Z_MAX), COMPUTER_PADDLE_BOUNDARY_Z_MIN);
+        this.computerPaddle.position.x = Math.max(Math.min(this.computerPaddle.position.x, WALL_BOUNDARY), -WALL_BOUNDARY);
 
         this.computerPaddle.position.y = this.ball.position.y; // Ensure the computer paddle follows the ball's height
     }
 
     updateScore() {
-        this.scoreboard.innerText = `Player: ${this.score} - Computer: ${this.computerScore}`;
+        this.playerScore.innerText = this.score;
+        this.computerScoreLabel.innerText = this.computerScore;
+        this.finalScore.innerText = `${this.score} : ${this.computerScore}`;
+        this.pulseScoreboard();
     }
 
     onWindowResize() {
+        this.refreshGameplayCamera(this.isMobileViewport());
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -463,10 +1041,11 @@ class PingPongGame {
         requestAnimationFrame(() => this.animate());
         if (!this.isPaused) {
             const delta = this.clock.getDelta();
-            if (!this.isAnimating && this.isGameStarted) {
+            if (!this.isAnimating && this.isGameStarted && !this.isPointAnnouncementActive) {
                 this.applyPhysics(delta);
                 this.movePaddle();
                 this.moveComputerPaddle();
+                this.updatePaddleMotion(delta);
                 this.checkCollisions();
                 this.updateTrail();
             }
@@ -479,6 +1058,13 @@ class PingPongGame {
     }
 
     applyPhysics(delta) {
+        this.previousBallPosition.copy(this.ball.position);
+
+        const spinDecay = Math.pow(BALL_SPIN_DECAY_PER_FRAME, delta * 60);
+        this.ballVelocity.x += this.ballSpin.x * BALL_SPIN_CURVE_FACTOR * delta;
+        this.ballVelocity.y -= this.ballSpin.y * BALL_TOPSPIN_DIP_FACTOR * delta;
+        this.ballSpin.multiplyScalar(spinDecay);
+
         this.ballVelocity.add(GRAVITY.clone().multiplyScalar(delta));
         this.ball.position.add(this.ballVelocity.clone().multiplyScalar(delta));
 
@@ -495,8 +1081,16 @@ class PingPongGame {
 
         // Check for table collision and bounce
         if (this.ball.position.y <= TABLE_HEIGHT && this.ballVelocity.y < 0) {
-            this.ballVelocity.y = Math.max(-this.ballVelocity.y, MIN_BOUNCE_VELOCITY);
+            const topspin = this.ballSpin.y;
+            const bounceHeightFactor = topspin >= 0
+                ? Math.max(0.72, 1 - topspin * 0.08)
+                : Math.min(1.3, 1 + Math.abs(topspin) * 0.1);
+
+            this.ballVelocity.y = Math.max(-this.ballVelocity.y * bounceHeightFactor, MIN_BOUNCE_VELOCITY);
+            this.ballVelocity.x += this.ballSpin.x * BALL_BOUNCE_SPIN_TRANSFER;
             this.ball.position.y = TABLE_HEIGHT; // Ensure the ball is placed correctly on the table
+            this.ballSpin.x *= 0.9;
+            this.ballSpin.y *= 0.82;
         }
     }
 
@@ -510,8 +1104,12 @@ class PingPongGame {
     }
 
     checkWallCollisions() {
-        if (this.ball.position.x <= -WALL_BOUNDARY || this.ball.position.x >= WALL_BOUNDARY) {
-            this.ballVelocity.x = -this.ballVelocity.x;
+        if (this.ball.position.x <= -WALL_BOUNDARY) {
+            this.ball.position.x = -WALL_BOUNDARY;
+            this.ballVelocity.x = Math.abs(this.ballVelocity.x);
+        } else if (this.ball.position.x >= WALL_BOUNDARY) {
+            this.ball.position.x = WALL_BOUNDARY;
+            this.ballVelocity.x = -Math.abs(this.ballVelocity.x);
         }
     }
 
@@ -530,62 +1128,82 @@ class PingPongGame {
 
         const randomHeightIncrement = Math.random() * (HEIGHT_INCREMENT_MAX - HEIGHT_INCREMENT_MIN) + HEIGHT_INCREMENT_MIN;
         const randomVelocityIncrement = Math.random() * (VELOCITY_INCREMENT_MAX - VELOCITY_INCREMENT_MIN) + VELOCITY_INCREMENT_MIN;
-
-        // Player paddle collision
-        if (this.ball.position.z >= this.paddle.position.z - 0.3 &&
-            this.ball.position.z <= this.paddle.position.z + 0.3 &&
+        const playerWithinFace =
             this.ball.position.x >= this.paddle.position.x - paddleWidth / 2 &&
             this.ball.position.x <= this.paddle.position.x + paddleWidth / 2 &&
             this.ball.position.y >= this.paddle.position.y - paddleHeight / 2 &&
-            this.ball.position.y <= this.paddle.position.y + paddleHeight / 2) {
+            this.ball.position.y <= this.paddle.position.y + paddleHeight / 2;
+
+        const playerPaddleFrontZ = this.paddle.position.z - PADDLE_HALF_DEPTH - BALL_RADIUS;
+        const playerCrossedFront =
+            this.ballVelocity.z > 0 &&
+            this.previousBallPosition.z <= playerPaddleFrontZ &&
+            this.ball.position.z >= playerPaddleFrontZ &&
+            playerWithinFace;
+        const playerOverlapping =
+            this.ball.position.z >= this.paddle.position.z - PADDLE_HALF_DEPTH &&
+            this.ball.position.z <= this.paddle.position.z + PADDLE_HALF_DEPTH &&
+            playerWithinFace;
+
+        if (playerCrossedFront || playerOverlapping) {
             const currentTime = this.clock.getElapsedTime();
             if (currentTime - this.playerPaddleBounceTime > bounceDelay) {
                 console.log('Player paddle hit');
                 const hitPosition = (this.ball.position.x - this.paddle.position.x) / (paddleWidth / 2);
-                this.ballVelocity.z = -Math.abs(this.ballVelocity.z) * randomVelocityIncrement;
-                this.ballVelocity.y = Math.abs(this.ballVelocity.y) * randomHeightIncrement; // Randomize height increment
-                this.ballVelocity.x += hitPosition * ANGLE_ADJUSTMENT_FACTOR; // Adjust angle
+                this.applyPaddleShot({
+                    paddle: this.paddle,
+                    paddleVelocity: this.playerPaddleVelocity,
+                    hitPosition,
+                    returnDirection: -1,
+                    randomHeightIncrement,
+                    randomVelocityIncrement,
+                    isPlayer: true
+                });
 
-                // Ensure the ball velocity in the y-direction does not exceed the maximum
-                if (this.ballVelocity.y > MAX_HEIGHT_VELOCITY) {
-                    this.ballVelocity.y = MAX_HEIGHT_VELOCITY;
-                }
-
-                // Apply spin effect based on paddle movement
-                const paddleSpeed = this.paddle.position.x - (this.previousPaddlePosition ? this.previousPaddlePosition.x : this.paddle.position.x);
-                this.ballVelocity.x += paddleSpeed * SPIN_EFFECT_FACTOR; // Apply spin effect
-
+                // Push the ball back in front of the paddle so it cannot be hit again from overlap.
+                this.ball.position.z = this.paddle.position.z - PADDLE_HALF_DEPTH - BALL_RADIUS - 0.02;
                 this.playerPaddleBounceTime = currentTime;
 
-                // Store current paddle position
-                this.previousPaddlePosition = this.paddle.position.clone();
-
+                this.pulsePaddle(this.paddle);
                 this.playHitSound(); // Play sound when the paddle hits the ball
             }
         }
 
-        // Computer paddle collision
-        if (this.ball.position.z <= this.computerPaddle.position.z + 0.3 &&
-            this.ball.position.z >= this.computerPaddle.position.z - 0.3 &&
+        const computerWithinFace =
             this.ball.position.x >= this.computerPaddle.position.x - paddleWidth / 2 &&
             this.ball.position.x <= this.computerPaddle.position.x + paddleWidth / 2 &&
             this.ball.position.y >= this.computerPaddle.position.y - paddleHeight / 2 &&
-            this.ball.position.y <= this.computerPaddle.position.y + paddleHeight / 2) {
+            this.ball.position.y <= this.computerPaddle.position.y + paddleHeight / 2;
+        const computerPaddleFrontZ = this.computerPaddle.position.z + PADDLE_HALF_DEPTH + BALL_RADIUS;
+        const computerCrossedFront =
+            this.ballVelocity.z < 0 &&
+            this.previousBallPosition.z >= computerPaddleFrontZ &&
+            this.ball.position.z <= computerPaddleFrontZ &&
+            computerWithinFace;
+        const computerOverlapping =
+            this.ball.position.z <= this.computerPaddle.position.z + PADDLE_HALF_DEPTH &&
+            this.ball.position.z >= this.computerPaddle.position.z - PADDLE_HALF_DEPTH &&
+            computerWithinFace;
+
+        if (computerCrossedFront || computerOverlapping) {
             const currentTime = this.clock.getElapsedTime();
             if (currentTime - this.computerPaddleBounceTime > bounceDelay) {
                 console.log('Computer paddle hit');
                 const hitPosition = (this.ball.position.x - this.computerPaddle.position.x) / (paddleWidth / 2);
-                this.ballVelocity.z = Math.abs(this.ballVelocity.z) * randomVelocityIncrement;
-                this.ballVelocity.y = Math.abs(this.ballVelocity.y) * randomHeightIncrement; // Randomize height increment
-                this.ballVelocity.x += hitPosition * ANGLE_ADJUSTMENT_FACTOR; // Adjust angle
+                this.applyPaddleShot({
+                    paddle: this.computerPaddle,
+                    paddleVelocity: this.computerPaddleVelocity,
+                    hitPosition,
+                    returnDirection: 1,
+                    randomHeightIncrement,
+                    randomVelocityIncrement,
+                    isPlayer: false
+                });
 
-                // Ensure the ball velocity in the y-direction does not exceed the maximum
-                if (this.ballVelocity.y > MAX_HEIGHT_VELOCITY) {
-                    this.ballVelocity.y = MAX_HEIGHT_VELOCITY;
-                }
-
+                this.ball.position.z = this.computerPaddle.position.z + PADDLE_HALF_DEPTH + BALL_RADIUS + 0.02;
                 this.computerPaddleBounceTime = currentTime;
 
+                this.pulsePaddle(this.computerPaddle);
                 this.playHitSound(); // Play sound when the computer paddle hits the ball
             }
         }
@@ -599,6 +1217,7 @@ class PingPongGame {
                 this.scene.remove(powerUp.mesh);
                 powerUp.removeLabel(); // Remove the label
                 this.powerUps.splice(i, 1);
+                this.showFeedback(this.getPowerUpFeedback(powerUp.type), 'good');
                 this.playHitSound(); // Feedback for collecting power-up
             }
         }
@@ -655,6 +1274,7 @@ class PingPongGame {
                 this.scene.remove(obstacle.mesh);
                 obstacle.removeLabel(); // Remove the label
                 this.obstacles.splice(i, 1);
+                this.showFeedback(this.getObstacleFeedback(obstacle.type), 'warn');
                 this.playHitSound(); // Feedback for hitting an obstacle
             }
         }
@@ -683,36 +1303,44 @@ class PingPongGame {
 
     checkGameOver() {
         if (this.ball.position.z > PADDLE_BOUNDARY_Z_MAX) {
-            // Computer scores
-            this.computerScore += 1;
-            this.updateScore();
-            if (this.computerScore >= 11) {
-                this.showGameOverScreen();
-                this.isGameStarted = false; // Reset game start flag
-                this.clearPowerUpsAndObstacles(); // Clear power-ups and obstacles
-            } else {
-                this.resetBall(); // Reset the ball for the next round
-            }
+            this.awardPoint('computer');
         } else if (this.ball.position.z < COMPUTER_PADDLE_BOUNDARY_Z_MIN) {
-            // Player scores
+            this.awardPoint('player');
+        }
+    }
+
+    awardPoint(side) {
+        if (side === 'computer') {
+            this.computerScore += 1;
+        } else {
             this.score += 1;
-            this.updateScore();
-            if (this.score >= 11) {
-                this.showGameOverScreen();
-                this.isGameStarted = false; // Reset game start flag
-                this.clearPowerUpsAndObstacles(); // Clear power-ups and obstacles
-            } else {
-                this.resetBall(); // Reset the ball for the next round
-            }
+        }
+
+        this.updateScore();
+
+        const reachedGameOver = side === 'computer'
+            ? this.computerScore >= 11
+            : this.score >= 11;
+
+        if (reachedGameOver) {
+            this.hidePointAnnouncement();
+            this.showGameOverScreen();
+            this.isGameStarted = false; // Reset game start flag
+            this.clearPowerUpsAndObstacles(); // Clear power-ups and obstacles
+        } else {
+            this.resetBall(); // Reset the ball for the next round
+            this.showPointAnnouncement(side);
         }
     }
 
     resetBall() {
         this.ball.position.set(0, 0.4, 0); // Reset ball position to the center
         this.ballVelocity.copy(BALL_INITIAL_VELOCITY); // Reset ball velocity
+        this.previousBallPosition.copy(this.ball.position);
     }
 
     resetGame() {
+        this.hidePointAnnouncement();
         this.score = 0;
         this.computerScore = 0;
         this.updateScore();
@@ -773,6 +1401,10 @@ class PingPongGame {
     }
 
     playHitSound() {
+        if (!this.soundEnabled || !this.hitSound || !this.hitSound.buffer) {
+            return;
+        }
+
         if (this.hitSound.isPlaying) {
             this.hitSound.stop();
         }

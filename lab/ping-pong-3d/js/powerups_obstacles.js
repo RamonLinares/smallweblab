@@ -1,12 +1,46 @@
 const { CylinderGeometry, TextGeometry, FontLoader, MeshBasicMaterial } = THREE;
 
+function getPowerUpLabel(type) {
+    switch (type) {
+        case 'speed':
+            return 'SPEED';
+        case 'extend':
+            return 'EXTEND';
+        case 'slow':
+            return 'SLOW';
+        case 'doublePoints':
+            return 'DOUBLE';
+        case 'shield':
+            return 'SHIELD';
+        default:
+            return 'ITEM';
+    }
+}
+
+function getObstacleLabel(type) {
+    switch (type) {
+        case 'barrier':
+            return 'BARRIER';
+        case 'paddle':
+            return 'BLOCK';
+        case 'wall':
+            return 'WALL';
+        case 'bouncePad':
+            return 'BOUNCE PAD';
+        case 'shrinkZone':
+            return 'SHRINK ZONE';
+        default:
+            return 'TRAP';
+    }
+}
+
 class PowerUp {
     constructor(type, position, game) {
         this.type = type;
         this.position = position;
         this.game = game;
         this.mesh = this.createMesh();
-        this.textMesh = null; // Store the reference to the text mesh
+        this.textMesh = null;
         this.addLabel();
         this.animateAppearance();
     }
@@ -47,26 +81,30 @@ class PowerUp {
     addLabel() {
         const loader = new FontLoader();
         loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
-            const textGeometry = new TextGeometry(this.type.toUpperCase(), {
+            const textGeometry = new TextGeometry(getPowerUpLabel(this.type), {
                 font: font,
-                size: 0.2,
-                height: 0.05,
+                size: 0.16,
+                height: 0.04,
             });
             textGeometry.computeBoundingBox();
             const bbox = textGeometry.boundingBox;
             const textMaterial = new MeshBasicMaterial({ color: this.mesh.material.color.getHex() });
             const textMesh = new Mesh(textGeometry, textMaterial);
-            textMesh.position.set(this.position.x - (bbox.max.x - bbox.min.x) / 2, this.position.y + 0.5, this.position.z); // Center the label
+            textMesh.position.set(
+                this.position.x - (bbox.max.x - bbox.min.x) / 2,
+                this.position.y + 0.45,
+                this.position.z
+            );
             this.game.scene.add(textMesh);
-            this.textMesh = textMesh; // Store the reference to the text mesh
+            this.textMesh = textMesh;
         });
     }
 
     removeLabel() {
         if (this.textMesh) {
             this.game.scene.remove(this.textMesh);
-            console.log(`Label removed: ${this.type}`);
         }
+        return;
     }
 
     animateAppearance() {
@@ -84,7 +122,7 @@ class Obstacle {
         this.position = position;
         this.game = game;
         this.mesh = this.createMesh();
-        this.textMesh = null; // Store the reference to the text mesh
+        this.textMesh = null;
         this.addLabel();
         this.animateAppearance();
     }
@@ -125,26 +163,30 @@ class Obstacle {
     addLabel() {
         const loader = new FontLoader();
         loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
-            const textGeometry = new TextGeometry(this.type.toUpperCase(), {
+            const textGeometry = new TextGeometry(getObstacleLabel(this.type), {
                 font: font,
-                size: 0.2,
-                height: 0.05,
+                size: 0.14,
+                height: 0.04,
             });
             textGeometry.computeBoundingBox();
             const bbox = textGeometry.boundingBox;
             const textMaterial = new MeshBasicMaterial({ color: this.mesh.material.color.getHex() });
             const textMesh = new Mesh(textGeometry, textMaterial);
-            textMesh.position.set(this.position.x - (bbox.max.x - bbox.min.x) / 2, this.position.y + 0.5, this.position.z); // Center the label
+            textMesh.position.set(
+                this.position.x - (bbox.max.x - bbox.min.x) / 2,
+                this.position.y + 0.56,
+                this.position.z
+            );
             this.game.scene.add(textMesh);
-            this.textMesh = textMesh; // Store the reference to the text mesh
+            this.textMesh = textMesh;
         });
     }
 
     removeLabel() {
         if (this.textMesh) {
             this.game.scene.remove(this.textMesh);
-            console.log(`Label removed: ${this.type}`);
         }
+        return;
     }
 
     animateAppearance() {

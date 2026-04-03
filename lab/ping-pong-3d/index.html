@@ -4,69 +4,745 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ping Pong 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            color-scheme: dark;
+            --bg: #041014;
+            --panel: rgba(6, 16, 21, 0.72);
+            --panel-strong: rgba(8, 23, 30, 0.92);
+            --line: rgba(150, 248, 255, 0.22);
+            --line-strong: rgba(150, 248, 255, 0.45);
+            --text: #ecfffb;
+            --muted: rgba(214, 243, 240, 0.74);
+            --accent: #7cf7ff;
+            --accent-warm: #ffb15a;
+            --shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
+            --safe-top: max(18px, env(safe-area-inset-top));
+            --safe-right: max(18px, env(safe-area-inset-right));
+            --safe-bottom: max(18px, env(safe-area-inset-bottom));
+            --safe-left: max(18px, env(safe-area-inset-left));
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
         body {
             margin: 0;
+            min-height: 100%;
             overflow: hidden;
-            font-family: 'Arial', sans-serif;
+            overscroll-behavior: none;
+            background:
+                radial-gradient(circle at top, rgba(38, 146, 158, 0.28), transparent 34%),
+                radial-gradient(circle at bottom, rgba(8, 54, 67, 0.5), transparent 38%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Space Grotesk", sans-serif;
         }
-        #startScreen, #gameOverScreen {
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        #hudLayer {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        #hudHeader {
+            position: absolute;
+            top: var(--safe-top);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: max-content;
+            max-width: calc(100vw - (var(--safe-left) + var(--safe-right)));
+            pointer-events: none;
+        }
+
+        #topBar {
+            width: min(320px, calc(100vw - (var(--safe-left) + var(--safe-right) + 152px)));
+            min-width: 0;
+        }
+
+        #controlRail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        #feedbackToast {
+            position: absolute;
+            top: calc(var(--safe-top) + 76px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            max-width: min(320px, calc(100vw - 32px));
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(5, 16, 22, 0.72);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 140ms ease, transform 140ms ease;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        #feedbackToast.is-visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #feedbackToast[data-tone="good"] {
+            color: #b9ffe5;
+        }
+
+        #feedbackToast[data-tone="warn"] {
+            color: #ffe2a8;
+        }
+
+        #pointAnnouncement {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: min(320px, calc(100vw - 40px));
+            padding: 18px 24px 16px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(8, 23, 30, 0.9), rgba(5, 16, 22, 0.84));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            color: var(--text);
             text-align: center;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-        }
-        #startButton, #restartButton, #pauseButton {
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            transform: translate(-50%, calc(-50% + 18px));
+            opacity: 0;
+            transition: opacity 160ms ease, transform 160ms ease;
+            pointer-events: none;
             cursor: pointer;
-            font-size: 16px;
         }
-        #startButton:hover, #restartButton:hover, #pauseButton:hover {
-            background-color: #218838;
+
+        #pointAnnouncement.is-visible {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
         }
+
+        #pointAnnouncement[data-side="player"] {
+            border-color: rgba(124, 247, 255, 0.42);
+        }
+
+        #pointAnnouncement[data-side="computer"] {
+            border-color: rgba(255, 177, 90, 0.42);
+        }
+
+        .pointAnnouncementEyebrow {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .pointAnnouncementTitle {
+            font-family: "Bebas Neue", sans-serif;
+            font-size: clamp(40px, 8vw, 58px);
+            line-height: 0.9;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .pointAnnouncementHint {
+            color: rgba(214, 243, 240, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #scoreboard,
+        .overlayCard {
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            background: linear-gradient(180deg, rgba(10, 28, 36, 0.64), rgba(5, 16, 22, 0.58));
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+        }
+
         #scoreboard {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px 20px;
-            border-radius: 5px;
+            min-width: 0;
+            width: 100%;
+            padding: 8px 14px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
         }
-        #pauseButton {
+
+        #scoreboard.score-pop {
+            transform: scale(1.04);
+            border-color: var(--line-strong);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5), 0 0 28px rgba(124, 247, 255, 0.16);
+        }
+
+        .scoreSide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 58px;
+        }
+
+        .scoreName {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .scoreValue {
+            font-family: "Bebas Neue", sans-serif;
+            font-size: 44px;
+            line-height: 0.92;
+            letter-spacing: 0.03em;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 24px rgba(124, 247, 255, 0.22);
+        }
+
+        .scoreDivider {
+            width: 36px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+        }
+
+        #pauseButton,
+        #soundButton {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 52px;
+            padding: 0 18px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(9, 26, 34, 0.84), rgba(5, 16, 22, 0.78));
+            color: var(--text);
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #pauseButton:hover,
+        #pauseButton:focus-visible,
+        #soundButton:hover,
+        #soundButton:focus-visible {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            background: linear-gradient(180deg, rgba(14, 38, 49, 0.92), rgba(7, 20, 27, 0.84));
+            outline: none;
+        }
+
+        #pauseButton:active,
+        #soundButton:active {
+            transform: translateY(1px);
+        }
+
+        #pauseButton::before {
+            content: "";
+        }
+
+        #soundButton {
+            min-width: 72px;
+            font-size: 13px;
+        }
+
+        #soundButton[data-muted="true"] {
+            color: rgba(236, 255, 251, 0.78);
+            border-color: rgba(255, 177, 90, 0.4);
+        }
+
+        #soundButton[data-muted="true"]::after {
+            content: "";
             position: absolute;
-            top: 10px;
-            right: 10px;
+            width: 40px;
+            height: 2px;
+            background: rgba(255, 177, 90, 0.95);
+            transform: rotate(-34deg);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            pointer-events: auto;
+            background:
+                radial-gradient(circle at top, rgba(31, 118, 127, 0.16), transparent 30%),
+                rgba(3, 10, 14, 0.28);
+        }
+
+        .overlayCard {
+            width: min(560px, calc(100vw - 32px));
+            padding: 28px 28px 26px;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .overlayCard::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--accent-warm), transparent);
+            opacity: 0.9;
+        }
+
+        .overlayEyebrow {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+        }
+
+        .overlayTitle {
+            margin: 10px 0 0;
+            font-family: "Bebas Neue", sans-serif;
+            font-size: clamp(56px, 11vw, 92px);
+            line-height: 0.9;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            text-wrap: balance;
+        }
+
+        .overlayBody {
+            margin: 14px 0 0;
+            max-width: 30rem;
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.55;
+        }
+
+        .overlayMeta {
+            margin-top: 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .settingsStack {
+            margin-top: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .settingsGroup {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settingsLabelRow {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .settingsLabel {
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .settingsValue {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .segmentRow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .segmentButton {
+            pointer-events: auto;
+            min-height: 46px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            cursor: pointer;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+        }
+
+        .segmentButton:hover,
+        .segmentButton:focus-visible {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            outline: none;
+        }
+
+        .segmentButton.is-selected {
+            border-color: rgba(124, 247, 255, 0.38);
+            background: linear-gradient(135deg, rgba(124, 247, 255, 0.2), rgba(255, 177, 90, 0.18));
+            color: #f7fffd;
+        }
+
+        .scoreSummary {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .metaPill {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            padding: 10px 14px;
+            color: rgba(236, 255, 251, 0.88);
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .overlayActionRow {
+            margin-top: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .primaryButton,
+        .secondaryButton {
+            pointer-events: auto;
+            min-height: 54px;
+            padding: 0 22px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            transition: transform 150ms ease, border-color 150ms ease, opacity 150ms ease;
+        }
+
+        .primaryButton {
+            background: linear-gradient(135deg, var(--accent), var(--accent-warm));
+            color: #031014;
+            box-shadow: 0 18px 40px rgba(124, 247, 255, 0.22);
+        }
+
+        .secondaryButton {
+            border-color: rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+        }
+
+        .primaryButton:hover,
+        .primaryButton:focus-visible,
+        .secondaryButton:hover,
+        .secondaryButton:focus-visible {
+            transform: translateY(-1px);
+            outline: none;
+        }
+
+        .overlayFootnote {
+            color: rgba(214, 243, 240, 0.56);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #finalScore {
+            margin: 0;
+            color: var(--text);
+            font-family: "Bebas Neue", sans-serif;
+            font-size: clamp(48px, 10vw, 72px);
+            line-height: 0.9;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 760px) {
+            #hudHeader {
+                top: calc(var(--safe-top) + 4px);
+                gap: 8px;
+            }
+
+            #topBar {
+                width: min(228px, calc(100vw - (var(--safe-left) + var(--safe-right) + 128px)));
+            }
+
+            #feedbackToast {
+                top: calc(var(--safe-top) + 70px);
+                max-width: min(260px, calc(100vw - 28px));
+                font-size: 11px;
+                letter-spacing: 0.12em;
+            }
+
+            #pointAnnouncement {
+                min-width: min(272px, calc(100vw - 28px));
+                padding: 16px 18px 14px;
+            }
+
+            .pointAnnouncementTitle {
+                font-size: clamp(34px, 12vw, 48px);
+            }
+
+            .scoreValue {
+                font-size: 38px;
+            }
+
+            #controlRail {
+                gap: 8px;
+            }
+
+            #pauseButton,
+            #soundButton {
+                width: 56px;
+                min-width: 56px;
+                min-height: 56px;
+                padding: 0;
+                border-color: var(--line);
+                background: linear-gradient(180deg, rgba(10, 28, 36, 0.64), rgba(5, 16, 22, 0.58));
+                backdrop-filter: blur(18px);
+                -webkit-backdrop-filter: blur(18px);
+                letter-spacing: 0;
+            }
+
+            #pauseButton {
+                font-size: 0;
+                color: transparent;
+            }
+
+            #pauseButton::before {
+                content: "";
+                display: block;
+                width: 14px;
+                height: 14px;
+                border-left: 4px solid var(--text);
+                border-right: 4px solid var(--text);
+            }
+
+            #pauseButton[data-state="resume"]::before {
+                width: 0;
+                height: 0;
+                border-left: 14px solid var(--text);
+                border-right: none;
+                border-top: 9px solid transparent;
+                border-bottom: 9px solid transparent;
+            }
+
+            #soundButton {
+                font-size: 10px;
+                letter-spacing: 0.16em;
+            }
+
+            #soundButton[data-muted="true"]::after {
+                width: 32px;
+            }
+
+            .overlay {
+                align-items: end;
+                padding: 16px 16px calc(var(--safe-bottom) + 16px);
+            }
+
+            .overlayCard {
+                width: 100%;
+                border-radius: 24px;
+                padding: 24px 20px 22px;
+            }
+
+            .scoreSummary {
+                margin-top: 20px;
+                gap: 12px;
+            }
+
+            .overlayActionRow {
+                justify-content: center;
+            }
+
+            .overlayFootnote {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="scoreboard">Score: 0</div>
-    <div id="startScreen">
-        <h1>Ping Pong 3D</h1>
-        <p>Press Enter or click the button to start the game.</p>
-        <button id="startButton">Start</button>
+    <div id="hudLayer">
+        <div id="hudHeader">
+            <div id="topBar">
+                <div id="scoreboard" aria-live="polite">
+                    <div class="scoreSide">
+                        <span class="scoreName">You</span>
+                        <span class="scoreValue" id="playerScore">0</span>
+                    </div>
+                    <span class="scoreDivider" aria-hidden="true"></span>
+                    <div class="scoreSide">
+                        <span class="scoreName">CPU</span>
+                        <span class="scoreValue" id="computerScore">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="controlRail">
+                <button id="soundButton" aria-label="Mute sound effects" aria-pressed="false">SFX</button>
+                <button id="pauseButton" aria-label="Pause match">Pause</button>
+            </div>
+        </div>
+
+        <div id="feedbackToast" aria-live="polite"></div>
+
+        <button id="pointAnnouncement" aria-live="polite" aria-hidden="true" type="button">
+            <span class="pointAnnouncementEyebrow">Point Won</span>
+            <span class="pointAnnouncementTitle" id="pointAnnouncementTitle">You Scored</span>
+            <span class="pointAnnouncementHint">Tap to continue</span>
+        </button>
+
+        <div id="startScreen" class="overlay">
+            <div class="overlayCard">
+                <span class="overlayEyebrow">Neon Arena</span>
+                <h1 class="overlayTitle">Ping Pong 3D</h1>
+                <p class="overlayBody">Fast rally play, tighter controls, and a cleaner match HUD. Hold the center, read the bounce, and push the CPU off rhythm.</p>
+                <div class="overlayMeta">
+                    <span class="metaPill">First To 11</span>
+                    <span class="metaPill">Drag To Move</span>
+                    <span class="metaPill">Keyboard + Touch</span>
+                </div>
+                <div class="overlayActionRow">
+                    <button id="startButton" class="primaryButton">Start Match</button>
+                    <span class="overlayFootnote">Press Enter for a quick start.</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="overlay">
+            <div class="overlayCard">
+                <span class="overlayEyebrow">Final Whistle</span>
+                <h2 class="overlayTitle">Match Over</h2>
+                <p class="overlayBody" id="finalOutcome">The rally is done. Reset the table and go again.</p>
+                <div class="scoreSummary">
+                    <span class="metaPill">Final Score</span>
+                    <p id="finalScore">0 : 0</p>
+                </div>
+                <div class="overlayActionRow">
+                    <button id="restartButton" class="primaryButton">Play Again</button>
+                    <span class="overlayFootnote">Press Enter to restart.</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="pauseScreen" class="overlay">
+            <div class="overlayCard">
+                <span class="overlayEyebrow">Time Out</span>
+                <h2 class="overlayTitle">Paused</h2>
+                <p class="overlayBody">Tune the match, then jump straight back into the next rally.</p>
+                <div class="settingsStack">
+                    <div class="settingsGroup">
+                        <div class="settingsLabelRow">
+                            <span class="settingsLabel">Difficulty</span>
+                            <span class="settingsValue" id="difficultyValue">Normal</span>
+                        </div>
+                        <div class="segmentRow">
+                            <button class="segmentButton" data-setting="difficulty" data-value="easy" type="button">Easy</button>
+                            <button class="segmentButton" data-setting="difficulty" data-value="normal" type="button">Normal</button>
+                            <button class="segmentButton" data-setting="difficulty" data-value="hard" type="button">Hard</button>
+                        </div>
+                    </div>
+                    <div class="settingsGroup">
+                        <div class="settingsLabelRow">
+                            <span class="settingsLabel">Camera</span>
+                            <span class="settingsValue" id="cameraZoomValue">Default</span>
+                        </div>
+                        <div class="segmentRow">
+                            <button class="segmentButton" data-setting="cameraZoom" data-value="tight" type="button">Tight</button>
+                            <button class="segmentButton" data-setting="cameraZoom" data-value="default" type="button">Default</button>
+                            <button class="segmentButton" data-setting="cameraZoom" data-value="wide" type="button">Wide</button>
+                        </div>
+                    </div>
+                    <div class="settingsGroup">
+                        <div class="settingsLabelRow">
+                            <span class="settingsLabel">SFX</span>
+                            <span class="settingsValue" id="pauseSfxValue">On</span>
+                        </div>
+                        <div class="segmentRow">
+                            <button class="segmentButton" data-setting="sound" data-value="on" type="button">On</button>
+                            <button class="segmentButton" data-setting="sound" data-value="off" type="button">Off</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overlayActionRow">
+                    <button id="resumeButton" class="primaryButton" type="button">Resume Match</button>
+                    <button id="restartMatchButton" class="secondaryButton" type="button">Restart Match</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="gameOverScreen">
-        <h1>Game Over</h1>
-        <p>Your score: <span id="finalScore">0</span></p>
-        <p>Press Enter or click the button to restart.</p>
-        <button id="restartButton">Restart</button>
-    </div>
-    <button id="pauseButton">Pause</button>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.min.js"></script>
     <script src="js/paddle_ball.js"></script>
