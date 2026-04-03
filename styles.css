@@ -576,10 +576,7 @@ button {
 }
 
 .prototype-card__visual--lens {
-  padding: 1.45rem;
-  background:
-    radial-gradient(circle at 18% 14%, rgba(23, 183, 163, 0.24), transparent 24%),
-    linear-gradient(165deg, #f4f8f7 0%, #e6efef 52%, #d6e3e2 100%);
+  background: #edf4f4;
 }
 
 .prototype-card__badge {
