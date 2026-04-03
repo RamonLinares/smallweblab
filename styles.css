@@ -196,6 +196,10 @@ button {
 
 .eyebrow,
 .section-kicker {
+  color: rgba(17, 24, 33, 0.34);
+}
+
+.eyebrow {
   color: rgba(246, 241, 234, 0.72);
 }
 
