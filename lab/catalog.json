@@ -20,5 +20,27 @@
       "ref": "main",
       "source": "."
     }
+  },
+  {
+    "slug": "asteroids-3d",
+    "title": "Asteroids 3D",
+    "path": "/lab/asteroids-3d/",
+    "eyebrow": "Space shooter / Lab route",
+    "badge": "Built in early Cursor days",
+    "previewImage": "/lab/asteroids-3d/assets/game_title.jpeg",
+    "previewAlt": "Asteroids 3D title screen preview",
+    "summary": "A browser asteroid shooter from an earlier wave of vibe coding, kept here as a playable snapshot instead of a full standalone domain.",
+    "note": "It is rougher than the newer lab entries, which is part of the point. The route makes room for experiments that are still interesting even when they are not polished enough to graduate.",
+    "tags": [
+      "Space shooter",
+      "Retro prototype",
+      "Early Cursor"
+    ],
+    "repoUrl": "https://github.com/RamonLinares/Asteroids-3D",
+    "sync": {
+      "repo": "https://github.com/RamonLinares/Asteroids-3D.git",
+      "ref": "master",
+      "source": "."
+    }
   }
 ]

@@ -18,6 +18,9 @@ IGNORE_PATTERNS = shutil.ignore_patterns(
     ".git",
     ".github",
     ".DS_Store",
+    ".gitignore",
+    ".vscode",
+    ".idea",
     "node_modules",
 )
 

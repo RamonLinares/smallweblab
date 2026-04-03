@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Asteroids</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Orbitron', sans-serif; }
+        canvas { width: 100%; height: 100%; }
+        .game-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            color: white;
+            font-size: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex; /* Use flexbox for layout */
+            justify-content: space-between; /* Space between elements */
+            align-items: center; /* Center items vertically */
+            z-index: 10;
+            white-space: nowrap; /* Prevent text from wrapping */
+        }
+        #timeDisplay {
+            flex: 1; /* Allow element to grow */
+            text-align: left; /* Align text to the left */
+            min-width: 150px; /* Ensure it has enough space */
+        }
+        #asteroidCountDisplay {
+            flex: 1; /* Allow element to grow */
+            text-align: right; /* Align text to the right */
+            min-width: 150px; /* Ensure it has enough space */
+        }
+        .start-screen {
+            display: flex; /* Use flexbox for centering */
+            flex-direction: column; /* Stack elements vertically */
+            justify-content: center; /* Center vertically */
+            align-items: center; /* Center horizontally */
+            position: fixed; /* Position fixed to cover the entire screen */
+            top: 0; /* Align to the top */
+            left: 0; /* Align to the left */
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+            z-index: 100; /* Ensure it is above other elements */
+            opacity: 1; /* Fully visible */
+            transition: opacity 0.5s ease; /* Add transition for opacity */
+        }
+        .end-screen {
+            display: none; /* Initially hidden */
+            opacity: 0; /* Start hidden */
+            transition: opacity 0.5s ease; /* Add transition for opacity */
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.8); 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 20; 
+            text-align: center; 
+            font-family: 'Orbitron', sans-serif; 
+        }
+        .logo { max-width: 80%; height: auto; margin-bottom: 20px; }
+        .instructions { font-size: 24px; color: white; margin-top: 20px; }
+        #scoreboard { list-style-type: none; padding: 0; }
+        #scoreboard li { margin: 5px 0; }
+        #restartButton { margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
+        .scoreboard {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        #scoreList {
+            list-style-type: none; /* Remove bullet points */
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margin */
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen" class="start-screen">
+        <img src="assets/game_title.jpeg" alt="Game Title" class="logo" />
+        <p class="instructions">Press any key or click to start</p>
+        <button id="musicToggleButton" style="margin-top: 20px;">Enable Music</button>
+    </div>
+    <div id="endScreen" class="end-screen">
+        <h1>Game Over</h1>
+        <p id="finalScore"></p>
+        <div id="scoreboard" class="scoreboard">
+            <h2>Scoreboard</h2>
+            <ul id="scoreList"></ul>
+        </div>
+        <button id="restartButton">Restart Game</button>
+        <button id="musicToggleButtonEnd" style="margin-top: 20px;">Enable Music</button>
+    </div>
+    <div id="crosshair" style="position: fixed; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;"></div>
+    
+    <div id="gameInfo" class="game-info">
+        <div id="timeDisplay">Time: 00:00</div>
+        <div id="asteroidCountDisplay">Asteroids Left: 5</div>
+    </div>
+    <canvas id="radarCanvas" style="position: fixed; bottom: 20px; right: 20px; width: 300px; height: 300px; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%;"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Declare audio variables at the top of your script
+        let startEndMusic, gameplayMusic;
+        let isMusicEnabled = false; // Default is disabled
+
+        // Load audio files
+        function loadAudio() {
+            startEndMusic = new Audio('assets/aster3d_start_end.mp3');
+            gameplayMusic = new Audio('assets/aster3d.mp3');
+        }
+
+        // Call loadAudio at the beginning of your script
+        loadAudio();
+
+        // Function to toggle music
+        function toggleMusic(event) {
+            event.stopPropagation(); // Prevent the click from propagating to the document
+            isMusicEnabled = !isMusicEnabled; // Toggle the state
+            if (isMusicEnabled) {
+                startEndMusic.loop = true; // Loop for start/end music
+                startEndMusic.play();
+                document.getElementById('musicToggleButton').innerText = 'Disable Music';
+                document.getElementById('musicToggleButtonEnd').innerText = 'Disable Music';
+            } else {
+                startEndMusic.pause();
+                gameplayMusic.pause();
+                document.getElementById('musicToggleButton').innerText = 'Enable Music';
+                document.getElementById('musicToggleButtonEnd').innerText = 'Enable Music';
+            }
+        }
+
+        // Event listeners for the music toggle buttons
+        document.getElementById('musicToggleButton').addEventListener('click', toggleMusic);
+        document.getElementById('musicToggleButtonEnd').addEventListener('click', toggleMusic);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.shadowMap.enabled = true; // Enable shadow maps
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const spaceSize = 300; // Increased from 100 to 300
+        const wrapMargin = 15; // Increased from 5 to 15
+
+        // Create boundary sphere geometry
+        const boundaryGeometry = new THREE.SphereGeometry(spaceSize / 2, 32, 32);
+
+        // Create the solid material
+        const boundaryMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333333, // Dark gray color
+            transparent: true,
+            opacity: 0.3, // Adjust opacity as needed
+        });
+
+        // Create the solid boundary sphere
+        const boundarySphere = new THREE.Mesh(boundaryGeometry, boundaryMaterial);
+        scene.add(boundarySphere);
+
+        // Create the wireframe material
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00, // Bright color for visibility (you can change this)
+            wireframe: true, // Enable wireframe
+        });
+
+        // Create the wireframe boundary sphere
+        const wireframeSphere = new THREE.Mesh(boundaryGeometry, wireframeMaterial);
+        scene.add(wireframeSphere);
+
+        const ship = new THREE.Group();
+        scene.add(ship);
+        ship.position.z = -10; // Initial position of the ship
+        ship.velocity = new THREE.Vector3(0, 0, 0);
+        ship.acceleration = 0.05; // Adjust as needed
+        ship.maxSpeed = 1.5; // Adjust as needed
+        ship.friction = 0.95; // Adjust as needed
+        ship.castShadow = true; // Enable shadow casting for the ship
+
+        // Create a visible part of the ship (e.g., a dashboard or cockpit frame)
+        const cockpitFrame = new THREE.Mesh(new THREE.RingGeometry(2, 2.2, 32), new THREE.MeshBasicMaterial({ color: 0x444444 }));
+        cockpitFrame.rotation.x = -Math.PI / 2;
+        cockpitFrame.position.z = -0.5;
+        ship.add(cockpitFrame);
+
+        // Add the camera to the ship
+        ship.add(camera);
+
+        const rotationSpeed = 0.02; // Increased rotation speed
+
+        // Create a separate object for pitch rotation
+        const pitchObject = new THREE.Object3D();
+        pitchObject.add(camera);
+        ship.add(pitchObject);
+
+        const keys = {
+            KeyW: false,
+            KeyS: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            ArrowDown: false,
+            Space: false
+        };
+
+        // Key event listeners (remove any related to 'R')
+        document.addEventListener('keydown', (event) => {
+            if (event.code in keys) keys[event.code] = true;
+        });
+
+        // Keyup event listener
+        document.addEventListener('keyup', (event) => {
+            if (event.code in keys) keys[event.code] = false;
+        });
+
+        // Function to shoot bullets
+        function shoot() {
+            const bulletGeometry = new THREE.SphereGeometry(0.2, 16, 16); // Use a sphere for the laser effect
+            const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+            // Calculate the forward direction of the ship
+            const forwardDirection = new THREE.Vector3(0, 0, -1);
+            forwardDirection.applyQuaternion(pitchObject.quaternion); // Apply pitch rotation first
+            forwardDirection.applyQuaternion(ship.quaternion); // Apply yaw rotation second
+
+            // Calculate the position to the left and right of the ship
+            const offset = 1.5; // Distance from the ship's center to the laser
+            const leftOffset = new THREE.Vector3(-offset, 0, 0).applyQuaternion(ship.quaternion);
+            const rightOffset = new THREE.Vector3(offset, 0, 0).applyQuaternion(ship.quaternion);
+
+            const leftPosition = ship.position.clone().add(forwardDirection).add(leftOffset);
+            const rightPosition = ship.position.clone().add(forwardDirection).add(rightOffset);
+
+            // Create the left bullet (sphere)
+            const leftBullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+            leftBullet.position.copy(leftPosition);
+            leftBullet.velocity = forwardDirection.clone().normalize().multiplyScalar(bulletSpeed); // Set the bullet's velocity
+
+            scene.add(leftBullet);
+            bullets.push(leftBullet); // Ensure the bullet is added to the bullets array
+
+            // Create the right bullet (sphere)
+            const rightBullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+            rightBullet.position.copy(rightPosition);
+            rightBullet.velocity = forwardDirection.clone().normalize().multiplyScalar(bulletSpeed); // Set the right bullet's velocity
+
+            scene.add(rightBullet);
+            bullets.push(rightBullet); // Add the right bullet to the bullets array
+        }
+
+        function checkCollisions() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                const oldPosition = bullet.position.clone();
+                bullet.position.add(bullet.velocity); // Update bullet position
+
+                // Check if the bullet is outside the sphere boundaries
+                if (bullet.position.length() > (spaceSize / 2)) {
+                    scene.remove(bullet); // Remove from scene
+                    bullets.splice(i, 1); // Remove from array
+                    continue; // Skip to the next bullet
+                }
+
+                // Check for collisions along the bullet's path
+                asteroids.forEach((asteroid, asteroidIndex) => {
+                    if (lineIntersectsSphere(oldPosition, bullet.position, asteroid.position, asteroid.size)) {
+                        scene.remove(bullet); // Remove from scene
+                        bullets.splice(i, 1); // Remove from array
+                        splitAsteroid(asteroid, asteroidIndex);
+                    }
+                });
+
+                // Remove bullet if it's too old
+                if (Date.now() - bullet.createdAt > bulletLifespan) {
+                    scene.remove(bullet); // Remove from scene
+                    bullets.splice(i, 1); // Remove from array
+                }
+            }
+        }
+
+        function lineIntersectsSphere(lineStart, lineEnd, sphereCenter, sphereRadius) {
+            const line = lineEnd.clone().sub(lineStart);
+            const lineLength = line.length();
+            const lineDirection = line.normalize();
+            
+            const sphereToLineStart = lineStart.clone().sub(sphereCenter);
+            
+            const a = lineDirection.dot(lineDirection);
+            const b = 2 * sphereToLineStart.dot(lineDirection);
+            const bufferRadius = sphereRadius + 1; // Add a small buffer to the sphere radius for more forgiving collisions
+            const c = sphereToLineStart.dot(sphereToLineStart) - bufferRadius * bufferRadius;
+            
+            const discriminant = b * b - 4 * a * c;
+            
+            if (discriminant < 0) {
+                return false;
+            }
+            
+            const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+            const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+            
+            return (t1 >= 0 && t1 <= lineLength) || (t2 >= 0 && t2 <= lineLength);
+        }
+
+        let asteroids = [];
+        const baseAsteroidSpeed = 0.2; // Decrease this value to slow down asteroids
+        const asteroidCount = 5; // Start with 5 asteroids
+
+        const textureLoader = new THREE.TextureLoader();
+        const asteroidTexture = textureLoader.load('assets/asteroid.jpg'); // Load your asteroid texture
+
+        function createAsteroid(size = null, position = null) {
+            size = size || Math.random() * 20 + 10;
+
+            if (!position) {
+                const radius = (Math.random() * 0.5 + 0.5) * (spaceSize / 2); // Between 50% and 100% of max radius
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(Math.random() * 2 - 1);
+                position = new THREE.Vector3(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.sin(phi) * Math.sin(theta),
+                    radius * Math.cos(phi)
+                );
+            }
+
+            const geometry = new THREE.IcosahedronGeometry(size, 1);
+            const material = new THREE.MeshStandardMaterial({ map: asteroidTexture }); // Use MeshStandardMaterial for better lighting
+
+            const asteroid = new THREE.Mesh(geometry, material);
+            asteroid.visible = true; // Ensure the asteroid is visible when created
+            asteroid.castShadow = true; // Enable shadow casting for the asteroid
+            asteroid.receiveShadow = true; // Optional: Enable receiving shadows if needed
+
+            asteroid.position.copy(position);
+            asteroid.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            
+            // Randomize direction and speed
+            asteroid.direction = new THREE.Vector3(
+                (Math.random() - 0.5) * 2, // Random x direction
+                (Math.random() - 0.5) * 2, // Random y direction
+                (Math.random() - 0.5) * 2  // Random z direction
+            ).normalize();
+
+            // Adjust speed based on size
+            asteroid.size = size;
+            asteroid.speed = baseAsteroidSpeed * (1 + Math.random()); // Randomize speed slightly
+            if (size < 5) { // Increase speed for smaller asteroids
+                asteroid.speed *= 1.5; // Make smaller asteroids faster
+            }
+
+            return asteroid;
+        }
+
+        function bounceOffBoundary(position, direction) {
+            const radius = spaceSize / 2;
+            if (position.length() > radius) {
+                // Calculate the normal vector at the point of intersection
+                const normal = position.clone().normalize();
+                
+                // Reflect the direction vector
+                direction.reflect(normal);
+                
+                // Move the asteroid slightly inside the boundary
+                position.setLength(radius - 0.1);
+            }
+        }
+
+        function splitAsteroid(asteroid, index) {
+            scene.remove(asteroid);
+            asteroids.splice(index, 1);
+
+            // Create explosion effect
+            createExplosion(asteroid.position);
+
+            let newAsteroids = 0;
+
+            if (asteroid.size > 4) { // Change this value to control when they disappear
+                for (let i = 0; i < 2; i++) {
+                    const newSize = asteroid.size / 2;
+                    const offset = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(newSize);
+                    const newPosition = asteroid.position.clone().add(offset);
+
+                    const newAsteroid = createAsteroid(newSize, newPosition);
+                    
+                    // Increase speed for smaller asteroids
+                    if (newSize < 5) { // Adjust the size threshold as needed
+                        newAsteroid.speed *= 1.5; // Make smaller asteroids faster
+                    }
+
+                    newAsteroid.direction.copy(asteroid.direction)
+                        .add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.5))
+                        .normalize();
+                    
+                    newAsteroid.speed = baseAsteroidSpeed * (1 + Math.random()); // Randomize speed slightly
+                    if (newSize < 5) { // Increase speed for smaller asteroids
+                        newAsteroid.speed *= 1.5; // Make smaller asteroids faster
+                    }
+
+                    scene.add(newAsteroid);
+                    asteroids.push(newAsteroid);
+                    newAsteroids++;
+                }
+            }
+
+            return newAsteroids;
+        }
+
+        function createExplosion(position) {
+            const particleCount = 150;
+            const particles = []; // Array to hold particle meshes
+            const colors = [0xffff00, 0xff0000]; // Yellow and Red colors
+
+            for (let p = 0; p < particleCount; p++) {
+                // Randomly select a color
+                const color = colors[Math.floor(Math.random() * colors.length)];
+
+                const pMaterial = new THREE.MeshStandardMaterial({
+                    color: color, // Random color for explosion
+                    transparent: true,
+                    opacity: 1, // Start fully opaque
+                });
+
+                // Create a sphere for each particle
+                const sphereGeometry = new THREE.SphereGeometry(0.5, 8, 8); // Radius, width segments, height segments
+                const particle = new THREE.Mesh(sphereGeometry, pMaterial);
+                particle.position.copy(position);
+                
+                // Random direction and speed for movement
+                const direction = new THREE.Vector3(
+                    (Math.random() - 0.5),
+                    (Math.random() - 0.5),
+                    (Math.random() - 0.5)
+                ).normalize(); // Normalize to get a direction vector
+
+                const speed = Math.random() * 20 + 2; // Increase speed range (2 to 6)
+
+                // Store direction and speed in the particle
+                particle.direction = direction;
+                particle.speed = speed;
+
+                particles.push(particle); // Add particle to the array
+                scene.add(particle); // Add particle to the scene
+            }
+
+            // Animate particles
+            const duration = 1500; // Duration for particles to fly out
+            const fadeOutDuration = 500; // Duration for fade out
+
+            const fadeOutStart = Date.now(); // Start fade out timer
+            const fadeOutInterval = setInterval(() => {
+                const elapsed = Date.now() - fadeOutStart;
+                const opacity = 1 - (elapsed / fadeOutDuration);
+
+                particles.forEach(particle => {
+                    // Move the particle outward immediately
+                    particle.position.add(particle.direction.clone().multiplyScalar(particle.speed * 0.016)); // Move based on speed
+
+                    particle.material.opacity = Math.max(opacity, 0); // Ensure opacity doesn't go below 0
+                    // Rotate the particle
+                    particle.rotation.x += 0.1; // Faster rotation
+                    particle.rotation.y += 0.1; // Faster rotation
+                });
+
+                if (opacity <= 0) {
+                    clearInterval(fadeOutInterval);
+                    particles.forEach(particle => {
+                        scene.remove(particle); // Remove after fade out
+                    });
+                }
+            }, 16); // Approximately 60 FPS
+        }
+
+        let elapsedTime = 0; // Global variable to track elapsed time
+        let gameActive = true; // Flag to track if the game is active
+
+        function updateGameInfo() {
+            if (gameActive) { // Only update if the game is active
+                elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate elapsed time in seconds
+            }
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const asteroidCount = asteroids.length; // Get the current number of asteroids
+            document.getElementById('timeDisplay').innerText = `Time: ${formattedTime}`;
+            document.getElementById('asteroidCountDisplay').innerText = `Asteroids Left: ${asteroidCount}`;
+        }
+
+        let gameStarted = false;
+
+        // Function to start the game
+        function startGame(event) {
+            if (event.target.id === 'musicToggleButton' || event.target.id === 'musicToggleButtonEnd') {
+                return; // Don't start the game if the music button was clicked
+            }
+            if (gameStarted) return; // Prevent starting the game multiple times
+            gameStarted = true;
+            startTime = Date.now(); // Initialize startTime when the game starts
+            startEndMusic.pause(); // Pause start screen music
+            if (isMusicEnabled) {
+                gameplayMusic.currentTime = 0; // Reset gameplay music to the beginning
+                gameplayMusic.play(); // Play gameplay music if enabled
+            }
+
+            const startScreen = document.getElementById('startScreen');
+            startScreen.style.opacity = '0'; // Fade out the start screen
+
+            setTimeout(() => {
+                startScreen.style.display = 'none'; // Set display to none after fade out
+                initializeGame(); // Initialize the game
+            }, 500); // Match the duration of the CSS transition
+        }
+
+        // Listen for keydown or mouse click to start the game
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') { // Change this to your desired key
+                startGame(event);
+            }
+        });
+        document.addEventListener('click', startGame); // Start game on click
+
+        // Show the start screen initially
+        document.getElementById('startScreen').style.display = 'flex'; // Show the start screen
+
+        // Add these variables at the top of your script
+        const radarCanvas = document.getElementById('radarCanvas');
+        const radarCtx = radarCanvas.getContext('2d');
+        const radarSize = 300; // Increased size of the radar canvas
+        const radarRange = spaceSize; // Increase the radar range to cover the full game space
+
+        // Set the actual size of the canvas (for sharp rendering)
+        radarCanvas.width = radarSize;
+        radarCanvas.height = radarSize;
+
+        function updateRadar() {
+            // Clear the radar
+            radarCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            radarCtx.fillRect(0, 0, radarSize, radarSize);
+
+            // Draw radar circle
+            radarCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            radarCtx.beginPath();
+            radarCtx.arc(radarSize / 2, radarSize / 2, radarSize / 2 - 1, 0, Math.PI * 2);
+            radarCtx.stroke();
+
+            // Draw player's ship (center of the radar)
+            radarCtx.fillStyle = 'blue';
+            radarCtx.beginPath();
+            radarCtx.arc(radarSize / 2, radarSize / 2, 3, 0, Math.PI * 2);
+            radarCtx.fill();
+
+            // Determine if the ship is upside down
+            const isUpsideDown = Math.abs(pitchObject.rotation.x) > Math.PI / 2;
+
+            // Draw asteroids
+            radarCtx.fillStyle = 'red';
+            asteroids.forEach(asteroid => {
+                // Calculate relative position
+                const relativePos = asteroid.position.clone().sub(ship.position);
+
+                // Rotate the relative position based on the ship's yaw rotation
+                const yawRotation = ship.rotation.y; // Assuming y is the yaw axis
+                const rotatedPos = relativePos.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -yawRotation);
+
+                // Apply pitch rotation if upside down
+                if (isUpsideDown) {
+                    rotatedPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
+                }
+
+                // Scale the position to fit the radar
+                const radarX = (rotatedPos.x / radarRange) * (radarSize / 2) + radarSize / 2;
+                const radarY = (rotatedPos.z / radarRange) * (radarSize / 2) + radarSize / 2;
+
+                // Draw asteroid on radar
+                radarCtx.beginPath();
+                radarCtx.arc(radarX, radarY, 2, 0, Math.PI * 2);
+                radarCtx.fill();
+            });
+
+            // Draw a small triangle to indicate the ship's forward direction
+            radarCtx.fillStyle = 'white';
+            radarCtx.beginPath();
+            radarCtx.moveTo(radarSize / 2, radarSize / 2 - 10); // Pointing upwards
+            radarCtx.lineTo(radarSize / 2 - 5, radarSize / 2 + 5);
+            radarCtx.lineTo(radarSize / 2 + 5, radarSize / 2 + 5);
+            radarCtx.closePath();
+            radarCtx.fill();
+        }
+
+        function updateShipPosition() {
+            // Normalize the pitch rotation
+            pitchObject.rotation.x = normalizeAngle(pitchObject.rotation.x);
+
+            // Determine if the ship is upside down
+            const isUpsideDown = Math.abs(pitchObject.rotation.x) > Math.PI / 2; // Check if pitch rotation is greater than 90 degrees
+
+            // Yaw rotation (left/right)
+            if (keys.ArrowLeft) {
+                if (isUpsideDown) {
+                    ship.rotation.y -= rotationSpeed; // Rotate left if upside down
+                } else {
+                    ship.rotation.y += rotationSpeed; // Rotate right if not upside down
+                }
+            }
+            if (keys.ArrowRight) {
+                if (isUpsideDown) {
+                    ship.rotation.y += rotationSpeed; // Rotate right if upside down
+                } else {
+                    ship.rotation.y -= rotationSpeed; // Rotate left if not upside down
+                }
+            }
+
+            // Pitch rotation (up/down)
+            if (keys.ArrowUp) pitchObject.rotation.x += rotationSpeed;
+            if (keys.ArrowDown) pitchObject.rotation.x -= rotationSpeed;
+
+            // Calculate forward direction for acceleration
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyQuaternion(pitchObject.quaternion); // Apply pitch rotation first
+            direction.applyQuaternion(ship.quaternion); // Apply yaw rotation second
+
+            // Accelerate
+            if (keys.KeyW) {
+                ship.velocity.add(direction.clone().multiplyScalar(ship.acceleration));
+            }
+
+            // Brake (stop acceleration)
+            if (keys.KeyS) {
+                ship.velocity.set(0, 0, 0); // Stop the ship immediately
+            }
+
+            // Apply friction
+            ship.velocity.multiplyScalar(ship.friction);
+
+            // Ensure velocity doesn't go below zero (prevent backwards movement)
+            if (ship.velocity.length() < 0.01) {
+                ship.velocity.set(0, 0, 0);
+            }
+
+            // Limit speed
+            if (ship.velocity.length() > ship.maxSpeed) {
+                ship.velocity.setLength(ship.maxSpeed);
+            }
+
+            // Move ship
+            ship.position.add(ship.velocity);
+
+            // Wrap ship position
+            bounceOffBoundary(ship.position, ship.velocity);
+
+            // Move the ship forward in the direction it is facing
+            const forwardDirection = new THREE.Vector3(0, 0, -1); // Forward direction in local space
+            forwardDirection.applyQuaternion(pitchObject.quaternion); // Apply pitch rotation first
+            forwardDirection.applyQuaternion(ship.quaternion); // Apply the ship's rotation
+            ship.position.add(forwardDirection.multiplyScalar(forwardSpeed)); // Move the ship forward
+        }
+
+        let bullets = [];
+        const bulletSpeed = 2; // Decreased bullet speed
+        const bulletDiameter = 1.5; // Diameter of the bullet (adjust as needed)
+        const bulletLifespan = (spaceSize / bulletSpeed) * 1000; // Convert to milliseconds
+
+        // Create a function to handle shooting continuously
+        function handleShooting() {
+            if (keys.Space) {
+                shoot(); // Call shoot if the space key is held down
+            }
+        }
+
+        let lastCheckTime = 0;
+        const checkInterval = 5000; // Check every 5 seconds
+
+        let scores = []; // Array to hold player scores
+
+        // Load scores from local storage
+        function loadScores() {
+            const storedScores = localStorage.getItem('scores');
+            if (storedScores) {
+                scores = JSON.parse(storedScores);
+            } else {
+                scores = []; // Initialize if no scores are stored
+            }
+        }
+
+        // Call loadScores at the beginning of your script
+        loadScores();
+
+        function endGame() {
+            gameActive = false; // Stop the timer
+            gameplayMusic.pause(); // Pause gameplay music
+            if (isMusicEnabled) { // Check if music is enabled
+                startEndMusic.currentTime = 0; // Reset start/end music to the beginning
+                startEndMusic.play(); // Play end screen music
+            }
+            const endScreen = document.getElementById('endScreen');
+            endScreen.style.display = 'flex'; // Show the end screen
+            endScreen.style.opacity = '1'; // Fade in the end screen
+
+            // Calculate final score
+            const finalElapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('finalScore').innerText = `Final Time: ${finalElapsedTime}s`;
+
+            // Load scores from local storage
+            const storedScores = localStorage.getItem('scores');
+            let scores = storedScores ? JSON.parse(storedScores) : [];
+
+            // Add the new score
+            scores.push(finalElapsedTime);
+            scores.sort((a, b) => a - b); // Sort scores in ascending order
+
+            // Limit to top 10 scores
+            const topScores = scores.slice(0, 10); // Get the top 10 scores
+
+            // Store scores in local storage
+            localStorage.setItem('scores', JSON.stringify(topScores));
+
+            // Display the scoreboard
+            const scoreboardElement = document.getElementById('scoreList');
+            if (scoreboardElement) {
+                scoreboardElement.innerHTML = ''; // Clear previous scores
+                topScores.forEach((score, index) => {
+                    const li = document.createElement('li');
+                    li.innerText = `Player ${index + 1}: ${score}s`;
+                    scoreboardElement.appendChild(li);
+                });
+            } else {
+                console.error("Element with ID 'scoreList' not found.");
+            }
+        }
+
+        // Call endGame when time reaches 500 seconds or no asteroids left
+        function checkGameEnd() {
+            if (gameActive && (elapsedTime >= 500 || asteroids.length === 0)) {
+                endGame();
+            }
+        }
+
+        // Restart game functionality
+        document.getElementById('restartButton').addEventListener('click', () => {
+            // Hide the end screen
+            const endScreen = document.getElementById('endScreen');
+            endScreen.style.opacity = '0'; // Fade out the end screen
+
+            setTimeout(() => {
+                endScreen.style.display = 'none'; // Set display to none after fade out
+                initializeGame(); // Call a function to set up the game
+                document.getElementById('crosshair').style.display = 'block'; // Show crosshair
+            }, 500); // Match the duration of the CSS transition
+        });
+
+        // Initialize lights outside the initializeGame function
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5); // Increase intensity
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(5, 10, 7); // Position the light to cast shadows
+        directionalLight.castShadow = true; // Enable shadow casting
+        const pointLight = new THREE.PointLight(0xffffff, 0.5, 1000);
+        pointLight.position.set(0, 0, 0); // Position at the center of the game space
+        const cockpitLight = new THREE.DirectionalLight(0xffffff, 1); // Bright light for the cockpit
+        cockpitLight.position.set(0, -1, -2); // Position under the cockpit
+        cockpitLight.target.position.set(0, -1, -5); // Point the light forward
+        ship.add(cockpitLight); // Add the light to the ship
+        ship.add(cockpitLight.target); // Add the target to the ship
+
+        function initializeGame() {
+            // Reset game state variables
+            gameStarted = true;
+            gameActive = true;
+            elapsedTime = 0;
+            startTime = Date.now();
+            scores = [];
+            asteroids = [];
+            explosions = [];
+            bullets = [];
+
+            // Reset ship
+            ship.position.set(0, 0, -10);
+            ship.velocity.set(0, 0, 0);
+            ship.rotation.set(0, 0, 0);
+            pitchObject.rotation.set(0, 0, 0);
+
+            // Clear existing objects from the scene
+            while(scene.children.length > 0){ 
+                scene.remove(scene.children[0]); 
+            }
+
+            // Re-add essential scene elements
+            scene.add(ship);
+            scene.add(boundarySphere);
+            scene.add(wireframeSphere);
+
+            // Add floor
+            const textureLoader = new THREE.TextureLoader();
+            const floorTexture = textureLoader.load('assets/planet_surface.jpeg', (texture) => {
+                // Set texture properties for realism
+                texture.wrapS = THREE.ClampToEdgeWrapping; // Prevent horizontal repetition
+                texture.wrapT = THREE.ClampToEdgeWrapping; // Prevent vertical repetition
+            });
+
+            // Create the floor with the loaded texture
+            const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture, side: THREE.DoubleSide }); // Use the loaded texture
+
+            const floorGeometry = new THREE.PlaneGeometry(5000, 5000); // Increase size as needed
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2; // Rotate to make it horizontal
+
+            const sphereRadius = spaceSize / 2; // Calculate the radius of the boundary sphere
+            floor.position.y = -sphereRadius - 0.1; // Position the floor below the sphere
+            floor.receiveShadow = true; // Enable receiving shadows
+
+            scene.add(floor); // Add the floor to the scene
+
+            // Ensure lights are added to the scene
+            scene.add(ambientLight);
+            scene.add(directionalLight);
+            scene.add(pointLight);
+
+            // Create initial asteroids
+            for (let i = 0; i < asteroidCount; i++) {
+                const asteroid = createAsteroid();
+                scene.add(asteroid);
+                asteroids.push(asteroid);
+            }
+
+            // Reset UI elements
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('crosshair').style.display = 'show';
+            document.getElementById('gameInfo').style.display = 'show';
+
+            // Update game info
+            updateGameInfo();
+
+            // Handle music transition
+            if (isMusicEnabled) {
+                startEndMusic.pause(); // Pause the start/end music
+                gameplayMusic.currentTime = 0; // Reset gameplay music to the beginning
+                gameplayMusic.play(); // Start playing gameplay music
+            }
+
+            // Restart the game loop
+            if (!animationFrameId) {
+                animate();
+            }
+        }
+
+        let animationFrameId = null;
+
+        function animate() {
+            if (!gameStarted) return; // Only run the game loop if the game has started
+
+            if (gameActive) {
+                updateShipPosition();
+                checkCollisions();
+                updateGameInfo(); // Update game info each frame
+                checkGameEnd(); // Check for end game conditions
+            }
+
+            // Update explosion particles
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                const explosion = explosions[i];
+                const positions = explosion.particles.geometry.attributes.position.array;
+                const velocities = explosion.particles.geometry.attributes.velocity.array;
+
+                for (let j = 0; j < positions.length; j += 3) {
+                    positions[j] += velocities[j];
+                    positions[j + 1] += velocities[j + 1];
+                    positions[j + 2] += velocities[j + 2];
+                }
+
+                explosion.particles.geometry.attributes.position.needsUpdate = true;
+
+                // Fade out the particles
+                explosion.particles.material.opacity -= 0.02;
+
+                if (explosion.particles.material.opacity <= 0) {
+                    scene.remove(explosion.particles);
+                    explosions.splice(i, 1);
+                }
+            }
+
+            updateRadar();
+            handleShooting(); // Check for shooting in each frame
+
+            // Update asteroids movement and rotation
+            asteroids.forEach(asteroid => {
+                const movement = asteroid.direction.clone().multiplyScalar(asteroid.speed);
+                asteroid.position.add(movement);
+                bounceOffBoundary(asteroid.position, asteroid.direction);
+                asteroid.rotation.x += 0.01;
+                asteroid.rotation.y += 0.01;
+            });
+
+            renderer.render(scene, camera);
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function checkForInvisibleAsteroids() {
+            let invisibleCount = 0;
+            asteroids.forEach((asteroid, index) => {
+                if (!asteroid.visible) {
+                    asteroid.visible = true;
+                    invisibleCount++;
+                }
+            });
+            if (invisibleCount > 0) {
+                console.warn(`${invisibleCount} invisible asteroids were found and made visible.`);
+            }
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+
+        // Create the floor
+        const floorTexture = textureLoader.load('assets/planet_surface.jpeg', (texture) => {
+            // Set texture properties for realism
+            texture.wrapS = THREE.ClampToEdgeWrapping; // Prevent horizontal repetition
+            texture.wrapT = THREE.ClampToEdgeWrapping; // Prevent vertical repetition
+        });
+
+        const floorGeometry = new THREE.PlaneGeometry(5000, 5000); // Increase size as needed
+        const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture, side: THREE.DoubleSide }); // Use the loaded texture
+
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2; // Rotate to make it horizontal
+
+        const sphereRadius = spaceSize / 2; // Calculate the radius of the boundary sphere
+        floor.position.y = -sphereRadius - 0.1; // Position the floor below the sphere
+        floor.receiveShadow = true; // Enable receiving shadows
+
+        scene.add(floor); // Add the floor to the scene
+
+        // Enable fog in the scene
+        scene.fog = new THREE.FogExp2(0xcccccc, 0.002); // Color and density of the fog
+
+        // Function to normalize angles
+        function normalizeAngle(angle) {
+            while (angle > Math.PI) angle -= 2 * Math.PI;
+            while (angle < -Math.PI) angle += 2 * Math.PI;
+            return angle;
+        }
+
+        const forwardSpeed = 0.1; // Adjust this value for desired speed
+
+        animate();
+    </script>
+</body>
+</html>
