@@ -166,6 +166,7 @@ button {
 .hero__inner,
 .support__inner,
 .projects,
+.prototypes,
 .next,
 .callout,
 .site-footer__inner {
@@ -265,6 +266,18 @@ button {
   border-color: rgba(246, 241, 234, 0.22);
   background: rgba(246, 241, 234, 0.06);
   color: var(--light);
+}
+
+.button--dark {
+  background: var(--bg-strong);
+  color: var(--light);
+  box-shadow: 0 18px 34px rgba(13, 22, 34, 0.16);
+}
+
+.button--surface {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  color: var(--ink);
 }
 
 .hero__facts {
@@ -413,6 +426,7 @@ button {
 
 .support,
 .projects,
+.prototypes,
 .next {
   padding: 0 1.5rem;
 }
@@ -476,10 +490,132 @@ button {
   padding-top: 5.5rem;
 }
 
+.section-head--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+}
+
 .section-head h2 {
   max-width: 14ch;
   margin-top: 0.8rem;
   font-size: clamp(2.2rem, 4.6vw, 4rem);
+}
+
+.prototypes {
+  padding-top: 0.8rem;
+}
+
+.prototypes__intro {
+  max-width: 30rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.04rem;
+  line-height: 1.72;
+}
+
+.prototype-grid {
+  margin-top: 2.1rem;
+}
+
+.prototype-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 33, 0.08);
+  border-radius: calc(var(--radius) + 6px);
+  background:
+    radial-gradient(circle at right top, rgba(23, 183, 163, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.4)),
+    #efe9e1;
+  box-shadow: var(--shadow);
+}
+
+.prototype-card__visual {
+  position: relative;
+  min-height: 24rem;
+  background: #0f1a29;
+}
+
+.prototype-card__visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.prototype-card__badge {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(246, 241, 234, 0.18);
+  border-radius: 999px;
+  background: rgba(13, 22, 34, 0.74);
+  color: rgba(246, 241, 234, 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+}
+
+.prototype-card__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(1.5rem, 3vw, 2.35rem);
+}
+
+.prototype-card__eyebrow,
+.prototype-card__path {
+  margin: 0;
+}
+
+.prototype-card__eyebrow {
+  color: rgba(17, 24, 33, 0.5);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.prototype-card__path {
+  margin-top: 0.65rem;
+  color: rgba(17, 24, 33, 0.72);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.prototype-card__body h3 {
+  margin: 0.9rem 0 0;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+}
+
+.prototype-card__summary,
+.prototype-card__note {
+  max-width: 28rem;
+  line-height: 1.7;
+}
+
+.prototype-card__summary {
+  margin: 1.05rem 0 0;
+  color: var(--ink);
+  font-size: 1.08rem;
+}
+
+.prototype-card__note {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+}
+
+.prototype-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1.6rem;
 }
 
 .project {
@@ -881,6 +1017,8 @@ button {
 @media (max-width: 1080px) {
   .hero__inner,
   .support__grid,
+  .section-head--split,
+  .prototype-card,
   .method__intro,
   .next__row,
   .project {
@@ -928,6 +1066,10 @@ button {
   .method__steps {
     grid-template-columns: 1fr;
   }
+
+  .prototype-card__visual {
+    min-height: 20rem;
+  }
 }
 
 @media (max-width: 760px) {
@@ -955,6 +1097,7 @@ button {
 
   .support,
   .projects,
+  .prototypes,
   .method,
   .next,
   .callout,
@@ -1030,6 +1173,22 @@ button {
 
   .project__visual {
     min-height: 22rem;
+  }
+
+  .prototype-card__visual {
+    min-height: 16rem;
+  }
+
+  .prototype-card__body {
+    padding: 1.2rem;
+  }
+
+  .prototype-card__body h3 {
+    font-size: 2rem;
+  }
+
+  .prototype-card__actions .button {
+    flex: 1 1 12rem;
   }
 
   .support__tags,

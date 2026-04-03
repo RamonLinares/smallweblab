@@ -43,6 +43,7 @@
         <a class="brand" href="#top">Small Web Lab</a>
         <nav class="site-nav" aria-label="Primary">
           <a href="#projects">Projects</a>
+          <a href="#lab">Lab</a>
           <a href="#method">Method</a>
           <a href="#next">Next</a>
         </nav>
@@ -64,12 +65,12 @@
             </p>
             <div class="hero__actions">
               <a class="button button--solid" href="#projects">View projects</a>
-              <a class="button button--ghost" href="#next">See what&apos;s next</a>
+              <a class="button button--ghost" href="#lab">Explore lab</a>
             </div>
             <ul class="hero__facts" aria-label="Small Web Lab snapshot">
-              <li>3 live products</li>
-              <li>Media, gaming, and AI</li>
-              <li>Built for the open web</li>
+              <li>3 standalone domains</li>
+              <li>1 synced lab prototype</li>
+              <li>Media, games, and AI</li>
             </ul>
           </div>
 
@@ -267,6 +268,64 @@
         </article>
       </section>
 
+      <section class="prototypes reveal" id="lab">
+        <div class="section-head section-head--split">
+          <div>
+            <p class="section-kicker">Prototype lab</p>
+            <h2>Small routes for ideas that are ready to exist, not yet ready for a domain.</h2>
+          </div>
+          <p class="prototypes__intro">
+            Mini-sites live inside Small Web Lab under a stable `/lab/...`
+            path. They keep their own repos, ship fast, and can graduate later
+            if they earn a bigger home.
+          </p>
+        </div>
+
+        <div class="prototype-grid">
+          <article class="prototype-card tilt-surface">
+            <a class="prototype-card__visual" href="./lab/ping-pong-3d/" aria-label="Open Ping Pong 3D">
+              <img
+                src="./lab/ping-pong-3d/img/arena.webp"
+                alt="Ping Pong 3D prototype arena preview"
+                loading="lazy"
+              />
+              <div class="prototype-card__badge">Playable in browser</div>
+            </a>
+
+            <div class="prototype-card__body">
+              <p class="prototype-card__eyebrow">Browser game / Lab route</p>
+              <p class="prototype-card__path">smallweblab.com/lab/ping-pong-3d/</p>
+              <h3>Ping Pong 3D</h3>
+              <p class="prototype-card__summary">
+                A compact 3D table-tennis game that stays discoverable here
+                while it remains a small standalone experiment.
+              </p>
+              <p class="prototype-card__note">
+                It ships from its own repository, syncs into the lab
+                automatically, and gives future mini-sites a clear pattern to
+                follow.
+              </p>
+              <ul class="project__tags" aria-label="Ping Pong 3D tags">
+                <li>3D gameplay</li>
+                <li>Mini-site</li>
+                <li>Auto-synced</li>
+              </ul>
+              <div class="prototype-card__actions">
+                <a class="button button--dark" href="./lab/ping-pong-3d/">Open mini-site</a>
+                <a
+                  class="button button--surface"
+                  href="https://github.com/RamonLinares/ping-pong-3d"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View source
+                </a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="method reveal" id="method">
         <div class="method__inner">
           <p class="section-kicker section-kicker--light">How the lab works</p>
@@ -335,6 +394,7 @@
             <a href="https://lensdigest.com/" target="_blank" rel="noreferrer">LensDigest</a>
             <a href="https://breakshot3d.com/" target="_blank" rel="noreferrer">Breakshot 3D</a>
             <a href="https://arcanamuse.com/" target="_blank" rel="noreferrer">Arcana Muse</a>
+            <a href="./lab/ping-pong-3d/">Ping Pong 3D</a>
           </div>
         </div>
       </section>
