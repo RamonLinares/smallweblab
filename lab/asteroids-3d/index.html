@@ -92,7 +92,7 @@
     <div id="startScreen" class="start-screen">
         <img src="assets/game_title.jpeg" alt="Game Title" class="logo" />
         <p class="instructions">Press any key or click to start</p>
-        <button id="musicToggleButton" style="margin-top: 20px;">Enable Music</button>
+        <button id="musicToggleButton" style="margin-top: 20px;" hidden>Enable Music</button>
     </div>
     <div id="endScreen" class="end-screen">
         <h1>Game Over</h1>
@@ -102,7 +102,7 @@
             <ul id="scoreList"></ul>
         </div>
         <button id="restartButton">Restart Game</button>
-        <button id="musicToggleButtonEnd" style="margin-top: 20px;">Enable Music</button>
+        <button id="musicToggleButtonEnd" style="margin-top: 20px;" hidden>Enable Music</button>
     </div>
     <div id="crosshair" style="position: fixed; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;"></div>
     
@@ -116,30 +116,150 @@
         // Declare audio variables at the top of your script
         let startEndMusic, gameplayMusic;
         let isMusicEnabled = false; // Default is disabled
+        let isMusicAvailable = false;
+        // Restore these paths if the MP3 assets are added back to the repo.
+        const musicTracks = {
+            startEnd: null,
+            gameplay: null
+        };
+        const musicToggleButtons = [
+            document.getElementById('musicToggleButton'),
+            document.getElementById('musicToggleButtonEnd')
+        ];
+
+        function setMusicButtonsVisible(isVisible) {
+            musicToggleButtons.forEach((button) => {
+                button.hidden = !isVisible;
+                button.disabled = !isVisible;
+            });
+        }
+
+        function updateMusicButtonLabel(label) {
+            musicToggleButtons.forEach((button) => {
+                button.innerText = label;
+            });
+        }
+
+        function playAudio(audio) {
+            if (!audio) return;
+            const playPromise = audio.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {});
+            }
+        }
+
+        function stopAudio(audio) {
+            if (!audio) return;
+            audio.pause();
+        }
+
+        async function audioAssetExists(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                const contentType = response.headers.get('content-type') || '';
+                return response.ok && !contentType.includes('text/html');
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function preloadAudio(audio) {
+            return new Promise((resolve) => {
+                let settled = false;
+                const timeoutId = window.setTimeout(() => finish(false), 4000);
+
+                function finish(isReady) {
+                    if (settled) return;
+                    settled = true;
+                    window.clearTimeout(timeoutId);
+                    audio.removeEventListener('canplaythrough', onReady);
+                    audio.removeEventListener('error', onError);
+                    resolve(isReady);
+                }
+
+                function onReady() {
+                    finish(true);
+                }
+
+                function onError() {
+                    finish(false);
+                }
+
+                audio.preload = 'auto';
+                audio.addEventListener('canplaythrough', onReady);
+                audio.addEventListener('error', onError);
+                audio.load();
+            });
+        }
 
         // Load audio files
-        function loadAudio() {
-            startEndMusic = new Audio('assets/aster3d_start_end.mp3');
-            gameplayMusic = new Audio('assets/aster3d.mp3');
+        async function loadAudio() {
+            setMusicButtonsVisible(false);
+            const startEndUrl = musicTracks.startEnd;
+            const gameplayUrl = musicTracks.gameplay;
+
+            if (!startEndUrl || !gameplayUrl) {
+                isMusicAvailable = false;
+                isMusicEnabled = false;
+                startEndMusic = null;
+                gameplayMusic = null;
+                return;
+            }
+
+            const [hasStartEndAsset, hasGameplayAsset] = await Promise.all([
+                audioAssetExists(startEndUrl),
+                audioAssetExists(gameplayUrl)
+            ]);
+
+            if (!hasStartEndAsset || !hasGameplayAsset) {
+                isMusicAvailable = false;
+                isMusicEnabled = false;
+                startEndMusic = null;
+                gameplayMusic = null;
+                return;
+            }
+
+            const startEndCandidate = new Audio(startEndUrl);
+            const gameplayCandidate = new Audio(gameplayUrl);
+            const [startEndReady, gameplayReady] = await Promise.all([
+                preloadAudio(startEndCandidate),
+                preloadAudio(gameplayCandidate)
+            ]);
+
+            if (!startEndReady || !gameplayReady) {
+                isMusicAvailable = false;
+                isMusicEnabled = false;
+                startEndMusic = null;
+                gameplayMusic = null;
+                return;
+            }
+
+            startEndMusic = startEndCandidate;
+            gameplayMusic = gameplayCandidate;
+            isMusicAvailable = true;
+            updateMusicButtonLabel('Enable Music');
+            setMusicButtonsVisible(true);
         }
 
         // Call loadAudio at the beginning of your script
-        loadAudio();
+        void loadAudio();
 
         // Function to toggle music
         function toggleMusic(event) {
             event.stopPropagation(); // Prevent the click from propagating to the document
+            if (!isMusicAvailable || !startEndMusic || !gameplayMusic) {
+                return;
+            }
+
             isMusicEnabled = !isMusicEnabled; // Toggle the state
             if (isMusicEnabled) {
                 startEndMusic.loop = true; // Loop for start/end music
-                startEndMusic.play();
-                document.getElementById('musicToggleButton').innerText = 'Disable Music';
-                document.getElementById('musicToggleButtonEnd').innerText = 'Disable Music';
+                playAudio(startEndMusic);
+                updateMusicButtonLabel('Disable Music');
             } else {
-                startEndMusic.pause();
-                gameplayMusic.pause();
-                document.getElementById('musicToggleButton').innerText = 'Enable Music';
-                document.getElementById('musicToggleButtonEnd').innerText = 'Enable Music';
+                stopAudio(startEndMusic);
+                stopAudio(gameplayMusic);
+                updateMusicButtonLabel('Enable Music');
             }
         }
 
@@ -508,10 +628,10 @@
             if (gameStarted) return; // Prevent starting the game multiple times
             gameStarted = true;
             startTime = Date.now(); // Initialize startTime when the game starts
-            startEndMusic.pause(); // Pause start screen music
-            if (isMusicEnabled) {
+            stopAudio(startEndMusic); // Pause start screen music
+            if (isMusicEnabled && gameplayMusic) {
                 gameplayMusic.currentTime = 0; // Reset gameplay music to the beginning
-                gameplayMusic.play(); // Play gameplay music if enabled
+                playAudio(gameplayMusic); // Play gameplay music if enabled
             }
 
             const startScreen = document.getElementById('startScreen');
@@ -699,10 +819,10 @@
 
         function endGame() {
             gameActive = false; // Stop the timer
-            gameplayMusic.pause(); // Pause gameplay music
-            if (isMusicEnabled) { // Check if music is enabled
+            stopAudio(gameplayMusic); // Pause gameplay music
+            if (isMusicEnabled && startEndMusic) { // Check if music is enabled
                 startEndMusic.currentTime = 0; // Reset start/end music to the beginning
-                startEndMusic.play(); // Play end screen music
+                playAudio(startEndMusic); // Play end screen music
             }
             const endScreen = document.getElementById('endScreen');
             endScreen.style.display = 'flex'; // Show the end screen
@@ -843,10 +963,10 @@
             updateGameInfo();
 
             // Handle music transition
-            if (isMusicEnabled) {
-                startEndMusic.pause(); // Pause the start/end music
+            if (isMusicEnabled && startEndMusic && gameplayMusic) {
+                stopAudio(startEndMusic); // Pause the start/end music
                 gameplayMusic.currentTime = 0; // Reset gameplay music to the beginning
-                gameplayMusic.play(); // Start playing gameplay music
+                playAudio(gameplayMusic); // Start playing gameplay music
             }
 
             // Restart the game loop
