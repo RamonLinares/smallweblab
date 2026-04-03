@@ -1394,6 +1394,7 @@ button {
 
   .prototype-card__visual--lens {
     padding: 1rem;
+    min-height: auto;
   }
 
   .lens-sheet__masthead {
@@ -1419,6 +1420,10 @@ button {
 
   .lens-sheet__art-frame--compact {
     min-height: 4rem;
+  }
+
+  .lens-sheet__stories {
+    display: none;
   }
 
   .project__content h3 {
