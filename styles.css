@@ -693,20 +693,61 @@ button {
 
 .project__link {
   display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0 1.35rem;
   margin-top: 1.6rem;
+  border: 1px solid rgba(17, 24, 33, 0.12);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.62)),
+    rgba(255, 255, 255, 0.6);
   color: var(--ink);
   font-weight: 800;
+  box-shadow: 0 14px 28px rgba(13, 22, 34, 0.08);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.project__link::after {
+  content: "->";
+  color: var(--accent);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
 }
 
 .project__visual-wrap {
   display: flex;
   justify-content: flex-end;
+  color: inherit;
+}
+
+.project__visual-wrap:hover .project__visual,
+.project__visual-wrap:focus-visible .project__visual {
+  transform: translateY(-4px);
+  box-shadow: 0 26px 54px rgba(13, 22, 34, 0.16);
+}
+
+.project__visual-wrap:focus-visible {
+  outline: none;
 }
 
 .project__visual {
   width: min(100%, 40rem);
   min-height: 31rem;
   background: #d8dedf;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.project__visual-wrap:focus-visible .project__visual {
+  border-color: rgba(23, 183, 163, 0.58);
 }
 
 .project__visual--lens {
