@@ -42,5 +42,27 @@
       "ref": "master",
       "source": "."
     }
+  },
+  {
+    "slug": "rally-rush",
+    "title": "Rally Rush",
+    "path": "/lab/rally-rush/",
+    "eyebrow": "Arcade racer / Lab route",
+    "badge": "Playable in browser",
+    "previewImage": "/lab/rally-rush/assets/start_banner.webp",
+    "previewAlt": "Rally Rush start banner preview",
+    "summary": "A lightweight browser rally game with quick circuit selection, arcade controls, and a straightforward race loop that fits the lab's playable prototype shelf.",
+    "note": "It stays in its own repository, syncs into the lab like the other prototypes, and broadens the catalog from shooters and table tennis into racing experiments.",
+    "tags": [
+      "Arcade racing",
+      "Three.js",
+      "Auto-synced"
+    ],
+    "repoUrl": "https://github.com/RamonLinares/RallyRush",
+    "sync": {
+      "repo": "https://github.com/RamonLinares/RallyRush.git",
+      "ref": "main",
+      "source": "."
+    }
   }
 ]

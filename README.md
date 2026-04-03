@@ -25,9 +25,11 @@ Prototype sites can live in their own repositories and still be published under
 - The workflow also accepts a `repository_dispatch` event named `prototype-updated`
   if you later want upstream repos to trigger immediate syncs on push.
 
-Current first prototype:
+Current prototype routes:
 
 - `ping-pong-3d` -> `/lab/ping-pong-3d/`
+- `asteroids-3d` -> `/lab/asteroids-3d/`
+- `rally-rush` -> `/lab/rally-rush/`
 
 ## Adding A New Lab Prototype
 
