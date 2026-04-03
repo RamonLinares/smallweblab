@@ -565,11 +565,14 @@ button {
 .prototype-card__visual {
   position: relative;
   display: block;
+  overflow: hidden;
   min-height: 24rem;
   background: #0f1a29;
 }
 
 .prototype-card__visual img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -577,6 +580,10 @@ button {
 
 .prototype-card__visual--lens {
   background: #edf4f4;
+}
+
+.prototype-card__visual--lens img {
+  object-position: center center;
 }
 
 .prototype-card__badge {
