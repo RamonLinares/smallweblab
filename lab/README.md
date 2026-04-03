@@ -19,3 +19,9 @@ Future Codex threads should read:
 - `lab/README.md`
 - `scripts/sync_prototypes.py`
 - `.github/workflows/sync-prototypes.yml`
+
+Branch policy for this repo:
+
+- `smallweblab` deploys from `main`.
+- If the user asks to add a lab repo and `push it`, that means the change belongs on `main`.
+- Do not stop at a draft PR or side branch unless the user explicitly asks for PR review flow.

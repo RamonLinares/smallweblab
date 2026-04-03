@@ -41,6 +41,15 @@ Current prototype routes:
 If a future Codex thread needs context, point it to `lab/catalog.json`, `lab/README.md`,
 and `scripts/sync_prototypes.py` first.
 
+## Branch Policy
+
+This repo is the live deploy source for `smallweblab.com`.
+
+- If the user says `push it`, `ship it`, `make it live`, or similar, default to updating `main`.
+- Do not leave lab additions only on a side branch or draft PR unless the user explicitly asks for PR workflow.
+- Use a PR branch only when the user asks to review changes before merge.
+- If a side branch already contains the desired change, merge it into `main` before calling the task done.
+
 ## Cloudflare Pages Setup
 
 For the current static version:
