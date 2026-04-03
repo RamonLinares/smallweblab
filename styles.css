@@ -546,6 +546,22 @@ button {
   box-shadow: var(--shadow);
 }
 
+.prototype-card--project {
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  background:
+    radial-gradient(circle at left top, rgba(23, 183, 163, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.4)),
+    #efe9e1;
+}
+
+.prototype-card--project .prototype-card__body {
+  order: 1;
+}
+
+.prototype-card--project .prototype-card__visual {
+  order: 2;
+}
+
 .prototype-card__visual {
   position: relative;
   display: block;
