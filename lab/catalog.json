@@ -64,5 +64,27 @@
       "ref": "main",
       "source": "."
     }
+  },
+  {
+    "slug": "meeting-notes",
+    "title": "Meeting Notes",
+    "path": "/lab/meeting-notes/",
+    "eyebrow": "Productivity app / Lab route",
+    "badge": "Local-first notes app",
+    "previewImage": "/assets/meeting-notes-preview.png",
+    "previewAlt": "Meeting Notes app preview showing saved notes and filters",
+    "summary": "A lightweight browser note workspace for capturing meeting details, action items, deadlines, tags, and quick follow-up search from one screen.",
+    "note": "It stays in its own repository, syncs into the lab from `main`, and expands the catalog beyond games into practical browser tooling.",
+    "tags": [
+      "Notes",
+      "Local-first",
+      "Auto-synced"
+    ],
+    "repoUrl": "https://github.com/RamonLinares/Meeting-notes",
+    "sync": {
+      "repo": "https://github.com/RamonLinares/Meeting-notes.git",
+      "ref": "main",
+      "source": "."
+    }
   }
 ]

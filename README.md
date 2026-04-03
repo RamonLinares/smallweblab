@@ -30,6 +30,7 @@ Current prototype routes:
 - `ping-pong-3d` -> `/lab/ping-pong-3d/`
 - `asteroids-3d` -> `/lab/asteroids-3d/`
 - `rally-rush` -> `/lab/rally-rush/`
+- `meeting-notes` -> `/lab/meeting-notes/`
 
 ## Adding A New Lab Prototype
 

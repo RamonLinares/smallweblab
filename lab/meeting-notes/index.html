@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Notes</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.css">
+</head>
+<body>
+    <header class="main-header">
+        <h1>Meeting Notes</h1>
+        <div class="message-container">
+            <div id="status" class="status-message"></div>
+            <div id="error" class="error-message"></div>
+        </div>
+        <div class="search-container">
+            <div class="search-input-container">
+                <input type="text" id="searchInput" placeholder="Search notes...">
+            </div>
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label for="dateFilter">Date:</label>
+                    <select id="dateFilter">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last-week">Last Week</option>
+                        <option value="last-month">Last Month</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Status:</label>
+                    <select id="statusFilter">
+                        <option value="all">All</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <button id="clearFiltersBtn" class="clear-filters-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M19,15.59L17.59,17L14,13.41L10.41,17L9,15.59L12.59,12L9,8.41L10.41,7L14,10.59L17.59,7L19,8.41L15.41,12L19,15.59M22,3A2,2 0 0,1 24,5V19A2,2 0 0,1 22,21H7C6.31,21 5.77,20.64 5.41,20.11L0,12L5.41,3.88C5.77,3.35 6.31,3 7,3H22M22,5H7L2.28,12L7,19H22V5Z"/>
+                    </svg>
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="menuToggleBtn" class="menu-toggle-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div id="headerMenu" class="header-menu">
+                <button id="darkModeToggle" class="menu-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    Dark Mode
+                </button>
+                <button id="keyboardShortcutsBtn" class="menu-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
+                    </svg>
+                    Keyboard Shortcuts
+                </button>
+                <button id="exportXmlBtn" class="menu-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export to XML
+                </button>
+                <button id="importXmlBtn" class="menu-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Import from XML
+                </button>
+                <button id="clearAllNotesBtn" class="menu-item danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                    Clear All Notes
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="tagFilterContainer" class="tag-filter-container"></div>
+        <div id="notesGrid" class="notes-grid"></div>
+    </div>
+
+    <button id="addNoteFab" class="add-note-fab">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
+
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modalTitle">New Note</h2>
+            <form id="noteForm" class="modal-form-scrollable">
+                <input type="hidden" id="noteId">
+                <div>
+                    <label for="noteTitle">Title:</label>
+                    <input type="text" id="noteTitle" required>
+                </div>
+                <div>
+                    <label for="contentInputArea">Content:</label>
+                    <div id="trixEditorWrapper">
+                        <input id="noteContentHidden" type="hidden" name="content">
+                        <trix-editor id="contentInputArea" input="noteContentHidden"></trix-editor>
+                    </div>
+                </div>
+                <div>
+                    <label for="actionItemsArea">Action Items:</label>
+                    <textarea id="noteActionItems" rows="4"></textarea>
+                </div>
+                <div>
+                    <label for="deadlineGroup">Deadline:</label>
+                    <div id="deadlineGroup">
+                        <input type="date" id="noteDeadline">
+                    </div>
+                </div>
+                <div>
+                    <label>Tags:</label>
+                    <div id="noteTags" class="tags-container"></div>
+                    <div class="tag-input-container">
+                        <input type="text" id="tagInput" placeholder="Add a tag...">
+                        <button type="button" id="addTagButton">Add</button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="modalCancelBtn">Cancel</button>
+                    <button type="submit" id="modalSaveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Keyboard Shortcuts</h2>
+            <div class="shortcuts-list">
+                <div class="shortcut-item">
+                    <span class="shortcut-key">Ctrl/Cmd + N</span>
+                    <span class="shortcut-description">New note</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-key">Ctrl/Cmd + S</span>
+                    <span class="shortcut-description">Save note</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-key">Ctrl/Cmd + F</span>
+                    <span class="shortcut-description">Focus search</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-key">Ctrl/Cmd + E</span>
+                    <span class="shortcut-description">Toggle dark mode</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-key">/</span>
+                    <span class="shortcut-description">Focus search</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-key">Esc</span>
+                    <span class="shortcut-description">Close modal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="importXmlInput" accept=".xml" style="display: none;">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/noteRenderer.js"></script>
+    <script src="js/tagManager.js"></script>
+</body>
+</html>
