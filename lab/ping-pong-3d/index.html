@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping Pong 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        #startButton, #restartButton, #pauseButton {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #startButton:hover, #restartButton:hover, #pauseButton:hover {
+            background-color: #218838;
+        }
+        #scoreboard {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        #pauseButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreboard">Score: 0</div>
+    <div id="startScreen">
+        <h1>Ping Pong 3D</h1>
+        <p>Press Enter or click the button to start the game.</p>
+        <button id="startButton">Start</button>
+    </div>
+    <div id="gameOverScreen">
+        <h1>Game Over</h1>
+        <p>Your score: <span id="finalScore">0</span></p>
+        <p>Press Enter or click the button to restart.</p>
+        <button id="restartButton">Restart</button>
+    </div>
+    <button id="pauseButton">Pause</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.min.js"></script>
+    <script src="js/paddle_ball.js"></script>
+    <script src="js/powerups_obstacles.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
