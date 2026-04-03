@@ -331,11 +331,7 @@ button {
   top: 0.2rem;
   width: 46%;
   min-height: 21rem;
-  padding: 1.3rem;
-  background:
-    linear-gradient(180deg, rgba(23, 183, 163, 0.16), transparent 55%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01)),
-    #09121c;
+  background: #10202a;
 }
 
 .hero-panel--breakshot {
@@ -352,12 +348,17 @@ button {
   min-height: 14rem;
 }
 
+.hero-panel--lens img,
 .hero-panel--breakshot img,
 .hero-panel--arcana img,
 .project__visual--image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.hero-panel--lens img {
+  object-position: center 42%;
 }
 
 .hero-panel__overlay {
@@ -391,37 +392,6 @@ button {
   color: rgba(246, 241, 234, 0.84);
   font-size: 0.98rem;
   line-height: 1.45;
-}
-
-.lens-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  gap: 1.5rem;
-}
-
-.lens-panel__mark {
-  width: min(11rem, 90%);
-}
-
-.lens-panel__copy p {
-  max-width: 16rem;
-  margin: 0 0 1rem;
-  color: rgba(246, 241, 234, 0.84);
-  line-height: 1.55;
-}
-
-.lens-panel__copy ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  color: rgba(246, 241, 234, 0.6);
-  font-size: 0.92rem;
-}
-
-.lens-panel__copy li + li {
-  margin-top: 0.55rem;
 }
 
 .support,
