@@ -10,8 +10,10 @@ import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CONFIG_PATH = REPO_ROOT / ".github" / "prototype-sources.json"
 LAB_ROOT = REPO_ROOT / "lab"
+CATALOG_PATH = LAB_ROOT / "catalog.json"
+SITEMAP_PATH = REPO_ROOT / "sitemap.xml"
+SITE_ROOT_URL = "https://smallweblab.com"
 IGNORE_PATTERNS = shutil.ignore_patterns(
     ".git",
     ".github",
@@ -33,22 +35,46 @@ def remove_path(path: Path) -> None:
 
 def load_sources() -> list[dict[str, str]]:
     try:
-        raw = CONFIG_PATH.read_text(encoding="utf-8")
+        raw = CATALOG_PATH.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
-        raise SystemExit(f"Missing prototype source config: {CONFIG_PATH}") from exc
+        raise SystemExit(f"Missing prototype catalog: {CATALOG_PATH}") from exc
 
-    sources = json.loads(raw)
-    if not isinstance(sources, list):
-        raise SystemExit(f"Prototype source config must be a list: {CONFIG_PATH}")
+    catalog = json.loads(raw)
+    if not isinstance(catalog, list):
+        raise SystemExit(f"Prototype catalog must be a list: {CATALOG_PATH}")
 
-    return sources
+    return catalog
 
 
-def sync_source(entry: dict[str, str]) -> None:
-    slug = entry["slug"]
-    repo = entry["repo"]
-    ref = entry.get("ref", "main")
-    source = entry.get("source", ".")
+def build_sitemap(catalog: list[dict[str, object]]) -> str:
+    urls = [f"{SITE_ROOT_URL}/"]
+
+    for entry in catalog:
+        path = str(entry.get("path", "")).strip()
+        if not path.startswith("/"):
+            continue
+        urls.append(f"{SITE_ROOT_URL}{path}")
+
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for url in urls:
+        lines.append("  <url>")
+        lines.append(f"    <loc>{url}</loc>")
+        lines.append("  </url>")
+    lines.append("</urlset>")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def sync_source(entry: dict[str, object]) -> None:
+    slug = str(entry["slug"])
+    sync = entry.get("sync")
+    if not isinstance(sync, dict):
+        print(f"Skipping {slug}: no sync source configured")
+        return
+
+    repo = str(sync["repo"])
+    ref = str(sync.get("ref", "main"))
+    source = str(sync.get("source", "."))
 
     print(f"Syncing {slug} from {repo}@{ref}")
 
@@ -71,8 +97,12 @@ def sync_source(entry: dict[str, str]) -> None:
 def main() -> int:
     LAB_ROOT.mkdir(exist_ok=True)
 
-    for source in load_sources():
+    catalog = load_sources()
+
+    for source in catalog:
         sync_source(source)
+
+    SITEMAP_PATH.write_text(build_sitemap(catalog), encoding="utf-8")
 
     return 0
 

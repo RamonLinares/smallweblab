@@ -16,15 +16,28 @@ Static portfolio hub for `smallweblab.com`.
 Prototype sites can live in their own repositories and still be published under
 `smallweblab.com/lab/<slug>/`.
 
-- Source repos are listed in `.github/prototype-sources.json`.
-- `scripts/sync_prototypes.py` mirrors each configured source into `lab/<slug>/`.
+- `lab/catalog.json` is the source of truth for lab entries.
+- The homepage prototype cards, hero count, and prototype live links all render from `lab/catalog.json`.
+- `scripts/sync_prototypes.py` reads the same catalog and mirrors each configured repo into `lab/<slug>/`.
+- The same script also rewrites `sitemap.xml` so lab routes are indexed without a separate manual step.
 - `.github/workflows/sync-prototypes.yml` runs hourly and can also be triggered manually.
+- The sync workflow also runs on pushes that change `lab/catalog.json` or the sync script.
 - The workflow also accepts a `repository_dispatch` event named `prototype-updated`
   if you later want upstream repos to trigger immediate syncs on push.
 
 Current first prototype:
 
 - `ping-pong-3d` -> `/lab/ping-pong-3d/`
+
+## Adding A New Lab Prototype
+
+1. Add a new entry to `lab/catalog.json`.
+2. Commit and push that catalog change.
+3. Let the `Sync prototypes` GitHub Action mirror the source repo into `lab/<slug>/`.
+4. The homepage section and sitemap will update from the same catalog-driven flow.
+
+If a future Codex thread needs context, point it to `lab/catalog.json`, `lab/README.md`,
+and `scripts/sync_prototypes.py` first.
 
 ## Cloudflare Pages Setup
 

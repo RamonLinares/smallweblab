@@ -69,7 +69,7 @@
             </div>
             <ul class="hero__facts" aria-label="Small Web Lab snapshot">
               <li>3 standalone domains</li>
-              <li>1 synced lab prototype</li>
+              <li data-prototype-count-label>1 synced lab prototype</li>
               <li>Media, games, and AI</li>
             </ul>
           </div>
@@ -268,6 +268,7 @@
         </article>
       </section>
 
+      <!-- Prototype cards render from /lab/catalog.json. Add new lab entries there first. -->
       <section class="prototypes reveal" id="lab">
         <div class="section-head section-head--split">
           <div>
@@ -281,49 +282,12 @@
           </p>
         </div>
 
-        <div class="prototype-grid">
-          <article class="prototype-card tilt-surface">
-            <a class="prototype-card__visual" href="./lab/ping-pong-3d/" aria-label="Open Ping Pong 3D">
-              <img
-                src="./lab/ping-pong-3d/img/arena.webp"
-                alt="Ping Pong 3D prototype arena preview"
-                loading="lazy"
-              />
-              <div class="prototype-card__badge">Playable in browser</div>
-            </a>
-
-            <div class="prototype-card__body">
-              <p class="prototype-card__eyebrow">Browser game / Lab route</p>
-              <p class="prototype-card__path">smallweblab.com/lab/ping-pong-3d/</p>
-              <h3>Ping Pong 3D</h3>
-              <p class="prototype-card__summary">
-                A compact 3D table-tennis game that stays discoverable here
-                while it remains a small standalone experiment.
-              </p>
-              <p class="prototype-card__note">
-                It ships from its own repository, syncs into the lab
-                automatically, and gives future mini-sites a clear pattern to
-                follow.
-              </p>
-              <ul class="project__tags" aria-label="Ping Pong 3D tags">
-                <li>3D gameplay</li>
-                <li>Mini-site</li>
-                <li>Auto-synced</li>
-              </ul>
-              <div class="prototype-card__actions">
-                <a class="button button--dark" href="./lab/ping-pong-3d/">Open mini-site</a>
-                <a
-                  class="button button--surface"
-                  href="https://github.com/RamonLinares/ping-pong-3d"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View source
-                </a>
-              </div>
-            </div>
-          </article>
-        </div>
+        <div class="prototype-grid" data-prototype-grid></div>
+        <noscript>
+          <p class="prototypes__empty">
+            Prototype routes are listed from <code>/lab/catalog.json</code>.
+          </p>
+        </noscript>
       </section>
 
       <section class="method reveal" id="method">
@@ -390,11 +354,10 @@
         <div class="callout__inner">
           <p class="section-kicker section-kicker--light">Live links only</p>
           <h2>Every route out of this page goes somewhere real.</h2>
-          <div class="callout__links">
+          <div class="callout__links" data-live-links>
             <a href="https://lensdigest.com/" target="_blank" rel="noreferrer">LensDigest</a>
             <a href="https://breakshot3d.com/" target="_blank" rel="noreferrer">Breakshot 3D</a>
             <a href="https://arcanamuse.com/" target="_blank" rel="noreferrer">Arcana Muse</a>
-            <a href="./lab/ping-pong-3d/">Ping Pong 3D</a>
           </div>
         </div>
       </section>
@@ -444,6 +407,35 @@
         </div>
       </div>
     </section>
+
+    <template id="prototype-card-template">
+      <article class="prototype-card tilt-surface">
+        <a class="prototype-card__visual" data-prototype-visual-link>
+          <img data-prototype-image alt="" loading="lazy" />
+          <div class="prototype-card__badge" data-prototype-badge></div>
+        </a>
+
+        <div class="prototype-card__body">
+          <p class="prototype-card__eyebrow" data-prototype-eyebrow></p>
+          <p class="prototype-card__path" data-prototype-path></p>
+          <h3 data-prototype-title></h3>
+          <p class="prototype-card__summary" data-prototype-summary></p>
+          <p class="prototype-card__note" data-prototype-note></p>
+          <ul class="project__tags" data-prototype-tags></ul>
+          <div class="prototype-card__actions">
+            <a class="button button--dark" data-prototype-open-link>Open mini-site</a>
+            <a
+              class="button button--surface"
+              data-prototype-source-link
+              target="_blank"
+              rel="noreferrer"
+            >
+              View source
+            </a>
+          </div>
+        </div>
+      </article>
+    </template>
 
     <script src="./script.js"></script>
   </body>

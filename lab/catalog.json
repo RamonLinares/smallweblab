@@ -1,0 +1,24 @@
+[
+  {
+    "slug": "ping-pong-3d",
+    "title": "Ping Pong 3D",
+    "path": "/lab/ping-pong-3d/",
+    "eyebrow": "Browser game / Lab route",
+    "badge": "Playable in browser",
+    "previewImage": "/lab/ping-pong-3d/img/arena.webp",
+    "previewAlt": "Ping Pong 3D prototype arena preview",
+    "summary": "A compact 3D table-tennis game that stays discoverable here while it remains a small standalone experiment.",
+    "note": "It ships from its own repository, syncs into the lab automatically, and gives future mini-sites a clear pattern to follow.",
+    "tags": [
+      "3D gameplay",
+      "Mini-site",
+      "Auto-synced"
+    ],
+    "repoUrl": "https://github.com/RamonLinares/ping-pong-3d",
+    "sync": {
+      "repo": "https://github.com/RamonLinares/ping-pong-3d.git",
+      "ref": "main",
+      "source": "."
+    }
+  }
+]

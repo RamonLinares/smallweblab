@@ -1,6 +1,13 @@
 name: Sync prototypes
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "lab/catalog.json"
+      - "scripts/sync_prototypes.py"
+      - ".github/workflows/sync-prototypes.yml"
   workflow_dispatch:
   repository_dispatch:
     types:
@@ -28,13 +35,13 @@ jobs:
 
       - name: Commit synced changes
         run: |
-          if [[ -z "$(git status --porcelain lab)" ]]; then
+          if [[ -z "$(git status --porcelain lab sitemap.xml)" ]]; then
             echo "No prototype changes found."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A lab
+          git add -A lab sitemap.xml
           git commit -m "Sync prototype content"
           git push origin HEAD:main
