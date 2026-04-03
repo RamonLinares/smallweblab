@@ -521,6 +521,12 @@ button {
   margin-top: 2.1rem;
 }
 
+.projects__grid {
+  display: grid;
+  gap: 1.35rem;
+  margin-top: 2.1rem;
+}
+
 .prototypes__empty {
   margin: 2.1rem 0 0;
   color: var(--muted);
@@ -542,6 +548,7 @@ button {
 
 .prototype-card__visual {
   position: relative;
+  display: block;
   min-height: 24rem;
   background: #0f1a29;
 }
@@ -550,6 +557,14 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.prototype-card__visual--lens {
+  padding: 2rem;
+  background:
+    linear-gradient(180deg, rgba(23, 183, 163, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42)),
+    #e7f0f0;
 }
 
 .prototype-card__badge {
