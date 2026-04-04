@@ -3,6 +3,8 @@ const { Scene, PerspectiveCamera, WebGLRenderer, AmbientLight, PointLight, SpotL
 const BALL_INITIAL_VELOCITY = new Vector3(1, 6.0, 3.0); // Initial velocity towards the player with an angle
 const GRAVITY = new Vector3(0, -9.8, 0); // Realistic gravity
 const PADDLE_MOVE_SPEED = 0.1; // Reduced paddle move speed for better control
+const INPUT_FRAME_RATE = 60;
+const MAX_INPUT_DELTA = 1 / 20;
 const WALL_BOUNDARY = 2.5;
 const TABLE_BOUNDARY = 5;
 const TABLE_HEIGHT = 0.2;
@@ -26,6 +28,8 @@ const BALL_TOPSPIN_DIP_FACTOR = 1.05;
 const BALL_SPIN_DECAY_PER_FRAME = 0.985;
 const BALL_BOUNCE_SPIN_TRANSFER = 0.16;
 const PADDLE_VELOCITY_CLAMP = 18;
+const PADDLE_SURFACE_Y = 0.4;
+const VAULT_WALL_BOUNDARY = 3.9;
 
 // Paddle boundaries
 const PADDLE_BOUNDARY_Z_MIN = 2; // Player paddle cannot move closer than 2 units from the net
@@ -40,6 +44,7 @@ const SOUND_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-sfx-enabled';
 const DIFFICULTY_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-difficulty';
 const CAMERA_ZOOM_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-camera-zoom';
 const CAMERA_PERSPECTIVE_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-camera-perspective';
+const ARENA_SCENE_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-arena-scene';
 
 const DIFFICULTY_SETTINGS = {
     easy: {
@@ -96,6 +101,29 @@ const CAMERA_PERSPECTIVE_SETTINGS = {
     isometric: { label: 'Isometric' }
 };
 
+const ARENA_SCENE_SETTINGS = {
+    classic: {
+        label: 'Classic Arena',
+        caption: 'Original stadium wrap and standard tournament table.',
+        tag: 'Legacy'
+    },
+    vault: {
+        label: 'Glass Vault',
+        caption: 'An enclosed glass court with wider lanes and ceiling ricochets.',
+        tag: 'Ricochet'
+    },
+    titan: {
+        label: 'Titan Stage',
+        caption: 'A larger championship platform on a heavy raised plinth.',
+        tag: 'Grand'
+    },
+    flux: {
+        label: 'Flux Foundry',
+        caption: 'An asymmetrical experimental court with an irregular chassis.',
+        tag: 'Wild'
+    }
+};
+
 class PingPongGame {
     constructor() {
         this.clock = new Clock();
@@ -113,9 +141,13 @@ class PingPongGame {
         this.difficulty = this.loadDifficultyPreference();
         this.cameraZoom = this.loadCameraZoomPreference();
         this.cameraPerspective = this.loadCameraPerspectivePreference();
+        this.arenaScene = this.loadArenaScenePreference();
         this.isPointAnnouncementActive = false;
         this.computerAimOffset = new Vector2(0, 0);
         this.nextComputerAimRefresh = 0;
+        this.activeStartTab = 'play';
+        this.paddleSpeed = 1;
+        this.paddleSpeedTimeout = null;
 
         this.init();
         window.addEventListener('resize', () => this.onWindowResize());
@@ -135,8 +167,14 @@ class PingPongGame {
         document.querySelectorAll('[data-setting="cameraPerspective"]').forEach((button) => {
             button.addEventListener('click', () => this.setCameraPerspective(button.dataset.value));
         });
+        document.querySelectorAll('[data-setting="arenaScene"]').forEach((button) => {
+            button.addEventListener('click', () => this.setArenaScene(button.dataset.value));
+        });
         document.querySelectorAll('[data-setting="sound"]').forEach((button) => {
             button.addEventListener('click', () => this.setSoundEnabled(button.dataset.value === 'on'));
+        });
+        document.querySelectorAll('[data-start-tab]').forEach((button) => {
+            button.addEventListener('click', () => this.setStartTab(button.dataset.startTab));
         });
         
         this.animate();
@@ -237,6 +275,23 @@ class PingPongGame {
     saveCameraPerspectivePreference() {
         try {
             window.localStorage.setItem(CAMERA_PERSPECTIVE_PREFERENCE_STORAGE_KEY, this.cameraPerspective);
+        } catch (error) {
+            // Ignore storage failures and keep the in-memory preference.
+        }
+    }
+
+    loadArenaScenePreference() {
+        try {
+            const storedValue = window.localStorage.getItem(ARENA_SCENE_PREFERENCE_STORAGE_KEY);
+            return ARENA_SCENE_SETTINGS[storedValue] ? storedValue : 'classic';
+        } catch (error) {
+            return 'classic';
+        }
+    }
+
+    saveArenaScenePreference() {
+        try {
+            window.localStorage.setItem(ARENA_SCENE_PREFERENCE_STORAGE_KEY, this.arenaScene);
         } catch (error) {
             // Ignore storage failures and keep the in-memory preference.
         }
@@ -359,7 +414,8 @@ class PingPongGame {
         this.normalCameraLookAt = new Vector3(0, 0.5, 0);
         this.cameraLookTarget = new Vector3(0, 0.5, 0);
         this.refreshGameplayCamera(true);
-        this.renderer = new WebGLRenderer();
+        this.renderer = new WebGLRenderer({ antialias: true });
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true; // Enable shadow maps
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Use soft shadows
@@ -367,14 +423,13 @@ class PingPongGame {
         document.body.appendChild(this.renderer.domElement);
 
         this.initLighting();
-        this.initTable();
-        this.initNet();
-        this.initBoundaries();
-        this.initEnvironment();
+        this.arenaRoot = new THREE.Group();
+        this.scene.add(this.arenaRoot);
+        this.buildArenaScene();
 
         const playerPaddle = new Paddle(0xff0000);
         this.paddle = playerPaddle.group;
-        this.paddle.position.set(0, 0.4, PLAYER_PADDLE_START_Z);
+        this.paddle.position.set(0, PADDLE_SURFACE_Y, PLAYER_PADDLE_START_Z);
         this.paddle.castShadow = true; // Ensure the paddle casts shadow
         this.playerPaddleSolidMeshes = [];
         this.paddle.traverse((child) => {
@@ -388,7 +443,7 @@ class PingPongGame {
 
         const computerPaddle = new Paddle(0x0000ff);
         this.computerPaddle = computerPaddle.group;
-        this.computerPaddle.position.set(0, 0.4, COMPUTER_PADDLE_START_Z);
+        this.computerPaddle.position.set(0, PADDLE_SURFACE_Y, COMPUTER_PADDLE_START_Z);
         this.computerPaddle.castShadow = true; // Ensure the paddle casts shadow
         this.scene.add(this.computerPaddle);
 
@@ -401,7 +456,7 @@ class PingPongGame {
         this.computerScore = 0;
         this.pointer = new Vector2();
         this.raycaster = new THREE.Raycaster();
-        this.dragPlane = new THREE.Plane(new Vector3(0, 1, 0), -0.4);
+        this.dragPlane = new THREE.Plane(new Vector3(0, 1, 0), -PADDLE_SURFACE_Y);
         this.dragIntersection = new Vector3();
 
         this.initTrail();
@@ -434,20 +489,21 @@ class PingPongGame {
     }
 
     initLighting() {
-        this.scene.add(new AmbientLight(0x404040, 1.5)); // Stronger ambient light
+        this.ambientLight = new AmbientLight(0x404040, 1.5);
+        this.scene.add(this.ambientLight); // Stronger ambient light
 
-        const pointLight = new PointLight(0xffffff, 1, 100);
-        pointLight.position.set(10, 10, 10);
-        this.scene.add(pointLight);
+        this.pointLight = new PointLight(0xffffff, 1, 100);
+        this.pointLight.position.set(10, 10, 10);
+        this.scene.add(this.pointLight);
 
-        const spotLight = new SpotLight(0xffffff);
-        spotLight.position.set(5, 10, 7.5);
-        spotLight.castShadow = true;
-        spotLight.shadow.mapSize.width = 1024;
-        spotLight.shadow.mapSize.height = 1024;
-        spotLight.shadow.camera.near = 0.5;
-        spotLight.shadow.camera.far = 50;
-        this.scene.add(spotLight);
+        this.spotLight = new SpotLight(0xffffff);
+        this.spotLight.position.set(5, 10, 7.5);
+        this.spotLight.castShadow = true;
+        this.spotLight.shadow.mapSize.width = 1024;
+        this.spotLight.shadow.mapSize.height = 1024;
+        this.spotLight.shadow.camera.near = 0.5;
+        this.spotLight.shadow.camera.far = 50;
+        this.scene.add(this.spotLight);
     }
 
     initTrail() {
@@ -471,6 +527,8 @@ class PingPongGame {
 
     showStartScreen() {
         document.getElementById('startScreen').style.display = 'flex';
+        this.syncSettingsPanel();
+        this.setStartTab(this.activeStartTab);
         this.startAnimation();
     }
 
@@ -515,8 +573,8 @@ class PingPongGame {
     }
 
     resetPaddles() {
-        this.paddle.position.set(0, 0.4, PLAYER_PADDLE_START_Z);
-        this.computerPaddle.position.set(0, 0.4, COMPUTER_PADDLE_START_Z);
+        this.paddle.position.set(0, PADDLE_SURFACE_Y, PLAYER_PADDLE_START_Z);
+        this.computerPaddle.position.set(0, PADDLE_SURFACE_Y, COMPUTER_PADDLE_START_Z);
         this.playerPaddleVelocity.set(0, 0, 0);
         this.computerPaddleVelocity.set(0, 0, 0);
         this.previousPlayerPaddlePosition.copy(this.paddle.position);
@@ -588,13 +646,25 @@ class PingPongGame {
 
         switch (this.cameraPerspective) {
             case 'topDown':
+                if (this.arenaScene === 'vault') {
+                    this.normalCameraPosition.set(
+                        0,
+                        (isMobile ? 28.4 : 26.2) + zoomConfig.positionZ * 1.85 + zoomConfig.positionY * 0.9,
+                        0.01
+                    );
+                    this.normalCameraLookAt.set(0, TABLE_HEIGHT, 0);
+                    this.camera.fov = (isMobile ? 60 : 54) + zoomConfig.fov;
+                    this.camera.up.set(0, 0, -1);
+                    break;
+                }
+
                 this.normalCameraPosition.set(
                     0,
-                    (isMobile ? 17.9 : 16.9) + zoomConfig.positionZ * 1.05 + zoomConfig.positionY * 0.5,
+                    (isMobile ? 22.6 : 20.8) + zoomConfig.positionZ * 1.5 + zoomConfig.positionY * 0.7,
                     0.01
                 );
                 this.normalCameraLookAt.set(0, TABLE_HEIGHT, 0);
-                this.camera.fov = (isMobile ? 44 : 40) + zoomConfig.fov * 0.55;
+                this.camera.fov = (isMobile ? 52 : 47) + zoomConfig.fov * 0.85;
                 this.camera.up.set(0, 0, -1);
                 break;
             case 'pov': {
@@ -687,27 +757,110 @@ class PingPongGame {
             this.netShadow.material.opacity = this.cameraPerspective === 'topDown' ? 0.34 : 0.18;
             this.netShadow.material.needsUpdate = true;
         }
+
+        if (this.vaultCourtMirror) {
+            this.vaultCourtMirror.visible = !(this.arenaScene === 'vault' && this.cameraPerspective === 'topDown');
+        }
+
+        if (this.vaultTopDownElements) {
+            const hideForVaultTopDown = this.arenaScene === 'vault' && this.cameraPerspective === 'topDown';
+            this.vaultTopDownElements.forEach((element) => {
+                element.visible = !hideForVaultTopDown;
+            });
+        }
+
+        if (this.vaultTopDownFillLights) {
+            const isVaultTopDown = this.arenaScene === 'vault' && this.cameraPerspective === 'topDown';
+            this.vaultTopDownFillLights.forEach((light) => {
+                light.intensity = isVaultTopDown ? light.userData.topDownIntensity : 0;
+            });
+        }
+
+        const isVaultTopDown = this.arenaScene === 'vault' && this.cameraPerspective === 'topDown';
+        if (this.pointLight) {
+            this.pointLight.intensity = isVaultTopDown ? 0.12 : 1;
+        }
+        if (this.spotLight) {
+            this.spotLight.intensity = isVaultTopDown ? 0 : 1;
+        }
     }
 
     createPlayerPaddleGuide(sourceGroup) {
         const guide = new THREE.Group();
+        const neonEdgeColor = 0x8ff4ff;
+        const neonGlowColor = 0x35d9ff;
+        const silhouetteColor = 0x071a24;
+
         sourceGroup.traverse((child) => {
             if (!child.isMesh) {
                 return;
             }
 
             const edgeGeometry = new THREE.EdgesGeometry(child.geometry, 26);
-            const edgeMaterial = new LineBasicMaterial({
-                color: child.material.color ? child.material.color.getHex() : 0xffffff,
-                transparent: true,
-                opacity: child.material.color && child.material.color.getHex() === 0x8b4513 ? 0.82 : 0.92
+            const silhouette = new Mesh(
+                child.geometry,
+                new THREE.MeshBasicMaterial({
+                    color: silhouetteColor,
+                    transparent: true,
+                    opacity: 0.045,
+                    side: THREE.DoubleSide,
+                    depthTest: false,
+                    depthWrite: false
+                })
+            );
+            const glowShells = [
+                { scale: 1.02, opacity: 0.08 },
+                { scale: 1.06, opacity: 0.035 }
+            ].map(({ scale, opacity }) => {
+                const glowShell = new Mesh(
+                    child.geometry,
+                    new THREE.MeshBasicMaterial({
+                        color: neonGlowColor,
+                        transparent: true,
+                        opacity,
+                        side: THREE.DoubleSide,
+                        depthTest: false,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                glowShell.position.copy(child.position);
+                glowShell.rotation.copy(child.rotation);
+                glowShell.scale.copy(child.scale).multiplyScalar(scale);
+                return glowShell;
             });
-            const outline = new THREE.LineSegments(edgeGeometry, edgeMaterial);
-            outline.position.copy(child.position);
-            outline.rotation.copy(child.rotation);
-            outline.scale.copy(child.scale);
-            outline.renderOrder = 5;
-            guide.add(outline);
+            const outlineLayers = [
+                { scale: 1, opacity: 1 },
+                { scale: 1.02, opacity: 0.72 },
+                { scale: 1.045, opacity: 0.32 }
+            ].map(({ scale, opacity }) => {
+                const edgeMaterial = new LineBasicMaterial({
+                    color: neonEdgeColor,
+                    transparent: true,
+                    opacity,
+                    depthTest: false,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+                const outline = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+                outline.position.copy(child.position);
+                outline.rotation.copy(child.rotation);
+                outline.scale.copy(child.scale).multiplyScalar(scale);
+                return outline;
+            });
+            silhouette.position.copy(child.position);
+            silhouette.rotation.copy(child.rotation);
+            silhouette.scale.copy(child.scale);
+            silhouette.renderOrder = 3;
+            glowShells.forEach((glowShell, index) => {
+                glowShell.renderOrder = 4 + index;
+                guide.add(glowShell);
+            });
+            guide.add(silhouette);
+            outlineLayers.forEach((outline, index) => {
+                outline.renderOrder = 7 + index;
+                guide.add(outline);
+            });
         });
 
         guide.visible = false;
@@ -759,15 +912,74 @@ class PingPongGame {
         this.syncSettingsPanel();
     }
 
+    setArenaScene(arenaScene) {
+        if (!ARENA_SCENE_SETTINGS[arenaScene]) {
+            return;
+        }
+
+        this.arenaScene = arenaScene;
+        this.saveArenaScenePreference();
+        this.buildArenaScene();
+        this.syncSettingsPanel();
+    }
+
+    setStartTab(tabName) {
+        this.activeStartTab = tabName;
+
+        if (!this.startTabButtons || !this.startPanels) {
+            return;
+        }
+
+        this.startTabButtons.forEach((button) => {
+            const isActive = button.dataset.startTab === tabName;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        this.startPanels.forEach((panel) => {
+            const isActive = panel.dataset.startPanel === tabName;
+            panel.classList.toggle('is-active', isActive);
+            panel.hidden = !isActive;
+        });
+    }
+
     syncSettingsPanel() {
         if (!this.pauseScreen) {
             return;
         }
 
-        this.difficultyValue.textContent = DIFFICULTY_SETTINGS[this.difficulty].label;
-        this.cameraPerspectiveValue.textContent = CAMERA_PERSPECTIVE_SETTINGS[this.cameraPerspective].label;
-        this.cameraZoomValue.textContent = CAMERA_ZOOM_SETTINGS[this.cameraZoom].label;
-        this.pauseSfxValue.textContent = this.soundEnabled ? 'On' : 'Off';
+        const difficultyLabel = DIFFICULTY_SETTINGS[this.difficulty].label;
+        const perspectiveLabel = CAMERA_PERSPECTIVE_SETTINGS[this.cameraPerspective].label;
+        const zoomLabel = CAMERA_ZOOM_SETTINGS[this.cameraZoom].label;
+        const soundLabel = this.soundEnabled ? 'On' : 'Off';
+        const arenaLabel = ARENA_SCENE_SETTINGS[this.arenaScene].label;
+        const arenaCaption = ARENA_SCENE_SETTINGS[this.arenaScene].caption;
+        const arenaTag = ARENA_SCENE_SETTINGS[this.arenaScene].tag;
+
+        this.difficultyValueDisplays.forEach((element) => {
+            element.textContent = difficultyLabel;
+        });
+        this.cameraPerspectiveValueDisplays.forEach((element) => {
+            element.textContent = perspectiveLabel;
+        });
+        this.cameraZoomValueDisplays.forEach((element) => {
+            element.textContent = zoomLabel;
+        });
+        this.soundValueDisplays.forEach((element) => {
+            element.textContent = soundLabel;
+        });
+        this.arenaSceneValueDisplays.forEach((element) => {
+            element.textContent = arenaLabel;
+        });
+        if (this.startArenaName) {
+            this.startArenaName.textContent = arenaLabel;
+        }
+        if (this.startArenaCaption) {
+            this.startArenaCaption.textContent = arenaCaption;
+        }
+        if (this.startArenaTag) {
+            this.startArenaTag.textContent = arenaTag;
+        }
 
         this.difficultyButtons.forEach((button) => {
             button.classList.toggle('is-selected', button.dataset.value === this.difficulty);
@@ -789,10 +1001,38 @@ class PingPongGame {
             button.classList.toggle('is-selected', shouldSelect);
             button.setAttribute('aria-pressed', shouldSelect ? 'true' : 'false');
         });
+
+        this.arenaSceneButtons.forEach((button) => {
+            const shouldSelect = button.dataset.value === this.arenaScene;
+            button.classList.toggle('is-selected', shouldSelect);
+            button.setAttribute('aria-pressed', shouldSelect ? 'true' : 'false');
+        });
     }
 
     getDifficultyConfig() {
         return DIFFICULTY_SETTINGS[this.difficulty] || DIFFICULTY_SETTINGS.normal;
+    }
+
+    getActiveWallBoundary() {
+        return this.arenaScene === 'vault' ? VAULT_WALL_BOUNDARY : WALL_BOUNDARY;
+    }
+
+    getActiveCeilingHeight() {
+        return this.arenaScene === 'vault' ? 4.6 : MAX_BALL_HEIGHT;
+    }
+
+    getArenaPaceMultiplier() {
+        return this.arenaScene === 'vault' ? 1.18 : 1;
+    }
+
+    getSpawnPosition() {
+        const halfWidth = this.getActiveWallBoundary() - 0.35;
+        const halfDepth = this.arenaScene === 'vault' ? 6.4 : 5;
+        return new Vector3(
+            (Math.random() * 2 - 1) * halfWidth,
+            0.5,
+            (Math.random() * 2 - 1) * halfDepth
+        );
     }
 
     refreshComputerAimOffset(force = false) {
@@ -886,6 +1126,7 @@ class PingPongGame {
 
     applyPaddleShot({ paddle, paddleVelocity, hitPosition, returnDirection, randomHeightIncrement, isPlayer }) {
         const clamp = THREE.MathUtils.clamp;
+        const paceMultiplier = this.getArenaPaceMultiplier();
         const impactSpeed = paddleVelocity.length();
         const lateralMotion = paddleVelocity.x;
         const forwardMotion = paddleVelocity.z * returnDirection;
@@ -898,19 +1139,19 @@ class PingPongGame {
         const currentForwardSpeed = Math.abs(this.ballVelocity.z);
         const normalTargetSpeed = clamp(
             6.4 + impactSpeed * 0.17 + Math.max(forwardMotion, 0) * 0.12 + Math.abs(hitPosition) * 0.12,
-            NORMAL_RETURN_SPEED_MIN,
-            NORMAL_RETURN_SPEED_MAX
+            NORMAL_RETURN_SPEED_MIN * paceMultiplier,
+            NORMAL_RETURN_SPEED_MAX * paceMultiplier
         );
         const smashTargetSpeed = clamp(
             9.6 + impactSpeed * 0.12 + Math.max(forwardMotion, 0) * 0.1,
-            SMASH_RETURN_SPEED_MIN,
-            SMASH_RETURN_SPEED_MAX
+            SMASH_RETURN_SPEED_MIN * paceMultiplier,
+            SMASH_RETURN_SPEED_MAX * paceMultiplier
         );
         const desiredForwardSpeed = smash ? smashTargetSpeed : normalTargetSpeed;
         const nextForwardSpeed = clamp(
             currentForwardSpeed * 0.18 + desiredForwardSpeed * 0.82,
-            smash ? SMASH_RETURN_SPEED_MIN : NORMAL_RETURN_SPEED_MIN,
-            smash ? SMASH_RETURN_SPEED_MAX : NORMAL_RETURN_SPEED_MAX
+            (smash ? SMASH_RETURN_SPEED_MIN : NORMAL_RETURN_SPEED_MIN) * paceMultiplier,
+            (smash ? SMASH_RETURN_SPEED_MAX : NORMAL_RETURN_SPEED_MAX) * paceMultiplier
         );
 
         this.ballVelocity.z = returnDirection * nextForwardSpeed;
@@ -920,8 +1161,8 @@ class PingPongGame {
         let nextLift = baseLift + 0.35 + loftBoost - (speedBoost + Math.max(driveBoost, 0)) * 0.22;
         const speedLiftFloor = THREE.MathUtils.mapLinear(
             nextForwardSpeed,
-            NORMAL_RETURN_SPEED_MIN,
-            SMASH_RETURN_SPEED_MAX,
+            NORMAL_RETURN_SPEED_MIN * paceMultiplier,
+            SMASH_RETURN_SPEED_MAX * paceMultiplier,
             2.15,
             3.35
         );
@@ -977,7 +1218,7 @@ class PingPongGame {
 
         const powerUpTypes = ['speed', 'extend', 'slow', 'doublePoints', 'shield'];
         const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
-        const position = new Vector3(Math.random() * 5 - 2.5, 0.5, Math.random() * 10 - 5);
+        const position = this.getSpawnPosition();
         const powerUp = new PowerUp(type, position, this); // Pass the game object
         this.powerUps.push(powerUp);
         this.scene.add(powerUp.mesh);
@@ -1000,7 +1241,7 @@ class PingPongGame {
 
         const obstacleTypes = ['barrier', 'paddle', 'wall', 'bouncePad', 'shrinkZone'];
         const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
-        const position = new Vector3(Math.random() * 5 - 2.5, 0.5, Math.random() * 10 - 5);
+        const position = this.getSpawnPosition();
         const obstacle = new Obstacle(type, position, this); // Pass the game object
         this.obstacles.push(obstacle);
         this.scene.add(obstacle.mesh);
@@ -1018,81 +1259,473 @@ class PingPongGame {
         setTimeout(() => this.spawnObstacle(), 45000);
     }
 
-    initTable() {
-        const tableTexture = new THREE.TextureLoader().load('img/pingpongtable1.webp'); // Load new table texture
-        const tableGeometry = new PlaneGeometry(5, 10);
-        const tableMaterial = new MeshStandardMaterial({
-            map: tableTexture,
-        });
-        this.table = new Mesh(tableGeometry, tableMaterial);
-        this.table.rotation.x = -Math.PI / 2;
-        this.table.receiveShadow = true;
-        this.scene.add(this.table);
+    buildArenaScene() {
+        if (!this.arenaRoot) {
+            return;
+        }
 
-        // Shadow plane to simulate shadow on the table
-        const shadowMaterial = new ShadowMaterial({ opacity: 0.5 });
-        const shadowPlane = new Mesh(tableGeometry, shadowMaterial);
-        shadowPlane.rotation.x = -Math.PI / 2;
-        shadowPlane.position.y = -0.01; // Slightly below the table
-        shadowPlane.receiveShadow = true;
-        this.scene.add(shadowPlane);
+        this.clearArenaScene();
+
+        switch (this.arenaScene) {
+            case 'vault':
+                this.buildVaultArena();
+                break;
+            case 'titan':
+                this.buildTitanArena();
+                break;
+            case 'flux':
+                this.buildFluxArena();
+                break;
+            case 'classic':
+            default:
+                this.buildClassicArena();
+                break;
+        }
+
+        this.updatePerspectivePresentation();
+
+        if (this.camera) {
+            this.refreshGameplayCamera(true);
+        }
     }
 
-    initNet() {
-        const netTexture = new THREE.TextureLoader().load('img/net.webp'); // Load the new net texture
+    clearArenaScene() {
+        const disposeMaterial = (material) => {
+            if (!material) {
+                return;
+            }
+
+            if (Array.isArray(material)) {
+                material.forEach(disposeMaterial);
+                return;
+            }
+
+            if (material.map) {
+                material.map.dispose();
+            }
+            material.dispose();
+        };
+
+        while (this.arenaRoot.children.length > 0) {
+            const child = this.arenaRoot.children.pop();
+            child.traverse((node) => {
+                if (node.geometry) {
+                    node.geometry.dispose();
+                }
+                if (node.material) {
+                    disposeMaterial(node.material);
+                }
+            });
+            this.arenaRoot.remove(child);
+        }
+
+        if (this.vaultTopDownFillLights) {
+            this.vaultTopDownFillLights.forEach((light) => {
+                this.scene.remove(light);
+            });
+        }
+
+        this.table = null;
+        this.net = null;
+        this.netShadow = null;
+        this.vaultCourtMirror = null;
+        this.vaultTopDownElements = null;
+        this.vaultTopDownFillLights = null;
+    }
+
+    addPlaySurfaceMarkings(group, y, width = 5, depth = 10, color = 0xf2fff8) {
+        const lineThickness = 0.06;
+        const inset = 0.12;
+        const lineMaterial = new MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08 });
+
+        const addStrip = (stripWidth, stripDepth, x, z) => {
+            const strip = new Mesh(new PlaneGeometry(stripWidth, stripDepth), lineMaterial.clone());
+            strip.rotation.x = -Math.PI / 2;
+            strip.position.set(x, y, z);
+            group.add(strip);
+        };
+
+        addStrip(width - inset * 2, lineThickness, 0, -depth / 2 + inset);
+        addStrip(width - inset * 2, lineThickness, 0, depth / 2 - inset);
+        addStrip(lineThickness, depth - inset * 2, -width / 2 + inset, 0);
+        addStrip(lineThickness, depth - inset * 2, width / 2 - inset, 0);
+        addStrip(lineThickness, depth - inset * 2, 0, 0);
+        addStrip(width - inset * 2, lineThickness, 0, 0);
+    }
+
+    addVaultCourtMarkings(group, y, width, depth, color = 0xe6f5ff) {
+        const lineMaterial = new MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.24 });
+        const lineThickness = 0.06;
+        const outerInset = 0.18;
+        const serviceDepth = depth * 0.26;
+
+        const addStrip = (stripWidth, stripDepth, x, z) => {
+            const strip = new Mesh(new PlaneGeometry(stripWidth, stripDepth), lineMaterial.clone());
+            strip.rotation.x = -Math.PI / 2;
+            strip.position.set(x, y, z);
+            group.add(strip);
+        };
+
+        addStrip(width - outerInset * 2, lineThickness, 0, -depth / 2 + outerInset);
+        addStrip(width - outerInset * 2, lineThickness, 0, depth / 2 - outerInset);
+        addStrip(lineThickness, depth - outerInset * 2, -width / 2 + outerInset, 0);
+        addStrip(lineThickness, depth - outerInset * 2, width / 2 - outerInset, 0);
+        addStrip(width - outerInset * 2, lineThickness, 0, 0);
+        addStrip(width - outerInset * 2, lineThickness, 0, -serviceDepth);
+        addStrip(width - outerInset * 2, lineThickness, 0, serviceDepth);
+        addStrip(lineThickness, serviceDepth * 2, 0, 0);
+    }
+
+    addSideBoundaries({ color = 0x67ebff, opacity = 0.34, height = 2.1, inset = 0.06, style = 'glass', halfWidth = WALL_BOUNDARY, depth = 10.4 } = {}) {
+        const material = new MeshStandardMaterial({
+            color,
+            transparent: true,
+            opacity,
+            side: THREE.DoubleSide,
+            emissive: style === 'glass' ? color : 0x000000,
+            emissiveIntensity: style === 'glass' ? 0.08 : 0
+        });
+
+        [-1, 1].forEach((direction) => {
+            const wall = new Mesh(new BoxGeometry(0.08, height, depth), material.clone());
+            wall.position.set(direction * (halfWidth + inset), height / 2, 0);
+            this.arenaRoot.add(wall);
+        });
+    }
+
+    addNet({ frameColor = 0xf5f7ff, shadowOpacity = 0.18, width = 5 } = {}) {
+        const netTexture = new THREE.TextureLoader().load('img/net.webp');
         const netMaterial = new MeshStandardMaterial({ map: netTexture, transparent: true });
-        const netGeometry = new PlaneGeometry(5, NET_HEIGHT); // Adjust net height
+        const netGeometry = new PlaneGeometry(width, NET_HEIGHT);
         this.net = new Mesh(netGeometry, netMaterial);
-        this.net.position.y = NET_HEIGHT / 2; // Center net position vertically
+        this.net.position.y = NET_HEIGHT / 2;
         this.net.position.z = 0;
         this.net.castShadow = true;
-        this.scene.add(this.net);
+        this.arenaRoot.add(this.net);
 
-        const netShadowGeometry = new PlaneGeometry(5.08, 0.34);
-        const netShadowMaterial = new MeshStandardMaterial({
-            color: 0x081014,
-            transparent: true,
-            opacity: 0.18,
-            depthWrite: false
-        });
-        this.netShadow = new Mesh(netShadowGeometry, netShadowMaterial);
+        const topTape = new Mesh(
+            new BoxGeometry(width + 0.02, 0.04, 0.04),
+            new MeshStandardMaterial({ color: frameColor, emissive: frameColor, emissiveIntensity: 0.06 })
+        );
+        topTape.position.set(0, NET_HEIGHT + 0.01, 0);
+        this.arenaRoot.add(topTape);
+
+        this.netShadow = new Mesh(
+            new PlaneGeometry(width + 0.08, 0.34),
+            new MeshStandardMaterial({
+                color: 0x081014,
+                transparent: true,
+                opacity: shadowOpacity,
+                depthWrite: false
+            })
+        );
         this.netShadow.rotation.x = -Math.PI / 2;
         this.netShadow.position.set(0, TABLE_HEIGHT + 0.004, 0);
-        this.scene.add(this.netShadow);
+        this.arenaRoot.add(this.netShadow);
     }
 
-    initBoundaries() {
-        const boundaryMaterial = new MeshStandardMaterial({
-            color: 0x00ffff,
+    buildClassicArena() {
+        const tableTexture = new THREE.TextureLoader().load('img/pingpongtable1.webp');
+        this.table = new Mesh(
+            new PlaneGeometry(5, 10),
+            new MeshStandardMaterial({ map: tableTexture })
+        );
+        this.table.rotation.x = -Math.PI / 2;
+        this.table.receiveShadow = true;
+        this.arenaRoot.add(this.table);
+
+        const shadowPlane = new Mesh(new PlaneGeometry(5, 10), new ShadowMaterial({ opacity: 0.5 }));
+        shadowPlane.rotation.x = -Math.PI / 2;
+        shadowPlane.position.y = -0.01;
+        shadowPlane.receiveShadow = true;
+        this.arenaRoot.add(shadowPlane);
+
+        this.addNet({ frameColor: 0xe9f7ff, shadowOpacity: 0.18 });
+        this.addSideBoundaries({ color: 0x62eaff, opacity: 0.5, height: 2, inset: 0.05, style: 'glass' });
+
+        const bgTexture = new THREE.TextureLoader().load('img/arena.webp');
+        const background = new Mesh(
+            new SphereGeometry(50, 32, 32),
+            new MeshStandardMaterial({ map: bgTexture, side: THREE.BackSide })
+        );
+        this.arenaRoot.add(background);
+    }
+
+    buildVaultArena() {
+        const wallBoundary = this.getActiveWallBoundary();
+        const wallThickness = 0.06;
+        const courtWidth = wallBoundary * 2;
+        const courtDepth = 15.4;
+        const enclosureWidth = courtWidth + wallThickness * 2;
+        const enclosureDepth = courtDepth + 1.4;
+        const ceilingHeight = this.getActiveCeilingHeight() + 0.16;
+
+        const shell = new Mesh(
+            new BoxGeometry(42, 18, 56),
+            new MeshStandardMaterial({
+                color: 0x101e27,
+                side: THREE.BackSide,
+                metalness: 0.2,
+                roughness: 0.85
+            })
+        );
+        shell.position.y = 6.5;
+        this.arenaRoot.add(shell);
+
+        const floor = new Mesh(
+            new BoxGeometry(courtWidth + 0.34, 0.42, courtDepth + 0.42),
+            new MeshStandardMaterial({ color: 0x0d1823, metalness: 0.28, roughness: 0.46 })
+        );
+        floor.position.y = -0.13;
+        this.arenaRoot.add(floor);
+
+        const court = new Mesh(
+            new BoxGeometry(courtWidth, 0.16, courtDepth),
+            new MeshStandardMaterial({
+                color: 0x132744,
+                emissive: 0x0b1730,
+                emissiveIntensity: 0.42,
+                metalness: 0.36,
+                roughness: 0.18
+            })
+        );
+        court.position.y = TABLE_HEIGHT - 0.08;
+        court.receiveShadow = true;
+        this.table = court;
+        this.arenaRoot.add(court);
+
+        const courtMirror = new Mesh(
+            new PlaneGeometry(courtWidth + 0.12, courtDepth + 0.14),
+            new MeshStandardMaterial({
+                color: 0x0b1628,
+                emissive: 0x102244,
+                emissiveIntensity: 0.08,
+                metalness: 0.22,
+                roughness: 0.3
+            })
+        );
+        courtMirror.rotation.x = -Math.PI / 2;
+        courtMirror.position.y = TABLE_HEIGHT - 0.085;
+        this.arenaRoot.add(courtMirror);
+        this.vaultCourtMirror = courtMirror;
+
+        const glassMaterial = new MeshStandardMaterial({
+            color: 0xc9f4ff,
             transparent: true,
-            opacity: 0.5,
-            side: THREE.DoubleSide
+            opacity: 0.12,
+            side: THREE.DoubleSide,
+            emissive: 0x9edbff,
+            emissiveIntensity: 0.08,
+            metalness: 0.08,
+            roughness: 0.1
         });
 
-        const boundaryHeight = 2.0; // Increased height
-        const boundaryThickness = 0.1;
+        const backWall = new Mesh(new BoxGeometry(enclosureWidth, ceilingHeight, 0.06), glassMaterial.clone());
+        backWall.position.set(0, ceilingHeight / 2, -enclosureDepth / 2);
+        this.arenaRoot.add(backWall);
 
-        const boundaries = [
-            // Left
-            { width: boundaryThickness, height: boundaryHeight, depth: 10, x: -2.5 - boundaryThickness / 2, y: boundaryHeight / 2, z: 0 },
-            // Right
-            { width: boundaryThickness, height: boundaryHeight, depth: 10, x: 2.5 + boundaryThickness / 2, y: boundaryHeight / 2, z: 0 },
+        [-1, 1].forEach((direction) => {
+            const sideWall = new Mesh(new BoxGeometry(wallThickness, ceilingHeight, enclosureDepth), glassMaterial.clone());
+            sideWall.position.set(direction * (wallBoundary + wallThickness / 2), ceilingHeight / 2, 0);
+            this.arenaRoot.add(sideWall);
+        });
+
+        const ceiling = new Mesh(
+            new BoxGeometry(enclosureWidth, 0.06, enclosureDepth),
+            new MeshStandardMaterial({
+                color: 0xbfe9ff,
+                transparent: true,
+                opacity: 0.08,
+                emissive: 0x9bd7ff,
+                emissiveIntensity: 0.14,
+                roughness: 0.08,
+                metalness: 0.1
+            })
+        );
+        ceiling.position.set(0, ceilingHeight, 0);
+        this.arenaRoot.add(ceiling);
+
+        const edgeLineMaterial = new MeshStandardMaterial({
+            color: 0xe9f5ff,
+            emissive: 0xd8f0ff,
+            emissiveIntensity: 0.28,
+            transparent: true,
+            opacity: 0.82
+        });
+        const edgeBars = [
+            [enclosureWidth, 0.05, 0.05, 0, ceilingHeight, -enclosureDepth / 2],
+            [0.05, 0.05, enclosureDepth, -enclosureWidth / 2, ceilingHeight, 0],
+            [0.05, 0.05, enclosureDepth, enclosureWidth / 2, ceilingHeight, 0],
+            [0.05, ceilingHeight, 0.05, -enclosureWidth / 2, ceilingHeight / 2, -enclosureDepth / 2],
+            [0.05, ceilingHeight, 0.05, enclosureWidth / 2, ceilingHeight / 2, -enclosureDepth / 2]
         ];
-
-        boundaries.forEach(boundary => {
-            const boundaryGeometry = new BoxGeometry(boundary.width, boundary.height, boundary.depth);
-            const boundaryMesh = new Mesh(boundaryGeometry, boundaryMaterial);
-            boundaryMesh.position.set(boundary.x, boundary.y, boundary.z);
-            this.scene.add(boundaryMesh);
+        this.vaultTopDownElements = [];
+        edgeBars.forEach(([width, height, depth, x, y, z]) => {
+            const bar = new Mesh(new BoxGeometry(width, height, depth), edgeLineMaterial.clone());
+            bar.position.set(x, y, z);
+            this.arenaRoot.add(bar);
+            if (z > 0) {
+                this.vaultTopDownElements.push(bar);
+            }
         });
+
+        this.vaultTopDownFillLights = [
+            { color: 0xaee6ff, intensity: 0.92, position: [-(enclosureWidth / 2 + 3.6), 5.8, 4.8] },
+            { color: 0xaee6ff, intensity: 0.86, position: [enclosureWidth / 2 + 3.4, 6.1, -3.6] },
+            { color: 0x8fd8ff, intensity: 0.54, position: [0, 6.8, -(enclosureDepth / 2 + 4.2)] }
+        ].map(({ color, intensity, position }) => {
+            const light = new PointLight(color, 0, 55);
+            light.position.set(...position);
+            light.userData.topDownIntensity = intensity;
+            this.scene.add(light);
+            return light;
+        });
+
+        for (let i = 0; i < 16; i += 1) {
+            const tower = new Mesh(
+                new BoxGeometry(0.6 + (i % 3) * 0.2, 3.4 + (i % 5) * 0.75, 0.6 + (i % 4) * 0.15),
+                new MeshStandardMaterial({
+                    color: 0x122237,
+                    emissive: 0x102030,
+                    emissiveIntensity: 0.3,
+                    roughness: 0.72
+                })
+            );
+            const side = i % 2 === 0 ? -1 : 1;
+            tower.position.set(side * (7.2 + (i % 3) * 1.2), tower.geometry.parameters.height / 2 - 0.1, -8 + (i % 8) * 2.3);
+            this.arenaRoot.add(tower);
+        }
+
+        this.addVaultCourtMarkings(this.arenaRoot, TABLE_HEIGHT + 0.004, courtWidth, courtDepth, 0xeaf5ff);
+        this.addNet({ frameColor: 0xf7fff9, shadowOpacity: 0.12, width: courtWidth - 0.08 });
     }
 
-    initEnvironment() {
-        const bgTexture = new THREE.TextureLoader().load('img/arena.webp'); // Load stadium background texture
-        const bgMaterial = new MeshStandardMaterial({ map: bgTexture, side: THREE.BackSide });
-        const bgGeometry = new SphereGeometry(50, 32, 32);
-        const background = new Mesh(bgGeometry, bgMaterial);
-        this.scene.add(background);
+    buildTitanArena() {
+        const floor = new Mesh(
+            new CylinderGeometry(15, 17, 0.9, 48),
+            new MeshStandardMaterial({ color: 0x12212c, metalness: 0.28, roughness: 0.72 })
+        );
+        floor.position.y = -0.55;
+        this.arenaRoot.add(floor);
+
+        for (let index = 0; index < 5; index += 1) {
+            const beam = new Mesh(
+                new BoxGeometry(18, 0.12, 0.2),
+                new MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.28 })
+            );
+            beam.position.set(0, 4.2 + index * 1.1, -12 + index * 6);
+            this.arenaRoot.add(beam);
+        }
+
+        const leftGrandstand = new Mesh(
+            new BoxGeometry(6, 4, 18),
+            new MeshStandardMaterial({ color: 0x0e1a22, roughness: 0.82 })
+        );
+        leftGrandstand.position.set(-9.8, 1.2, 0);
+        leftGrandstand.rotation.z = -0.26;
+        this.arenaRoot.add(leftGrandstand);
+
+        const rightGrandstand = leftGrandstand.clone();
+        rightGrandstand.position.x = 9.8;
+        rightGrandstand.rotation.z = 0.26;
+        this.arenaRoot.add(rightGrandstand);
+
+        const stage = new Mesh(
+            new BoxGeometry(8.2, 0.8, 13.4),
+            new MeshStandardMaterial({ color: 0x152938, metalness: 0.2, roughness: 0.58 })
+        );
+        stage.position.y = -0.28;
+        this.arenaRoot.add(stage);
+
+        const subStage = new Mesh(
+            new BoxGeometry(3.2, 2.2, 6.2),
+            new MeshStandardMaterial({ color: 0x10202b, roughness: 0.7 })
+        );
+        subStage.position.y = -1.28;
+        this.arenaRoot.add(subStage);
+
+        const apron = new Mesh(
+            new BoxGeometry(6.8, 0.2, 12),
+            new MeshStandardMaterial({ color: 0x2279a1, emissive: 0x1f5671, emissiveIntensity: 0.14, roughness: 0.36 })
+        );
+        apron.position.y = 0.04;
+        this.arenaRoot.add(apron);
+
+        this.table = new Mesh(
+            new BoxGeometry(5.4, 0.16, 10.4),
+            new MeshStandardMaterial({ color: 0x11c96a, roughness: 0.34, metalness: 0.08 })
+        );
+        this.table.position.y = TABLE_HEIGHT - 0.08;
+        this.table.receiveShadow = true;
+        this.arenaRoot.add(this.table);
+        this.addPlaySurfaceMarkings(this.arenaRoot, TABLE_HEIGHT + 0.004, 5, 10, 0xf3fff8);
+        this.addNet({ frameColor: 0xf8fbff, shadowOpacity: 0.2 });
+        this.addSideBoundaries({ color: 0x7cd7ff, opacity: 0.2, height: 2.4, inset: 0.12, style: 'glass' });
+    }
+
+    buildFluxArena() {
+        const shell = new Mesh(
+            new BoxGeometry(38, 16, 48),
+            new MeshStandardMaterial({
+                color: 0x09161b,
+                side: THREE.BackSide,
+                roughness: 0.88,
+                metalness: 0.1
+            })
+        );
+        shell.position.y = 5.8;
+        this.arenaRoot.add(shell);
+
+        const frameMaterial = new MeshStandardMaterial({ color: 0x43d0ff, emissive: 0x43d0ff, emissiveIntensity: 0.22 });
+        [
+            [-7.4, 4.4, -10, 0.25],
+            [7.2, 3.8, -5.5, -0.22],
+            [-8.6, 5.2, 5, -0.18],
+            [8.8, 4.6, 10.2, 0.2]
+        ].forEach(([x, y, z, rotY]) => {
+            const frame = new Mesh(new BoxGeometry(0.2, 7, 4), frameMaterial.clone());
+            frame.position.set(x, y, z);
+            frame.rotation.y = rotY;
+            this.arenaRoot.add(frame);
+        });
+
+        const shape = new THREE.Shape();
+        shape.moveTo(-3.5, -5.8);
+        shape.lineTo(3.1, -5.5);
+        shape.lineTo(3.9, -3.4);
+        shape.lineTo(3.2, -0.4);
+        shape.lineTo(4.1, 5.9);
+        shape.lineTo(-2.7, 5.7);
+        shape.lineTo(-3.8, 3.1);
+        shape.lineTo(-3.2, -0.9);
+        shape.lineTo(-3.5, -5.8);
+
+        const body = new Mesh(
+            new THREE.ExtrudeGeometry(shape, { depth: 0.72, bevelEnabled: false }),
+            new MeshStandardMaterial({ color: 0x112731, roughness: 0.62, metalness: 0.24 })
+        );
+        body.rotation.x = -Math.PI / 2;
+        body.rotation.z = Math.PI;
+        body.position.set(0, -0.92, 0.6);
+        this.arenaRoot.add(body);
+
+        const accentPlate = new Mesh(
+            new BoxGeometry(6.4, 0.14, 11.2),
+            new MeshStandardMaterial({ color: 0x0f3d45, emissive: 0x3be1d6, emissiveIntensity: 0.16, roughness: 0.34 })
+        );
+        accentPlate.position.y = -0.12;
+        this.arenaRoot.add(accentPlate);
+
+        this.table = new Mesh(
+            new BoxGeometry(5.15, 0.16, 10.15),
+            new MeshStandardMaterial({ color: 0x17c87d, roughness: 0.36, metalness: 0.14 })
+        );
+        this.table.position.y = TABLE_HEIGHT - 0.08;
+        this.table.receiveShadow = true;
+        this.arenaRoot.add(this.table);
+        this.addPlaySurfaceMarkings(this.arenaRoot, TABLE_HEIGHT + 0.004, 5, 10, 0xf4fff9);
+        this.addNet({ frameColor: 0xeeffff, shadowOpacity: 0.22 });
+        this.addSideBoundaries({ color: 0x4deaff, opacity: 0.18, height: 2.6, inset: 0.1, style: 'glass' });
     }
 
     initControls() {
@@ -1124,17 +1757,25 @@ class PingPongGame {
         this.gameOverScreen = document.getElementById('gameOverScreen');
         this.finalScore = document.getElementById('finalScore');
         this.finalOutcome = document.getElementById('finalOutcome');
-        this.difficultyValue = document.getElementById('difficultyValue');
-        this.cameraPerspectiveValue = document.getElementById('cameraPerspectiveValue');
-        this.cameraZoomValue = document.getElementById('cameraZoomValue');
-        this.pauseSfxValue = document.getElementById('pauseSfxValue');
+        this.startArenaName = document.getElementById('startArenaName');
+        this.startArenaCaption = document.getElementById('startArenaCaption');
+        this.startArenaTag = document.getElementById('startArenaTag');
+        this.difficultyValueDisplays = Array.from(document.querySelectorAll('[data-display="difficulty"]'));
+        this.cameraPerspectiveValueDisplays = Array.from(document.querySelectorAll('[data-display="cameraPerspective"]'));
+        this.cameraZoomValueDisplays = Array.from(document.querySelectorAll('[data-display="cameraZoom"]'));
+        this.soundValueDisplays = Array.from(document.querySelectorAll('[data-display="sound"]'));
+        this.arenaSceneValueDisplays = Array.from(document.querySelectorAll('[data-display="arenaScene"]'));
         this.difficultyButtons = Array.from(document.querySelectorAll('[data-setting="difficulty"]'));
         this.cameraPerspectiveButtons = Array.from(document.querySelectorAll('[data-setting="cameraPerspective"]'));
         this.cameraZoomButtons = Array.from(document.querySelectorAll('[data-setting="cameraZoom"]'));
         this.soundButtons = Array.from(document.querySelectorAll('[data-setting="sound"]'));
+        this.arenaSceneButtons = Array.from(document.querySelectorAll('[data-setting="arenaScene"]'));
+        this.startTabButtons = Array.from(document.querySelectorAll('[data-start-tab]'));
+        this.startPanels = Array.from(document.querySelectorAll('[data-start-panel]'));
         this.setPauseButtonLabel();
         this.setSoundButtonState();
         this.syncSettingsPanel();
+        this.setStartTab(this.activeStartTab);
         this.updateScore();
     }
 
@@ -1172,7 +1813,8 @@ class PingPongGame {
             return;
         }
 
-        this.paddle.position.x = Math.max(Math.min(this.dragIntersection.x, WALL_BOUNDARY), -WALL_BOUNDARY);
+        const wallBoundary = this.getActiveWallBoundary();
+        this.paddle.position.x = Math.max(Math.min(this.dragIntersection.x, wallBoundary), -wallBoundary);
         this.paddle.position.z = Math.max(Math.min(this.dragIntersection.z, PADDLE_BOUNDARY_Z_MAX), PADDLE_BOUNDARY_Z_MIN);
     }
 
@@ -1183,24 +1825,29 @@ class PingPongGame {
         this.camera.lookAt(this.tableCenter);
     }
 
-    movePaddle() {
+    movePaddle(delta) {
+        const frameScale = Math.min(delta, MAX_INPUT_DELTA) * INPUT_FRAME_RATE;
+        const moveStep = PADDLE_MOVE_SPEED * frameScale * this.paddleSpeed;
+        const wallBoundary = this.getActiveWallBoundary();
+
         if (this.keys['ArrowLeft']) {
-            this.paddle.position.x -= PADDLE_MOVE_SPEED;
+            this.paddle.position.x -= moveStep;
         }
         if (this.keys['ArrowRight']) {
-            this.paddle.position.x += PADDLE_MOVE_SPEED;
+            this.paddle.position.x += moveStep;
         }
         if (this.keys['ArrowUp']) {
-            this.paddle.position.z -= PADDLE_MOVE_SPEED * 1.2;
+            this.paddle.position.z -= moveStep * 1.2;
         }
         if (this.keys['ArrowDown']) {
-            this.paddle.position.z += PADDLE_MOVE_SPEED * 1.2;
+            this.paddle.position.z += moveStep * 1.2;
         }
 
         // Enforce paddle boundaries
+        this.paddle.position.x = Math.max(Math.min(this.paddle.position.x, wallBoundary), -wallBoundary);
         this.paddle.position.z = Math.max(Math.min(this.paddle.position.z, PADDLE_BOUNDARY_Z_MAX), PADDLE_BOUNDARY_Z_MIN);
 
-        this.paddle.position.y = this.ball.position.y; // Ensure the paddle follows the ball's height
+        this.paddle.position.y = Math.max(this.ball.position.y, PADDLE_SURFACE_Y);
     }
 
     moveComputerPaddle() {
@@ -1230,7 +1877,8 @@ class PingPongGame {
             lerpZ = config.readyLerpZ;
         }
 
-        targetX = Math.max(Math.min(targetX, WALL_BOUNDARY), -WALL_BOUNDARY);
+        const wallBoundary = this.getActiveWallBoundary();
+        targetX = Math.max(Math.min(targetX, wallBoundary), -wallBoundary);
         targetZ = Math.max(Math.min(targetZ, COMPUTER_PADDLE_BOUNDARY_Z_MAX), COMPUTER_PADDLE_BOUNDARY_Z_MIN);
 
         this.computerPaddle.position.x += (targetX - this.computerPaddle.position.x) * lerpX;
@@ -1238,9 +1886,9 @@ class PingPongGame {
 
         // Enforce computer paddle boundaries
         this.computerPaddle.position.z = Math.max(Math.min(this.computerPaddle.position.z, COMPUTER_PADDLE_BOUNDARY_Z_MAX), COMPUTER_PADDLE_BOUNDARY_Z_MIN);
-        this.computerPaddle.position.x = Math.max(Math.min(this.computerPaddle.position.x, WALL_BOUNDARY), -WALL_BOUNDARY);
+        this.computerPaddle.position.x = Math.max(Math.min(this.computerPaddle.position.x, wallBoundary), -wallBoundary);
 
-        this.computerPaddle.position.y = this.ball.position.y; // Ensure the computer paddle follows the ball's height
+        this.computerPaddle.position.y = Math.max(this.ball.position.y, PADDLE_SURFACE_Y);
     }
 
     updateScore() {
@@ -1254,6 +1902,7 @@ class PingPongGame {
         this.refreshGameplayCamera(true);
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
@@ -1268,7 +1917,7 @@ class PingPongGame {
             const delta = this.clock.getDelta();
             if (!this.isAnimating && this.isGameStarted && !this.isPointAnnouncementActive) {
                 this.applyPhysics(delta);
-                this.movePaddle();
+                this.movePaddle(delta);
                 this.moveComputerPaddle();
                 this.updatePaddleMotion(delta);
                 this.checkCollisions();
@@ -1300,8 +1949,9 @@ class PingPongGame {
         }
 
         // Cap the ball height
-        if (this.ball.position.y > MAX_BALL_HEIGHT) {
-            this.ball.position.y = MAX_BALL_HEIGHT;
+        const activeCeilingHeight = this.getActiveCeilingHeight();
+        if (this.ball.position.y > activeCeilingHeight) {
+            this.ball.position.y = activeCeilingHeight;
             this.ballVelocity.y = -Math.abs(this.ballVelocity.y); // Invert Y velocity to bounce down
         }
 
@@ -1335,11 +1985,12 @@ class PingPongGame {
     }
 
     checkWallCollisions() {
-        if (this.ball.position.x <= -WALL_BOUNDARY) {
-            this.ball.position.x = -WALL_BOUNDARY;
+        const wallBoundary = this.getActiveWallBoundary();
+        if (this.ball.position.x <= -wallBoundary) {
+            this.ball.position.x = -wallBoundary;
             this.ballVelocity.x = Math.abs(this.ballVelocity.x);
-        } else if (this.ball.position.x >= WALL_BOUNDARY) {
-            this.ball.position.x = WALL_BOUNDARY;
+        } else if (this.ball.position.x >= wallBoundary) {
+            this.ball.position.x = wallBoundary;
             this.ballVelocity.x = -Math.abs(this.ballVelocity.x);
         }
     }
@@ -1455,8 +2106,12 @@ class PingPongGame {
         switch (powerUp.type) {
             case 'speed':
                 // Increase paddle speed
-                this.paddleSpeed *= 1.5;
-                setTimeout(() => this.paddleSpeed /= 1.5, 10000);
+                this.paddleSpeed = 1.5;
+                clearTimeout(this.paddleSpeedTimeout);
+                this.paddleSpeedTimeout = setTimeout(() => {
+                    this.paddleSpeed = 1;
+                    this.paddleSpeedTimeout = null;
+                }, 10000);
                 break;
             case 'extend':
                 // Extend paddle width
@@ -1562,8 +2217,11 @@ class PingPongGame {
     }
 
     resetBall() {
+        const paceMultiplier = this.getArenaPaceMultiplier();
         this.ball.position.set(0, 0.4, 0); // Reset ball position to the center
-        this.ballVelocity.copy(BALL_INITIAL_VELOCITY); // Reset ball velocity
+        this.ballVelocity.copy(BALL_INITIAL_VELOCITY);
+        this.ballVelocity.x *= paceMultiplier;
+        this.ballVelocity.z *= paceMultiplier;
         this.ballSpin.set(0, 0);
         this.previousBallPosition.copy(this.ball.position);
     }
@@ -1572,6 +2230,9 @@ class PingPongGame {
         this.hidePointAnnouncement();
         this.score = 0;
         this.computerScore = 0;
+        this.paddleSpeed = 1;
+        clearTimeout(this.paddleSpeedTimeout);
+        this.paddleSpeedTimeout = null;
         this.resetPaddles();
         this.updateScore();
         this.resetBall();

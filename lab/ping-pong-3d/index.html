@@ -318,10 +318,12 @@
 
         .overlayCard {
             width: min(560px, calc(100vw - 32px));
+            max-height: calc(100vh - 48px);
             padding: 28px 28px 26px;
             border-radius: 30px;
             position: relative;
             overflow: hidden;
+            overflow-y: auto;
         }
 
         .overlayCard::before {
@@ -364,6 +366,243 @@
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
+        }
+
+        .overlayCard--start {
+            width: min(920px, calc(100vw - 36px));
+        }
+
+        .startTabs {
+            margin-top: 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .startTab {
+            min-height: 44px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(236, 255, 251, 0.82);
+            cursor: pointer;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+        }
+
+        .startTab:hover,
+        .startTab:focus-visible {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            outline: none;
+        }
+
+        .startTab.is-active {
+            border-color: rgba(124, 247, 255, 0.42);
+            background: linear-gradient(135deg, rgba(124, 247, 255, 0.16), rgba(255, 177, 90, 0.12));
+            color: var(--text);
+        }
+
+        .startPanels {
+            margin-top: 24px;
+        }
+
+        .startPanel {
+            display: none;
+        }
+
+        .startPanel.is-active {
+            display: block;
+        }
+
+        .startLayout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .startSceneSummary {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .startSceneCard {
+            padding: 18px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background:
+                radial-gradient(circle at top right, rgba(124, 247, 255, 0.14), transparent 42%),
+                rgba(255, 255, 255, 0.04);
+        }
+
+        .startSceneLabel {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .startSceneName {
+            margin: 8px 0 0;
+            font-family: "Bebas Neue", sans-serif;
+            font-size: clamp(32px, 7vw, 46px);
+            line-height: 0.92;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .startSceneCaption {
+            margin: 10px 0 0;
+            color: rgba(236, 255, 251, 0.76);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .startSceneTag {
+            align-self: flex-start;
+        }
+
+        .sceneGrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .sceneOption {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+        }
+
+        .sceneOption:hover,
+        .sceneOption:focus-visible {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            outline: none;
+        }
+
+        .sceneOption.is-selected {
+            border-color: rgba(124, 247, 255, 0.42);
+            background:
+                radial-gradient(circle at top right, rgba(124, 247, 255, 0.15), transparent 36%),
+                rgba(255, 255, 255, 0.06);
+        }
+
+        .scenePreview {
+            height: 108px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(145deg, rgba(12, 37, 48, 0.9), rgba(5, 15, 21, 0.72));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenePreview::before,
+        .scenePreview::after {
+            content: "";
+            position: absolute;
+            inset: auto;
+        }
+
+        .scenePreview[data-scene="classic"] {
+            background:
+                radial-gradient(circle at top, rgba(255, 177, 90, 0.35), transparent 46%),
+                linear-gradient(180deg, rgba(10, 39, 51, 0.78), rgba(4, 13, 19, 0.9));
+        }
+
+        .scenePreview[data-scene="classic"]::before {
+            inset: 48px 20px 18px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(36, 231, 143, 0.92), rgba(12, 171, 84, 0.92));
+            box-shadow: inset 0 0 0 3px rgba(247, 255, 249, 0.65);
+        }
+
+        .scenePreview[data-scene="vault"] {
+            background:
+                linear-gradient(90deg, rgba(124, 247, 255, 0.14), transparent 28%, transparent 72%, rgba(124, 247, 255, 0.14)),
+                linear-gradient(180deg, rgba(11, 30, 40, 0.92), rgba(5, 13, 18, 0.96));
+        }
+
+        .scenePreview[data-scene="vault"]::before {
+            inset: 46px 16px 16px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(29, 207, 120, 0.96), rgba(16, 145, 93, 0.96));
+            box-shadow:
+                inset 0 -18px 0 rgba(10, 36, 46, 0.85),
+                inset 0 0 0 2px rgba(241, 255, 250, 0.42);
+        }
+
+        .scenePreview[data-scene="titan"] {
+            background:
+                linear-gradient(180deg, rgba(255, 177, 90, 0.24), transparent 26%),
+                linear-gradient(180deg, rgba(16, 34, 46, 0.86), rgba(6, 15, 22, 0.94));
+        }
+
+        .scenePreview[data-scene="titan"]::before {
+            inset: 44px 12px 18px;
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(34, 121, 161, 0.94), rgba(13, 82, 116, 0.94));
+            box-shadow:
+                inset 0 -14px 0 rgba(8, 36, 52, 0.9),
+                inset 0 0 0 2px rgba(243, 255, 248, 0.42);
+        }
+
+        .scenePreview[data-scene="flux"] {
+            background:
+                radial-gradient(circle at top right, rgba(59, 225, 214, 0.24), transparent 40%),
+                linear-gradient(180deg, rgba(10, 31, 34, 0.88), rgba(4, 13, 17, 0.96));
+        }
+
+        .scenePreview[data-scene="flux"]::before {
+            inset: 42px 14px 16px;
+            clip-path: polygon(4% 6%, 84% 0, 100% 26%, 90% 100%, 18% 96%, 0 68%);
+            background: linear-gradient(180deg, rgba(23, 200, 125, 0.94), rgba(9, 132, 92, 0.94));
+            box-shadow: inset 0 0 0 2px rgba(242, 255, 247, 0.4);
+        }
+
+        .sceneOptionLabelRow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .sceneOptionTitle {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .sceneOptionTag {
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .sceneOptionBody {
+            color: rgba(236, 255, 251, 0.72);
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         .settingsStack {
@@ -608,6 +847,23 @@
                 padding: 24px 20px 22px;
             }
 
+            .overlayCard--start {
+                width: 100%;
+            }
+
+            .startLayout {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .sceneGrid {
+                grid-template-columns: 1fr;
+            }
+
+            .scenePreview {
+                height: 96px;
+            }
+
             .scoreSummary {
                 margin-top: 20px;
                 gap: 12px;
@@ -664,18 +920,127 @@
         </button>
 
         <div id="startScreen" class="overlay">
-            <div class="overlayCard">
+            <div class="overlayCard overlayCard--start">
                 <span class="overlayEyebrow">Neon Arena</span>
                 <h1 class="overlayTitle">Ping Pong 3D</h1>
-                <p class="overlayBody">Fast rally play, tighter controls, and a cleaner match HUD. Hold the center, read the bounce, and push the CPU off rhythm.</p>
-                <div class="overlayMeta">
-                    <span class="metaPill">First To 11</span>
-                    <span class="metaPill">Drag To Move</span>
-                    <span class="metaPill">Keyboard + Touch</span>
+                <p class="overlayBody">Set the arena, tune the match, then launch straight into the rally. Each scene changes the court build and atmosphere before the first serve.</p>
+
+                <div class="startTabs" role="tablist" aria-label="Pre-match menu">
+                    <button class="startTab is-active" data-start-tab="play" role="tab" aria-selected="true" type="button">Play</button>
+                    <button class="startTab" data-start-tab="arena" role="tab" aria-selected="false" type="button">Arena</button>
+                    <button class="startTab" data-start-tab="settings" role="tab" aria-selected="false" type="button">Settings</button>
                 </div>
-                <div class="overlayActionRow">
-                    <button id="startButton" class="primaryButton">Start Match</button>
-                    <span class="overlayFootnote">Press Enter for a quick start.</span>
+
+                <div class="startPanels">
+                    <section class="startPanel is-active" data-start-panel="play">
+                        <div class="startLayout">
+                            <div>
+                                <div class="overlayMeta">
+                                    <span class="metaPill">First To 11</span>
+                                    <span class="metaPill">Drag To Move</span>
+                                    <span class="metaPill">Keyboard + Touch</span>
+                                </div>
+                                <div class="overlayActionRow">
+                                    <button id="startButton" class="primaryButton">Start Match</button>
+                                    <span class="overlayFootnote">Press Enter for a quick start.</span>
+                                </div>
+                            </div>
+                            <div class="startSceneSummary">
+                                <div class="startSceneCard">
+                                    <span class="startSceneLabel">Current Arena</span>
+                                    <h3 class="startSceneName" id="startArenaName">Classic Arena</h3>
+                                    <p class="startSceneCaption" id="startArenaCaption">Original stadium wrap and standard tournament table.</p>
+                                </div>
+                                <span class="metaPill startSceneTag" id="startArenaTag">Legacy</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="startPanel" data-start-panel="arena" hidden>
+                        <div class="sceneGrid">
+                            <button class="sceneOption is-selected" data-setting="arenaScene" data-value="classic" type="button">
+                                <span class="scenePreview" data-scene="classic"></span>
+                                <div class="sceneOptionLabelRow">
+                                    <span class="sceneOptionTitle">Classic Arena</span>
+                                    <span class="sceneOptionTag">Legacy</span>
+                                </div>
+                                <span class="sceneOptionBody">The original stadium shell and tournament table.</span>
+                            </button>
+                            <button class="sceneOption" data-setting="arenaScene" data-value="vault" type="button">
+                                <span class="scenePreview" data-scene="vault"></span>
+                                <div class="sceneOptionLabelRow">
+                                    <span class="sceneOptionTitle">Glass Vault</span>
+                                    <span class="sceneOptionTag">Enclosed</span>
+                                </div>
+                                <span class="sceneOptionBody">A boxed-in court with a sealed display-case table.</span>
+                            </button>
+                            <button class="sceneOption" data-setting="arenaScene" data-value="titan" type="button">
+                                <span class="scenePreview" data-scene="titan"></span>
+                                <div class="sceneOptionLabelRow">
+                                    <span class="sceneOptionTitle">Titan Stage</span>
+                                    <span class="sceneOptionTag">Grand</span>
+                                </div>
+                                <span class="sceneOptionBody">A larger championship platform on a raised heavy plinth.</span>
+                            </button>
+                            <button class="sceneOption" data-setting="arenaScene" data-value="flux" type="button">
+                                <span class="scenePreview" data-scene="flux"></span>
+                                <div class="sceneOptionLabelRow">
+                                    <span class="sceneOptionTitle">Flux Foundry</span>
+                                    <span class="sceneOptionTag">Wild</span>
+                                </div>
+                                <span class="sceneOptionBody">An asymmetrical experimental chassis with a stranger silhouette.</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="startPanel" data-start-panel="settings" hidden>
+                        <div class="settingsStack">
+                            <div class="settingsGroup">
+                                <div class="settingsLabelRow">
+                                    <span class="settingsLabel">Difficulty</span>
+                                    <span class="settingsValue" data-display="difficulty">Normal</span>
+                                </div>
+                                <div class="segmentRow">
+                                    <button class="segmentButton" data-setting="difficulty" data-value="easy" type="button">Easy</button>
+                                    <button class="segmentButton" data-setting="difficulty" data-value="normal" type="button">Normal</button>
+                                    <button class="segmentButton" data-setting="difficulty" data-value="hard" type="button">Hard</button>
+                                </div>
+                            </div>
+                            <div class="settingsGroup">
+                                <div class="settingsLabelRow">
+                                    <span class="settingsLabel">Perspective</span>
+                                    <span class="settingsValue" data-display="cameraPerspective">Third-Person</span>
+                                </div>
+                                <div class="segmentRow">
+                                    <button class="segmentButton" data-setting="cameraPerspective" data-value="thirdPerson" type="button">3D</button>
+                                    <button class="segmentButton" data-setting="cameraPerspective" data-value="topDown" type="button">Top</button>
+                                    <button class="segmentButton" data-setting="cameraPerspective" data-value="pov" type="button">POV</button>
+                                    <button class="segmentButton" data-setting="cameraPerspective" data-value="isometric" type="button">Iso</button>
+                                </div>
+                            </div>
+                            <div class="settingsGroup">
+                                <div class="settingsLabelRow">
+                                    <span class="settingsLabel">Zoom</span>
+                                    <span class="settingsValue" data-display="cameraZoom">Default</span>
+                                </div>
+                                <div class="segmentRow">
+                                    <button class="segmentButton" data-setting="cameraZoom" data-value="tight" type="button">Tight</button>
+                                    <button class="segmentButton" data-setting="cameraZoom" data-value="default" type="button">Default</button>
+                                    <button class="segmentButton" data-setting="cameraZoom" data-value="wide" type="button">Wide</button>
+                                </div>
+                            </div>
+                            <div class="settingsGroup">
+                                <div class="settingsLabelRow">
+                                    <span class="settingsLabel">SFX</span>
+                                    <span class="settingsValue" data-display="sound">On</span>
+                                </div>
+                                <div class="segmentRow">
+                                    <button class="segmentButton" data-setting="sound" data-value="on" type="button">On</button>
+                                    <button class="segmentButton" data-setting="sound" data-value="off" type="button">Off</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -705,7 +1070,7 @@
                     <div class="settingsGroup">
                         <div class="settingsLabelRow">
                             <span class="settingsLabel">Difficulty</span>
-                            <span class="settingsValue" id="difficultyValue">Normal</span>
+                            <span class="settingsValue" data-display="difficulty">Normal</span>
                         </div>
                         <div class="segmentRow">
                             <button class="segmentButton" data-setting="difficulty" data-value="easy" type="button">Easy</button>
@@ -716,7 +1081,7 @@
                     <div class="settingsGroup">
                         <div class="settingsLabelRow">
                             <span class="settingsLabel">Perspective</span>
-                            <span class="settingsValue" id="cameraPerspectiveValue">Third-Person</span>
+                            <span class="settingsValue" data-display="cameraPerspective">Third-Person</span>
                         </div>
                         <div class="segmentRow">
                             <button class="segmentButton" data-setting="cameraPerspective" data-value="thirdPerson" type="button">3D</button>
@@ -728,7 +1093,7 @@
                     <div class="settingsGroup">
                         <div class="settingsLabelRow">
                             <span class="settingsLabel">Zoom</span>
-                            <span class="settingsValue" id="cameraZoomValue">Default</span>
+                            <span class="settingsValue" data-display="cameraZoom">Default</span>
                         </div>
                         <div class="segmentRow">
                             <button class="segmentButton" data-setting="cameraZoom" data-value="tight" type="button">Tight</button>
@@ -739,7 +1104,7 @@
                     <div class="settingsGroup">
                         <div class="settingsLabelRow">
                             <span class="settingsLabel">SFX</span>
-                            <span class="settingsValue" id="pauseSfxValue">On</span>
+                            <span class="settingsValue" data-display="sound">On</span>
                         </div>
                         <div class="segmentRow">
                             <button class="segmentButton" data-setting="sound" data-value="on" type="button">On</button>
