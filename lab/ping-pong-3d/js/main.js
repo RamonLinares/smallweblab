@@ -15,6 +15,11 @@ const HEIGHT_INCREMENT_MAX = 1.5; // Maximum height increment
 const MAX_HEIGHT_VELOCITY = 5; // Maximum height velocity
 const ANGLE_ADJUSTMENT_FACTOR = 2; // Adjusted factor for better gameplay
 const MAX_BALL_SPEED = 15; // Maximum speed for the ball
+const NORMAL_RETURN_SPEED_MIN = 6.2;
+const NORMAL_RETURN_SPEED_MAX = 8.6;
+const SMASH_RETURN_SPEED_MIN = 9.8;
+const SMASH_RETURN_SPEED_MAX = 11.2;
+const TABLE_BOUNCE_FORWARD_DECAY = 0.94;
 const MAX_BALL_HEIGHT = 4; // Maximum height for the ball
 const BALL_SPIN_CURVE_FACTOR = 0.95;
 const BALL_TOPSPIN_DIP_FACTOR = 1.05;
@@ -24,14 +29,17 @@ const PADDLE_VELOCITY_CLAMP = 18;
 
 // Paddle boundaries
 const PADDLE_BOUNDARY_Z_MIN = 2; // Player paddle cannot move closer than 2 units from the net
-const PADDLE_BOUNDARY_Z_MAX = TABLE_BOUNDARY + 1; // Allow the paddle to move slightly beyond the table edge
-const COMPUTER_PADDLE_BOUNDARY_Z_MIN = -TABLE_BOUNDARY - 1; // Allow the computer paddle to move slightly beyond the table edge
+const PADDLE_BOUNDARY_Z_MAX = TABLE_BOUNDARY + 2.75; // Allow the paddle to move noticeably below the table edge for touch play
+const COMPUTER_PADDLE_BOUNDARY_Z_MIN = -TABLE_BOUNDARY - 2.25; // Mirror the extra recovery space on the CPU side
 const COMPUTER_PADDLE_BOUNDARY_Z_MAX = -4; // Computer paddle should stay further back from the net
 const BALL_RADIUS = 0.2;
 const PADDLE_HALF_DEPTH = 0.3;
+const PLAYER_PADDLE_START_Z = 6.8;
+const COMPUTER_PADDLE_START_Z = -6.2;
 const SOUND_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-sfx-enabled';
 const DIFFICULTY_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-difficulty';
 const CAMERA_ZOOM_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-camera-zoom';
+const CAMERA_PERSPECTIVE_PREFERENCE_STORAGE_KEY = 'ping-pong-3d-camera-perspective';
 
 const DIFFICULTY_SETTINGS = {
     easy: {
@@ -81,6 +89,13 @@ const CAMERA_ZOOM_SETTINGS = {
     wide: { label: 'Wide', positionY: 0.65, positionZ: 1.25, lookAtY: -0.04, lookAtZ: 0.16, fov: 4 }
 };
 
+const CAMERA_PERSPECTIVE_SETTINGS = {
+    thirdPerson: { label: 'Third-Person' },
+    topDown: { label: 'Top-Down' },
+    pov: { label: 'POV' },
+    isometric: { label: 'Isometric' }
+};
+
 class PingPongGame {
     constructor() {
         this.clock = new Clock();
@@ -97,6 +112,7 @@ class PingPongGame {
         this.soundEnabled = this.loadSoundPreference();
         this.difficulty = this.loadDifficultyPreference();
         this.cameraZoom = this.loadCameraZoomPreference();
+        this.cameraPerspective = this.loadCameraPerspectivePreference();
         this.isPointAnnouncementActive = false;
         this.computerAimOffset = new Vector2(0, 0);
         this.nextComputerAimRefresh = 0;
@@ -115,6 +131,9 @@ class PingPongGame {
         });
         document.querySelectorAll('[data-setting="cameraZoom"]').forEach((button) => {
             button.addEventListener('click', () => this.setCameraZoom(button.dataset.value));
+        });
+        document.querySelectorAll('[data-setting="cameraPerspective"]').forEach((button) => {
+            button.addEventListener('click', () => this.setCameraPerspective(button.dataset.value));
         });
         document.querySelectorAll('[data-setting="sound"]').forEach((button) => {
             button.addEventListener('click', () => this.setSoundEnabled(button.dataset.value === 'on'));
@@ -136,7 +155,7 @@ class PingPongGame {
             this.showPauseScreen();
         } else {
             this.hidePauseScreen();
-            this.animate();
+            this.syncSimulationClock();
         }
     }
 
@@ -206,6 +225,23 @@ class PingPongGame {
         }
     }
 
+    loadCameraPerspectivePreference() {
+        try {
+            const storedValue = window.localStorage.getItem(CAMERA_PERSPECTIVE_PREFERENCE_STORAGE_KEY);
+            return CAMERA_PERSPECTIVE_SETTINGS[storedValue] ? storedValue : 'thirdPerson';
+        } catch (error) {
+            return 'thirdPerson';
+        }
+    }
+
+    saveCameraPerspectivePreference() {
+        try {
+            window.localStorage.setItem(CAMERA_PERSPECTIVE_PREFERENCE_STORAGE_KEY, this.cameraPerspective);
+        } catch (error) {
+            // Ignore storage failures and keep the in-memory preference.
+        }
+    }
+
     startGame() {
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
@@ -226,6 +262,7 @@ class PingPongGame {
             this.resetGame();
             this.isAnimating = false;
             this.refreshGameplayCamera(true);
+            this.syncSimulationClock();
             this.setPauseButtonLabel();
             this.spawnPowerUp(); // Start spawning power-ups
             this.spawnObstacle(); // Start spawning obstacles
@@ -320,6 +357,7 @@ class PingPongGame {
         this.camera = new PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.normalCameraPosition = new Vector3(0, 8, 11);
         this.normalCameraLookAt = new Vector3(0, 0.5, 0);
+        this.cameraLookTarget = new Vector3(0, 0.5, 0);
         this.refreshGameplayCamera(true);
         this.renderer = new WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -336,13 +374,21 @@ class PingPongGame {
 
         const playerPaddle = new Paddle(0xff0000);
         this.paddle = playerPaddle.group;
-        this.paddle.position.set(0, 0.4, 6); // Initial position slightly outside the table
+        this.paddle.position.set(0, 0.4, PLAYER_PADDLE_START_Z);
         this.paddle.castShadow = true; // Ensure the paddle casts shadow
+        this.playerPaddleSolidMeshes = [];
+        this.paddle.traverse((child) => {
+            if (child.isMesh) {
+                this.playerPaddleSolidMeshes.push(child);
+            }
+        });
+        this.playerPaddleGuide = this.createPlayerPaddleGuide(this.paddle);
+        this.paddle.add(this.playerPaddleGuide);
         this.scene.add(this.paddle);
 
         const computerPaddle = new Paddle(0x0000ff);
         this.computerPaddle = computerPaddle.group;
-        this.computerPaddle.position.set(0, 0.4, -6);
+        this.computerPaddle.position.set(0, 0.4, COMPUTER_PADDLE_START_Z);
         this.computerPaddle.castShadow = true; // Ensure the paddle casts shadow
         this.scene.add(this.computerPaddle);
 
@@ -464,7 +510,17 @@ class PingPongGame {
         this.resetGame();
         this.isAnimating = false;
         this.refreshGameplayCamera(true);
+        this.syncSimulationClock();
         this.setPauseButtonLabel();
+    }
+
+    resetPaddles() {
+        this.paddle.position.set(0, 0.4, PLAYER_PADDLE_START_Z);
+        this.computerPaddle.position.set(0, 0.4, COMPUTER_PADDLE_START_Z);
+        this.playerPaddleVelocity.set(0, 0, 0);
+        this.computerPaddleVelocity.set(0, 0, 0);
+        this.previousPlayerPaddlePosition.copy(this.paddle.position);
+        this.previousComputerPaddlePosition.copy(this.computerPaddle.position);
     }
 
     stopSpawning() {
@@ -507,12 +563,17 @@ class PingPongGame {
         delete this.pointAnnouncement.dataset.side;
     }
 
+    syncSimulationClock() {
+        this.clock.getDelta();
+    }
+
     resumeAfterPointAnnouncement() {
         if (!this.isPointAnnouncementActive) {
             return;
         }
 
         this.hidePointAnnouncement();
+        this.syncSimulationClock();
     }
 
     isMobileViewport() {
@@ -521,23 +582,136 @@ class PingPongGame {
 
     refreshGameplayCamera(resetView = false) {
         const zoomConfig = CAMERA_ZOOM_SETTINGS[this.cameraZoom];
+        const isMobile = this.isMobileViewport();
 
-        if (this.isMobileViewport()) {
-            this.normalCameraPosition.set(0, 8.9 + zoomConfig.positionY, 12.8 + zoomConfig.positionZ);
-            this.normalCameraLookAt.set(0, 0.45 + zoomConfig.lookAtY, 0.3 + zoomConfig.lookAtZ);
-            this.camera.fov = 56 + zoomConfig.fov;
-        } else {
-            this.normalCameraPosition.set(0, 8 + zoomConfig.positionY, 11 + zoomConfig.positionZ);
-            this.normalCameraLookAt.set(0, 0.5 + zoomConfig.lookAtY, 0 + zoomConfig.lookAtZ);
-            this.camera.fov = 50 + zoomConfig.fov;
+        this.camera.up.set(0, 1, 0);
+
+        switch (this.cameraPerspective) {
+            case 'topDown':
+                this.normalCameraPosition.set(
+                    0,
+                    (isMobile ? 17.9 : 16.9) + zoomConfig.positionZ * 1.05 + zoomConfig.positionY * 0.5,
+                    0.01
+                );
+                this.normalCameraLookAt.set(0, TABLE_HEIGHT, 0);
+                this.camera.fov = (isMobile ? 44 : 40) + zoomConfig.fov * 0.55;
+                this.camera.up.set(0, 0, -1);
+                break;
+            case 'pov': {
+                const paddleX = this.paddle ? this.paddle.position.x : 0;
+                const paddleBaseY = 0.42;
+                const paddleZ = this.paddle ? this.paddle.position.z : PLAYER_PADDLE_START_Z;
+                const ballX = this.ball ? this.ball.position.x : 0;
+                const ballY = this.ball ? this.ball.position.y : 0.5;
+                const ballZ = this.ball ? this.ball.position.z : 0;
+                const forwardLookZ = Math.min(paddleZ - 5.6, paddleZ + (ballZ - paddleZ) * 0.68);
+                let povZoomY = -0.1;
+                let povZoomZ = -0.22;
+                let povZoomFov = -2.25;
+
+                if (this.cameraZoom === 'tight') {
+                    povZoomY = -0.28;
+                    povZoomZ = -0.52;
+                    povZoomFov = -5.2;
+                } else if (this.cameraZoom === 'wide') {
+                    povZoomY = 0;
+                    povZoomZ = 0;
+                    povZoomFov = 0;
+                }
+
+                this.normalCameraPosition.set(
+                    paddleX,
+                    paddleBaseY + (isMobile ? 1.62 : 1.78) + povZoomY,
+                    paddleZ + (isMobile ? 3.15 : 3.35) + povZoomZ
+                );
+                this.normalCameraLookAt.set(
+                    paddleX + (ballX - paddleX) * 0.46,
+                    Math.max(0.98, paddleBaseY + (ballY - paddleBaseY) * 0.5),
+                    forwardLookZ
+                );
+                this.camera.fov = (isMobile ? 80 : 74) + povZoomFov;
+                break;
+            }
+            case 'isometric':
+                this.normalCameraPosition.set(
+                    9.1 + zoomConfig.positionZ * 0.9,
+                    (isMobile ? 11.7 : 10.8) + zoomConfig.positionY * 0.8,
+                    11 + zoomConfig.positionZ * 0.85
+                );
+                this.normalCameraLookAt.set(0, 0.45 + zoomConfig.lookAtY * 0.5, 0.2 + zoomConfig.lookAtZ * 0.35);
+                this.camera.fov = (isMobile ? 56 : 52) + zoomConfig.fov * 0.8;
+                break;
+            case 'thirdPerson':
+            default:
+                if (isMobile) {
+                    this.normalCameraPosition.set(0, 9.5 + zoomConfig.positionY, 14.2 + zoomConfig.positionZ * 1.05);
+                    this.normalCameraLookAt.set(0, 0.45 + zoomConfig.lookAtY, 0.3 + zoomConfig.lookAtZ);
+                    this.camera.fov = 60 + zoomConfig.fov;
+                } else {
+                    this.normalCameraPosition.set(0, 8.55 + zoomConfig.positionY, 12.25 + zoomConfig.positionZ * 1.05);
+                    this.normalCameraLookAt.set(0, 0.5 + zoomConfig.lookAtY, 0 + zoomConfig.lookAtZ);
+                    this.camera.fov = 54 + zoomConfig.fov;
+                }
+                break;
         }
 
+        this.updatePerspectivePresentation();
         this.camera.updateProjectionMatrix();
 
-        if (resetView) {
+        if (this.cameraPerspective === 'pov' && !resetView && this.isGameStarted) {
+            this.camera.position.lerp(this.normalCameraPosition, 0.18);
+            this.cameraLookTarget.lerp(this.normalCameraLookAt, 0.22);
+            this.camera.lookAt(this.cameraLookTarget);
+        } else if (resetView) {
             this.camera.position.copy(this.normalCameraPosition);
+            this.cameraLookTarget.copy(this.normalCameraLookAt);
             this.camera.lookAt(this.normalCameraLookAt);
         }
+    }
+
+    updatePerspectivePresentation() {
+        const isPov = this.cameraPerspective === 'pov';
+
+        if (this.playerPaddleSolidMeshes) {
+            this.playerPaddleSolidMeshes.forEach((mesh) => {
+                mesh.visible = !isPov;
+                mesh.castShadow = !isPov;
+            });
+        }
+
+        if (this.playerPaddleGuide) {
+            this.playerPaddleGuide.visible = isPov;
+        }
+
+        if (this.netShadow && this.netShadow.material) {
+            this.netShadow.material.opacity = this.cameraPerspective === 'topDown' ? 0.34 : 0.18;
+            this.netShadow.material.needsUpdate = true;
+        }
+    }
+
+    createPlayerPaddleGuide(sourceGroup) {
+        const guide = new THREE.Group();
+        sourceGroup.traverse((child) => {
+            if (!child.isMesh) {
+                return;
+            }
+
+            const edgeGeometry = new THREE.EdgesGeometry(child.geometry, 26);
+            const edgeMaterial = new LineBasicMaterial({
+                color: child.material.color ? child.material.color.getHex() : 0xffffff,
+                transparent: true,
+                opacity: child.material.color && child.material.color.getHex() === 0x8b4513 ? 0.82 : 0.92
+            });
+            const outline = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+            outline.position.copy(child.position);
+            outline.rotation.copy(child.rotation);
+            outline.scale.copy(child.scale);
+            outline.renderOrder = 5;
+            guide.add(outline);
+        });
+
+        guide.visible = false;
+        return guide;
     }
 
     setPauseButtonLabel() {
@@ -574,12 +748,24 @@ class PingPongGame {
         this.syncSettingsPanel();
     }
 
+    setCameraPerspective(cameraPerspective) {
+        if (!CAMERA_PERSPECTIVE_SETTINGS[cameraPerspective]) {
+            return;
+        }
+
+        this.cameraPerspective = cameraPerspective;
+        this.saveCameraPerspectivePreference();
+        this.refreshGameplayCamera(true);
+        this.syncSettingsPanel();
+    }
+
     syncSettingsPanel() {
         if (!this.pauseScreen) {
             return;
         }
 
         this.difficultyValue.textContent = DIFFICULTY_SETTINGS[this.difficulty].label;
+        this.cameraPerspectiveValue.textContent = CAMERA_PERSPECTIVE_SETTINGS[this.cameraPerspective].label;
         this.cameraZoomValue.textContent = CAMERA_ZOOM_SETTINGS[this.cameraZoom].label;
         this.pauseSfxValue.textContent = this.soundEnabled ? 'On' : 'Off';
 
@@ -591,6 +777,11 @@ class PingPongGame {
         this.cameraZoomButtons.forEach((button) => {
             button.classList.toggle('is-selected', button.dataset.value === this.cameraZoom);
             button.setAttribute('aria-pressed', button.dataset.value === this.cameraZoom ? 'true' : 'false');
+        });
+
+        this.cameraPerspectiveButtons.forEach((button) => {
+            button.classList.toggle('is-selected', button.dataset.value === this.cameraPerspective);
+            button.setAttribute('aria-pressed', button.dataset.value === this.cameraPerspective ? 'true' : 'false');
         });
 
         this.soundButtons.forEach((button) => {
@@ -693,21 +884,33 @@ class PingPongGame {
         this.previousComputerPaddlePosition.copy(this.computerPaddle.position);
     }
 
-    applyPaddleShot({ paddle, paddleVelocity, hitPosition, returnDirection, randomHeightIncrement, randomVelocityIncrement, isPlayer }) {
+    applyPaddleShot({ paddle, paddleVelocity, hitPosition, returnDirection, randomHeightIncrement, isPlayer }) {
         const clamp = THREE.MathUtils.clamp;
         const impactSpeed = paddleVelocity.length();
         const lateralMotion = paddleVelocity.x;
         const forwardMotion = paddleVelocity.z * returnDirection;
         const sideSpin = clamp(lateralMotion * (0.26 + impactSpeed * 0.015), -3.1, 3.1);
         const topspin = clamp(forwardMotion * 0.42, -2.4, 2.9);
-        const speedBoost = clamp(impactSpeed * 0.11, 0, 1.95);
-        const driveBoost = clamp(forwardMotion * 0.18, -0.35, 1.35);
+        const speedBoost = clamp(impactSpeed * 0.09, 0, 1.45);
+        const driveBoost = clamp(forwardMotion * 0.16, -0.25, 1.05);
         const loftBoost = clamp(-forwardMotion * 0.24, 0, 1.45);
         const smash = impactSpeed > 4.6 && forwardMotion > 2.2 && Math.abs(hitPosition) < 0.48;
+        const currentForwardSpeed = Math.abs(this.ballVelocity.z);
+        const normalTargetSpeed = clamp(
+            6.4 + impactSpeed * 0.17 + Math.max(forwardMotion, 0) * 0.12 + Math.abs(hitPosition) * 0.12,
+            NORMAL_RETURN_SPEED_MIN,
+            NORMAL_RETURN_SPEED_MAX
+        );
+        const smashTargetSpeed = clamp(
+            9.6 + impactSpeed * 0.12 + Math.max(forwardMotion, 0) * 0.1,
+            SMASH_RETURN_SPEED_MIN,
+            SMASH_RETURN_SPEED_MAX
+        );
+        const desiredForwardSpeed = smash ? smashTargetSpeed : normalTargetSpeed;
         const nextForwardSpeed = clamp(
-            Math.abs(this.ballVelocity.z) * randomVelocityIncrement + speedBoost + driveBoost + (smash ? 1.3 : 0),
-            3.6,
-            MAX_BALL_SPEED
+            currentForwardSpeed * 0.18 + desiredForwardSpeed * 0.82,
+            smash ? SMASH_RETURN_SPEED_MIN : NORMAL_RETURN_SPEED_MIN,
+            smash ? SMASH_RETURN_SPEED_MAX : NORMAL_RETURN_SPEED_MAX
         );
 
         this.ballVelocity.z = returnDirection * nextForwardSpeed;
@@ -715,12 +918,19 @@ class PingPongGame {
 
         const baseLift = Math.abs(this.ballVelocity.y) * randomHeightIncrement;
         let nextLift = baseLift + 0.35 + loftBoost - (speedBoost + Math.max(driveBoost, 0)) * 0.22;
+        const speedLiftFloor = THREE.MathUtils.mapLinear(
+            nextForwardSpeed,
+            NORMAL_RETURN_SPEED_MIN,
+            SMASH_RETURN_SPEED_MAX,
+            2.15,
+            3.35
+        );
 
         if (smash) {
-            nextLift *= 0.54;
+            nextLift *= 0.68;
         }
 
-        this.ballVelocity.y = clamp(nextLift, MIN_BOUNCE_VELOCITY, MAX_HEIGHT_VELOCITY);
+        this.ballVelocity.y = clamp(Math.max(nextLift, speedLiftFloor), MIN_BOUNCE_VELOCITY, MAX_HEIGHT_VELOCITY);
         this.ballSpin.set(sideSpin, topspin);
 
         if (isPlayer && smash) {
@@ -835,7 +1045,20 @@ class PingPongGame {
         this.net = new Mesh(netGeometry, netMaterial);
         this.net.position.y = NET_HEIGHT / 2; // Center net position vertically
         this.net.position.z = 0;
+        this.net.castShadow = true;
         this.scene.add(this.net);
+
+        const netShadowGeometry = new PlaneGeometry(5.08, 0.34);
+        const netShadowMaterial = new MeshStandardMaterial({
+            color: 0x081014,
+            transparent: true,
+            opacity: 0.18,
+            depthWrite: false
+        });
+        this.netShadow = new Mesh(netShadowGeometry, netShadowMaterial);
+        this.netShadow.rotation.x = -Math.PI / 2;
+        this.netShadow.position.set(0, TABLE_HEIGHT + 0.004, 0);
+        this.scene.add(this.netShadow);
     }
 
     initBoundaries() {
@@ -902,9 +1125,11 @@ class PingPongGame {
         this.finalScore = document.getElementById('finalScore');
         this.finalOutcome = document.getElementById('finalOutcome');
         this.difficultyValue = document.getElementById('difficultyValue');
+        this.cameraPerspectiveValue = document.getElementById('cameraPerspectiveValue');
         this.cameraZoomValue = document.getElementById('cameraZoomValue');
         this.pauseSfxValue = document.getElementById('pauseSfxValue');
         this.difficultyButtons = Array.from(document.querySelectorAll('[data-setting="difficulty"]'));
+        this.cameraPerspectiveButtons = Array.from(document.querySelectorAll('[data-setting="cameraPerspective"]'));
         this.cameraZoomButtons = Array.from(document.querySelectorAll('[data-setting="cameraZoom"]'));
         this.soundButtons = Array.from(document.querySelectorAll('[data-setting="sound"]'));
         this.setPauseButtonLabel();
@@ -1026,7 +1251,7 @@ class PingPongGame {
     }
 
     onWindowResize() {
-        this.refreshGameplayCamera(this.isMobileViewport());
+        this.refreshGameplayCamera(true);
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1048,6 +1273,7 @@ class PingPongGame {
                 this.updatePaddleMotion(delta);
                 this.checkCollisions();
                 this.updateTrail();
+                this.refreshGameplayCamera();
             }
             TWEEN.update(); // Update Tween animations
             this.renderer.render(this.scene, this.camera);
@@ -1085,8 +1311,13 @@ class PingPongGame {
             const bounceHeightFactor = topspin >= 0
                 ? Math.max(0.72, 1 - topspin * 0.08)
                 : Math.min(1.3, 1 + Math.abs(topspin) * 0.1);
+            const forwardSpeedAfterBounce = Math.max(
+                NORMAL_RETURN_SPEED_MIN,
+                Math.abs(this.ballVelocity.z) * TABLE_BOUNCE_FORWARD_DECAY
+            );
 
             this.ballVelocity.y = Math.max(-this.ballVelocity.y * bounceHeightFactor, MIN_BOUNCE_VELOCITY);
+            this.ballVelocity.z = Math.sign(this.ballVelocity.z || 1) * forwardSpeedAfterBounce;
             this.ballVelocity.x += this.ballSpin.x * BALL_BOUNCE_SPIN_TRANSFER;
             this.ball.position.y = TABLE_HEIGHT; // Ensure the ball is placed correctly on the table
             this.ballSpin.x *= 0.9;
@@ -1127,7 +1358,6 @@ class PingPongGame {
         const bounceDelay = 0.5; // Increased delay to prevent multiple detections
 
         const randomHeightIncrement = Math.random() * (HEIGHT_INCREMENT_MAX - HEIGHT_INCREMENT_MIN) + HEIGHT_INCREMENT_MIN;
-        const randomVelocityIncrement = Math.random() * (VELOCITY_INCREMENT_MAX - VELOCITY_INCREMENT_MIN) + VELOCITY_INCREMENT_MIN;
         const playerWithinFace =
             this.ball.position.x >= this.paddle.position.x - paddleWidth / 2 &&
             this.ball.position.x <= this.paddle.position.x + paddleWidth / 2 &&
@@ -1156,7 +1386,6 @@ class PingPongGame {
                     hitPosition,
                     returnDirection: -1,
                     randomHeightIncrement,
-                    randomVelocityIncrement,
                     isPlayer: true
                 });
 
@@ -1196,7 +1425,6 @@ class PingPongGame {
                     hitPosition,
                     returnDirection: 1,
                     randomHeightIncrement,
-                    randomVelocityIncrement,
                     isPlayer: false
                 });
 
@@ -1336,6 +1564,7 @@ class PingPongGame {
     resetBall() {
         this.ball.position.set(0, 0.4, 0); // Reset ball position to the center
         this.ballVelocity.copy(BALL_INITIAL_VELOCITY); // Reset ball velocity
+        this.ballSpin.set(0, 0);
         this.previousBallPosition.copy(this.ball.position);
     }
 
@@ -1343,6 +1572,7 @@ class PingPongGame {
         this.hidePointAnnouncement();
         this.score = 0;
         this.computerScore = 0;
+        this.resetPaddles();
         this.updateScore();
         this.resetBall();
         this.clearPowerUpsAndObstacles(); // Clear power-ups and obstacles on reset
