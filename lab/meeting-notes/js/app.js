@@ -23,11 +23,14 @@ const noteDeadlineInput = document.getElementById('noteDeadline');
 const statusDiv = document.getElementById('status');
 const errorDiv = document.getElementById('error');
 const searchInput = document.getElementById('searchInput');
+const searchToggleBtn = document.getElementById('searchToggleBtn');
+const searchPanel = document.getElementById('searchPanel');
 const menuToggleBtn = document.getElementById('menuToggleBtn');
 const headerMenu = document.getElementById('headerMenu');
 const exportXmlBtn = document.getElementById('exportXmlBtn');
 const importXmlBtn = document.getElementById('importXmlBtn');
 const importXmlInput = document.getElementById('importXmlInput');
+const mainHeader = document.querySelector('.main-header');
 
 // Global variables
 let notes = [];
@@ -35,6 +38,7 @@ let selectedTags = new Set();
 let dateFilter = 'all';
 let statusFilter = 'all';
 let currentlyEditingNote = null;
+const MOBILE_BREAKPOINT = 768;
 
 // Utility Functions
 function clearMessages() {
@@ -65,6 +69,64 @@ function showMessage(message, isError = false) {
             targetDiv.textContent = '';
         }
     }, isError ? 5000 : 3000);
+}
+
+function isMobileViewport() {
+    return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function updateHeaderOffset() {
+    if (!mainHeader) return;
+    const headerHeight = Math.ceil(mainHeader.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--header-offset', `${headerHeight}px`);
+}
+
+function setSearchPanelOpen(isOpen) {
+    if (!mainHeader || !searchToggleBtn || !searchPanel) return;
+
+    const shouldOpen = isMobileViewport() ? isOpen : false;
+
+    if (!shouldOpen && searchPanel.contains(document.activeElement)) {
+        document.activeElement.blur();
+    }
+
+    mainHeader.classList.toggle('search-open', shouldOpen);
+    searchToggleBtn.classList.toggle('active', shouldOpen);
+    searchToggleBtn.setAttribute('aria-expanded', String(shouldOpen));
+    searchPanel.setAttribute('aria-hidden', String(!shouldOpen));
+    updateHeaderOffset();
+}
+
+function focusSearchInput() {
+    if (!searchInput) return;
+
+    headerMenu?.classList.remove('show');
+
+    if (isMobileViewport()) {
+        setSearchPanelOpen(true);
+    }
+
+    requestAnimationFrame(() => {
+        searchInput.focus();
+    });
+}
+
+function syncResponsiveHeaderState() {
+    if (!mainHeader || !searchToggleBtn || !searchPanel) {
+        updateHeaderOffset();
+        return;
+    }
+
+    if (!isMobileViewport()) {
+        mainHeader.classList.remove('search-open');
+        searchToggleBtn.classList.remove('active');
+        searchToggleBtn.setAttribute('aria-expanded', 'false');
+        searchPanel.removeAttribute('aria-hidden');
+    } else if (!mainHeader.classList.contains('search-open')) {
+        searchPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    updateHeaderOffset();
 }
 
 const escapeXML = (str) => {
@@ -264,6 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (notes.length > 0) {
             showMessage(`Loaded ${notes.length} notes successfully`);
         }
+
+        syncResponsiveHeaderState();
     } catch (error) {
         console.error('Error initializing application:', error);
         showMessage('Error loading notes. Please check console for details.', true);
@@ -375,6 +439,7 @@ function setupEventListeners() {
     if (menuToggleBtn && headerMenu) {
         menuToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            setSearchPanelOpen(false);
             headerMenu.classList.toggle('show');
         });
 
@@ -382,6 +447,35 @@ function setupEventListeners() {
         document.addEventListener('click', (e) => {
             if (!menuToggleBtn.contains(e.target) && !headerMenu.contains(e.target)) {
                 headerMenu.classList.remove('show');
+            }
+
+             if (
+                isMobileViewport() &&
+                mainHeader &&
+                searchToggleBtn &&
+                mainHeader.classList.contains('search-open') &&
+                !mainHeader.contains(e.target)
+            ) {
+                setSearchPanelOpen(false);
+            }
+        });
+    }
+
+    if (searchToggleBtn) {
+        searchToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            headerMenu.classList.remove('show');
+
+            if (!isMobileViewport()) {
+                focusSearchInput();
+                return;
+            }
+
+            const isOpen = mainHeader?.classList.contains('search-open');
+            setSearchPanelOpen(!isOpen);
+
+            if (!isOpen) {
+                focusSearchInput();
             }
         });
     }
@@ -441,6 +535,8 @@ function setupEventListeners() {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
+    window.addEventListener('resize', syncResponsiveHeaderState);
+    window.addEventListener('load', syncResponsiveHeaderState);
 
     // Import XML button
     const importXmlBtn = document.getElementById('importXmlBtn');
@@ -641,6 +737,18 @@ function saveNote() {
 
 // Handle keyboard shortcuts
 function handleKeyboardShortcuts(e) {
+    if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        });
+
+        headerMenu.classList.remove('show');
+        setSearchPanelOpen(false);
+        return;
+    }
+
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
         return;
     }
@@ -661,7 +769,7 @@ function handleKeyboardShortcuts(e) {
                 break;
             case 'f':
                 e.preventDefault();
-                document.getElementById('searchInput').focus();
+                focusSearchInput();
                 break;
             case 'e':
                 e.preventDefault();
@@ -670,12 +778,7 @@ function handleKeyboardShortcuts(e) {
         }
     } else if (e.key === '/') {
         e.preventDefault();
-        document.getElementById('searchInput').focus();
-    } else if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-            modal.classList.remove('show');
-        });
+        focusSearchInput();
     }
 }
 
