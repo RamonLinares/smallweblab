@@ -32,25 +32,12 @@
                 </svg>
             </button>
             <div id="headerMenu" class="header-menu">
-                <button id="darkModeToggle" class="menu-item">
+                <button id="settingsBtn" class="menu-item">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                     </svg>
-                    Dark Mode
-                </button>
-                <button id="keyboardShortcutsBtn" class="menu-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
-                    </svg>
-                    Keyboard Shortcuts
+                    Settings
                 </button>
                 <button id="exportXmlBtn" class="menu-item">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -88,7 +75,29 @@
     </div>
 
     <div class="container">
-        <section id="searchSurface" class="search-surface">
+        <section id="searchSurface" class="search-surface" aria-hidden="true">
+            <div class="search-surface-header">
+                <div class="heading-with-help">
+                    <h2>Search &amp; Filters</h2>
+                    <div class="info-tooltip">
+                        <button
+                            type="button"
+                            class="info-tooltip-btn"
+                            aria-label="About search and filters"
+                            aria-expanded="false"
+                        >
+                            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                <circle cx="8" cy="8" r="6.25"></circle>
+                                <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                <path d="M8 7v4.1"></path>
+                            </svg>
+                        </button>
+                        <div class="info-tooltip-popover" role="tooltip">
+                            Search notes by title, content, tags, deadlines, and action status.
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="searchPanel" class="search-container">
                 <div class="search-input-container">
                     <input type="text" id="searchInput" placeholder="Search notes…">
@@ -121,7 +130,31 @@
                 </div>
             </div>
         </section>
-        <div id="tagFilterContainer" class="tag-filter-container"></div>
+        <section id="tagFilterSection" class="tag-filter-section" hidden>
+            <div class="tag-filter-header">
+                <div class="heading-with-help">
+                    <h2>Tags</h2>
+                    <div class="info-tooltip">
+                        <button
+                            type="button"
+                            class="info-tooltip-btn"
+                            aria-label="About tag filters"
+                            aria-expanded="false"
+                        >
+                            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                <circle cx="8" cy="8" r="6.25"></circle>
+                                <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                <path d="M8 7v4.1"></path>
+                            </svg>
+                        </button>
+                        <div class="info-tooltip-popover" role="tooltip">
+                            Use tag filters to show only notes that match all selected tags.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="tagFilterContainer" class="tag-filter-container"></div>
+        </section>
         <div id="notesGrid" class="notes-grid"></div>
     </div>
 
@@ -147,7 +180,11 @@
                                 aria-label="About this editor"
                                 aria-expanded="false"
                             >
-                                i
+                                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <circle cx="8" cy="8" r="6.25"></circle>
+                                    <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                    <path d="M8 7v4.1"></path>
+                                </svg>
                             </button>
                             <div class="info-tooltip-popover" role="tooltip">
                                 Keep narrative notes and follow-up actions separate while you edit.
@@ -219,7 +256,11 @@
                                             aria-label="About meeting notes"
                                             aria-expanded="false"
                                         >
-                                            i
+                                            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                                <circle cx="8" cy="8" r="6.25"></circle>
+                                                <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                                <path d="M8 7v4.1"></path>
+                                            </svg>
                                         </button>
                                         <div class="info-tooltip-popover" role="tooltip">
                                             Capture context, decisions, blockers, and follow-up detail.
@@ -250,7 +291,11 @@
                                             aria-label="About action items"
                                             aria-expanded="false"
                                         >
-                                            i
+                                            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                                <circle cx="8" cy="8" r="6.25"></circle>
+                                                <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                                <path d="M8 7v4.1"></path>
+                                            </svg>
                                         </button>
                                         <div class="info-tooltip-popover" role="tooltip">
                                             These show up as checkboxes in the note card and in the General Todo list.
@@ -271,7 +316,11 @@
                                                     aria-label="About deadline"
                                                     aria-expanded="false"
                                                 >
-                                                    i
+                                                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                                        <circle cx="8" cy="8" r="6.25"></circle>
+                                                        <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                                        <path d="M8 7v4.1"></path>
+                                                    </svg>
                                                 </button>
                                                 <div class="info-tooltip-popover" role="tooltip">
                                                     Leave this blank if there is no follow-up deadline.
@@ -305,7 +354,11 @@
                                             aria-label="About tags"
                                             aria-expanded="false"
                                         >
-                                            i
+                                            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                                <circle cx="8" cy="8" r="6.25"></circle>
+                                                <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                                <path d="M8 7v4.1"></path>
+                                            </svg>
                                         </button>
                                         <div class="info-tooltip-popover" role="tooltip">
                                             Use tags to group related notes and make them easier to filter later.
@@ -335,35 +388,130 @@
         </div>
     </div>
 
-    <div id="shortcutsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Keyboard Shortcuts</h2>
-            <div class="shortcuts-list">
-                <div class="shortcut-item">
-                    <span class="shortcut-key">Ctrl/Cmd + N</span>
-                    <span class="shortcut-description">New note</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="shortcut-key">Ctrl/Cmd + S</span>
-                    <span class="shortcut-description">Save note</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="shortcut-key">Ctrl/Cmd + F</span>
-                    <span class="shortcut-description">Focus search</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="shortcut-key">Ctrl/Cmd + E</span>
-                    <span class="shortcut-description">Toggle dark mode</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="shortcut-key">/</span>
-                    <span class="shortcut-description">Focus search</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="shortcut-key">Esc</span>
-                    <span class="shortcut-description">Close modal</span>
-                </div>
+    <div id="confirmDialog" class="modal">
+        <div class="modal-content confirm-modal-content">
+            <div class="confirm-dialog-copy">
+                <h2 id="confirmDialogTitle">Confirm action</h2>
+                <p id="confirmDialogMessage"></p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="confirmDialogCancelBtn">Cancel</button>
+                <button type="button" id="confirmDialogConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content settings-modal-content">
+            <button type="button" class="close-btn" id="settingsModalCloseBtn" aria-label="Close settings">&times;</button>
+            <div class="settings-modal-header">
+                <h2>Settings</h2>
+                <p>Adjust theme, dashboard behavior, and what appears in your notes view.</p>
+            </div>
+            <div class="settings-modal-body modal-form-scrollable">
+                <section class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="settings-choice-group" role="radiogroup" aria-label="Theme">
+                        <label class="settings-choice-card">
+                            <input type="radio" name="themeSetting" value="light">
+                            <span>Light mode</span>
+                        </label>
+                        <label class="settings-choice-card">
+                            <input type="radio" name="themeSetting" value="dark">
+                            <span>Dark mode</span>
+                        </label>
+                        <label class="settings-choice-card">
+                            <input type="radio" name="themeSetting" value="system">
+                            <span>As device</span>
+                        </label>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Dashboard</h3>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingShowTagFilters">
+                        <span>Show tag filters</span>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingShowCompletedGeneralTodo">
+                        <span>Show completed actions in General Todo</span>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingShowGeneralTodo">
+                        <span>Show General Todo</span>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingShowArchived">
+                        <span>Show archived cards</span>
+                    </label>
+                    <div class="settings-field">
+                        <label for="settingSortMode">Sort cards by</label>
+                        <select id="settingSortMode">
+                            <option value="created-desc">Date created, newer first</option>
+                            <option value="created-asc">Date created, older first</option>
+                            <option value="deadline-asc">Deadline, closer first</option>
+                            <option value="deadline-desc">Deadline, further first</option>
+                        </select>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Help</h3>
+                    <p class="field-helper">Open the usage guide and keyboard shortcuts in a dedicated help dialog.</p>
+                    <button type="button" id="openHelpModalBtn" class="secondary-inline-btn">Open Help</button>
+                </section>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="settingsDoneBtn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content settings-modal-content help-modal-content">
+            <button type="button" class="close-btn" id="helpModalCloseBtn" aria-label="Close help">&times;</button>
+            <div class="settings-modal-header">
+                <h2>Help</h2>
+                <p>Meeting Notes keeps meeting context, follow-up actions, deadlines, and tags together in one workspace.</p>
+            </div>
+            <div class="settings-modal-body modal-form-scrollable">
+                <section class="settings-section">
+                    <h3>How to use the workspace</h3>
+                    <ul class="help-list">
+                        <li>Use the note editor to capture narrative context and action items separately.</li>
+                        <li>Action items appear both inside the note card and in the General Todo card unless the note is archived.</li>
+                        <li>Search and filters help narrow notes by text, date, status, and selected tags.</li>
+                        <li>Archive notes to keep them for reference while removing their follow-up work from the active dashboard.</li>
+                    </ul>
+                </section>
+                <section class="settings-section">
+                    <h3>Keyboard shortcuts</h3>
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl/Cmd + N</span>
+                            <span class="shortcut-description">New note</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl/Cmd + S</span>
+                            <span class="shortcut-description">Save note</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl/Cmd + F</span>
+                            <span class="shortcut-description">Open search</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl/Cmd + E</span>
+                            <span class="shortcut-description">Toggle light and dark mode</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">/</span>
+                            <span class="shortcut-description">Focus search</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Esc</span>
+                            <span class="shortcut-description">Close the active dialog</span>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>

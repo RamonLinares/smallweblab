@@ -1,6 +1,7 @@
 // Constants
 const LOCAL_STORAGE_KEY = 'meetingNotes';
 const DRAFT_STORAGE_KEY = 'noteDraftData';
+const SETTINGS_STORAGE_KEY = 'meetingNotesSettings';
 const DARK_MODE_KEY = 'darkModeEnabled';
 
 // DOM Elements
@@ -32,11 +33,28 @@ const searchInput = document.getElementById('searchInput');
 const searchToggleBtn = document.getElementById('searchToggleBtn');
 const searchPanel = document.getElementById('searchPanel');
 const searchSurface = document.getElementById('searchSurface');
+const tagFilterSection = document.getElementById('tagFilterSection');
 const menuToggleBtn = document.getElementById('menuToggleBtn');
 const headerMenu = document.getElementById('headerMenu');
+const settingsBtn = document.getElementById('settingsBtn');
 const exportXmlBtn = document.getElementById('exportXmlBtn');
 const importXmlBtn = document.getElementById('importXmlBtn');
 const importXmlInput = document.getElementById('importXmlInput');
+const settingsModal = document.getElementById('settingsModal');
+const settingsDoneBtn = document.getElementById('settingsDoneBtn');
+const openHelpModalBtn = document.getElementById('openHelpModalBtn');
+const helpModal = document.getElementById('helpModal');
+const confirmDialog = document.getElementById('confirmDialog');
+const confirmDialogTitle = document.getElementById('confirmDialogTitle');
+const confirmDialogMessage = document.getElementById('confirmDialogMessage');
+const confirmDialogCancelBtn = document.getElementById('confirmDialogCancelBtn');
+const confirmDialogConfirmBtn = document.getElementById('confirmDialogConfirmBtn');
+const settingsThemeInputs = document.querySelectorAll('input[name="themeSetting"]');
+const settingShowTagFilters = document.getElementById('settingShowTagFilters');
+const settingShowCompletedGeneralTodo = document.getElementById('settingShowCompletedGeneralTodo');
+const settingShowGeneralTodo = document.getElementById('settingShowGeneralTodo');
+const settingShowArchived = document.getElementById('settingShowArchived');
+const settingSortMode = document.getElementById('settingSortMode');
 const mainHeader = document.querySelector('.main-header');
 
 // Global variables
@@ -45,7 +63,17 @@ let selectedTags = new Set();
 let dateFilter = 'all';
 let statusFilter = 'all';
 let currentlyEditingNote = null;
+let appSettings = null;
+let confirmDialogResolver = null;
 const MOBILE_BREAKPOINT = 768;
+const DEFAULT_APP_SETTINGS = {
+    theme: 'system',
+    showTagFilters: true,
+    showCompletedGeneralTodo: true,
+    showGeneralTodo: true,
+    showArchived: false,
+    sortMode: 'created-desc'
+};
 const ACTION_ITEM_BUTTON_ICONS = {
     add: `
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -108,23 +136,19 @@ function updateHeaderOffset() {
 }
 
 function setSearchPanelOpen(isOpen) {
-    if (!searchToggleBtn || !searchPanel) return;
+    if (!searchToggleBtn || !searchPanel || !searchSurface) return;
 
-    const shouldOpen = isMobileViewport() && Boolean(isOpen);
+    const shouldOpen = Boolean(isOpen);
 
     if (!shouldOpen && searchPanel.contains(document.activeElement)) {
         document.activeElement.blur();
     }
 
-    searchSurface?.classList.toggle('is-open', shouldOpen);
+    searchSurface.classList.toggle('is-open', shouldOpen);
+    searchSurface.setAttribute('aria-hidden', String(!shouldOpen));
     searchToggleBtn.classList.toggle('active', shouldOpen);
     searchToggleBtn.setAttribute('aria-expanded', String(shouldOpen));
-
-    if (shouldOpen || !isMobileViewport()) {
-        searchPanel.removeAttribute('aria-hidden');
-    } else {
-        searchPanel.setAttribute('aria-hidden', 'true');
-    }
+    searchPanel.setAttribute('aria-hidden', String(!shouldOpen));
 
     updateHeaderOffset();
 }
@@ -133,10 +157,7 @@ function focusSearchInput() {
     if (!searchInput) return;
 
     headerMenu?.classList.remove('show');
-
-    if (isMobileViewport()) {
-        setSearchPanelOpen(true);
-    }
+    setSearchPanelOpen(true);
 
     requestAnimationFrame(() => {
         searchInput.focus();
@@ -144,19 +165,16 @@ function focusSearchInput() {
 }
 
 function syncResponsiveHeaderState() {
-    if (!searchToggleBtn || !searchPanel) {
+    if (!searchToggleBtn || !searchPanel || !searchSurface) {
         updateHeaderOffset();
         return;
     }
 
-    if (!isMobileViewport()) {
-        searchSurface?.classList.remove('is-open');
-        searchToggleBtn.classList.remove('active');
-        searchToggleBtn.setAttribute('aria-expanded', 'false');
-        searchPanel.removeAttribute('aria-hidden');
-    } else if (!searchSurface?.classList.contains('is-open')) {
-        searchPanel.setAttribute('aria-hidden', 'true');
-    }
+    const isOpen = searchSurface.classList.contains('is-open');
+    searchToggleBtn.classList.toggle('active', isOpen);
+    searchToggleBtn.setAttribute('aria-expanded', String(isOpen));
+    searchSurface.setAttribute('aria-hidden', String(!isOpen));
+    searchPanel.setAttribute('aria-hidden', String(!isOpen));
 
     updateHeaderOffset();
 }
@@ -432,10 +450,219 @@ function populateNoteForm(note = null) {
 }
 
 function openNoteModal() {
-    if (!noteModal) return;
-    noteModal.style.display = 'flex';
-    noteModal.classList.add('show');
+    openModal(noteModal);
+}
+
+function openModal(modal) {
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
     requestAnimationFrame(syncInfoTooltipPositions);
+}
+
+function closeModal(modal) {
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'true');
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+}
+
+function closeNoteEditor({ preserveDraft = true } = {}) {
+    if (preserveDraft) {
+        saveDraft();
+    }
+
+    closeModal(noteModal);
+}
+
+function closeManagedModal(modal, { preserveDraft = true } = {}) {
+    if (!modal) return;
+
+    if (modal === confirmDialog) {
+        resolveConfirmDialog(false);
+        return;
+    }
+
+    if (modal === noteModal) {
+        closeNoteEditor({ preserveDraft });
+        return;
+    }
+
+    closeModal(modal);
+}
+
+function createWelcomeNote() {
+    return {
+        id: Date.now().toString(),
+        title: 'Welcome to Meeting Notes!',
+        content: 'This is a sample note to help you get started. Click the + button to create your own notes.',
+        items: [
+            { text: 'Create your first note', completed: false },
+            { text: 'Try out the dark mode', completed: false },
+            { text: 'Explore keyboard shortcuts (Ctrl/Cmd + ?)', completed: false }
+        ],
+        tags: ['welcome', 'getting-started'],
+        createdAt: new Date().toISOString(),
+        pinned: true,
+        archived: false
+    };
+}
+
+function normalizeNote(note = {}) {
+    const normalizedItems = Array.isArray(note.items)
+        ? note.items
+            .map(item => {
+                if (typeof item === 'string') {
+                    return { text: item.trim(), completed: false };
+                }
+
+                if (!item || typeof item !== 'object') return null;
+
+                return {
+                    text: String(item.text || '').trim(),
+                    completed: Boolean(item.completed ?? item.done)
+                };
+            })
+            .filter(item => item?.text)
+        : [];
+
+    const normalizedTags = Array.isArray(note.tags)
+        ? note.tags.map(tag => String(tag).trim().replace(/×$/, '').trim()).filter(Boolean)
+        : [];
+
+    return {
+        id: String(note.id || Date.now()),
+        title: String(note.title || '').trim(),
+        content: typeof note.content === 'string' ? note.content : '',
+        items: normalizedItems,
+        deadline: typeof note.deadline === 'string' ? note.deadline : '',
+        tags: normalizedTags,
+        createdAt: note.createdAt || new Date().toISOString(),
+        pinned: Boolean(note.pinned),
+        archived: Boolean(note.archived)
+    };
+}
+
+function getLegacyThemeSetting() {
+    const legacyDarkMode = localStorage.getItem('darkMode');
+    if (legacyDarkMode === 'true') return 'dark';
+    if (legacyDarkMode === 'false') return 'light';
+    return DEFAULT_APP_SETTINGS.theme;
+}
+
+function loadAppSettings() {
+    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (savedSettings) {
+        try {
+            const parsed = JSON.parse(savedSettings);
+            return { ...DEFAULT_APP_SETTINGS, ...parsed };
+        } catch (error) {
+            console.error('Error parsing app settings:', error);
+        }
+    }
+
+    return {
+        ...DEFAULT_APP_SETTINGS,
+        theme: getLegacyThemeSetting()
+    };
+}
+
+function saveAppSettings() {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+    } catch (error) {
+        console.error('Error saving app settings:', error);
+    }
+}
+
+function applyThemeSetting() {
+    if (!appSettings) return;
+
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const shouldUseDarkMode = appSettings.theme === 'dark' || (appSettings.theme === 'system' && prefersDark);
+    document.body.classList.toggle('dark-mode', shouldUseDarkMode);
+    document.documentElement.style.colorScheme = shouldUseDarkMode ? 'dark' : 'light';
+}
+
+function syncSettingsControls() {
+    settingsThemeInputs.forEach(input => {
+        input.checked = input.value === appSettings?.theme;
+    });
+
+    if (settingShowTagFilters) settingShowTagFilters.checked = Boolean(appSettings?.showTagFilters);
+    if (settingShowCompletedGeneralTodo) settingShowCompletedGeneralTodo.checked = Boolean(appSettings?.showCompletedGeneralTodo);
+    if (settingShowGeneralTodo) settingShowGeneralTodo.checked = Boolean(appSettings?.showGeneralTodo);
+    if (settingShowArchived) settingShowArchived.checked = Boolean(appSettings?.showArchived);
+    if (settingSortMode) settingSortMode.value = appSettings?.sortMode || DEFAULT_APP_SETTINGS.sortMode;
+}
+
+function applyAppSettings({ persist = true } = {}) {
+    if (!appSettings) return;
+
+    if (!appSettings.showTagFilters && selectedTags.size > 0) {
+        selectedTags.clear();
+    }
+
+    applyThemeSetting();
+    if (persist) saveAppSettings();
+    syncSettingsControls();
+    updateTagFilterContainer();
+    renderNotes(searchInput?.value || '');
+}
+
+function updateSetting(settingName, value) {
+    if (!appSettings) return;
+    appSettings = {
+        ...appSettings,
+        [settingName]: value
+    };
+    applyAppSettings();
+}
+
+function toggleThemePreferenceShortcut() {
+    if (!appSettings) return;
+    const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+    updateSetting('theme', nextTheme);
+}
+
+function resolveConfirmDialog(result) {
+    if (confirmDialogResolver) {
+        confirmDialogResolver(result);
+        confirmDialogResolver = null;
+    }
+
+    confirmDialogConfirmBtn?.classList.remove('danger');
+    closeModal(confirmDialog);
+}
+
+function showConfirmDialog({
+    title = 'Confirm action',
+    message = '',
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    tone = 'default'
+} = {}) {
+    if (!confirmDialog || !confirmDialogTitle || !confirmDialogMessage || !confirmDialogConfirmBtn || !confirmDialogCancelBtn) {
+        return Promise.resolve(false);
+    }
+
+    if (confirmDialogResolver) {
+        confirmDialogResolver(false);
+        confirmDialogResolver = null;
+    }
+
+    confirmDialogTitle.textContent = title;
+    confirmDialogMessage.textContent = message;
+    confirmDialogConfirmBtn.textContent = confirmLabel;
+    confirmDialogCancelBtn.textContent = cancelLabel;
+    confirmDialogConfirmBtn.classList.toggle('danger', tone === 'danger');
+
+    openModal(confirmDialog);
+
+    return new Promise(resolve => {
+        confirmDialogResolver = resolve;
+    });
 }
 
 const escapeXML = (str) => {
@@ -476,7 +703,7 @@ function loadNotesFromLocalStorage() {
     if (savedNotes) {
         try {
             const parsedNotes = JSON.parse(savedNotes);
-            return Array.isArray(parsedNotes) ? parsedNotes : [];
+            return Array.isArray(parsedNotes) ? parsedNotes.map(normalizeNote) : [];
         } catch (error) {
             console.error('Error parsing notes from localStorage:', error);
             return [];
@@ -517,10 +744,17 @@ function clearDraft() {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
 }
 
-function checkAndRestoreDraft() {
+async function checkAndRestoreDraft() {
     const draftJson = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (draftJson) {
-        if (confirm("You have an unsaved draft. Restore it?")) {
+        const shouldRestore = await showConfirmDialog({
+            title: 'Restore draft?',
+            message: 'You have an unsaved note draft. Restore it into the editor?',
+            confirmLabel: 'Restore draft',
+            cancelLabel: 'Discard draft'
+        });
+
+        if (shouldRestore) {
             try {
                 const draftData = JSON.parse(draftJson);
                 noteTitleInput.value = draftData.title || '';
@@ -553,80 +787,46 @@ function checkAndRestoreDraft() {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        // Initialize Trix Editor
         const trixEditor = document.querySelector('trix-editor');
         if (trixEditor) {
-            // Enable list nesting by default
             trixEditor.addEventListener('trix-initialize', () => {
                 const toolbar = trixEditor.toolbarElement;
                 const increaseButton = toolbar.querySelector('.trix-button--icon-increase-nesting-level');
                 const decreaseButton = toolbar.querySelector('.trix-button--icon-decrease-nesting-level');
-                
-                if (increaseButton) {
-                    increaseButton.disabled = false;
-                }
-                if (decreaseButton) {
-                    decreaseButton.disabled = false;
-                }
+
+                if (increaseButton) increaseButton.disabled = false;
+                if (decreaseButton) decreaseButton.disabled = false;
             });
 
-            // Handle selection changes
             trixEditor.addEventListener('trix-selection-change', () => {
                 const toolbar = trixEditor.toolbarElement;
                 const increaseButton = toolbar.querySelector('.trix-button--icon-increase-nesting-level');
                 const decreaseButton = toolbar.querySelector('.trix-button--icon-decrease-nesting-level');
-                
+
                 const editor = trixEditor.editor;
                 const selectedRange = editor.getSelectedRange();
                 const [startPosition] = selectedRange;
                 const block = editor.getDocument().getBlockAtPosition(startPosition);
-                
+
                 const isListItem = block && (block.attributes.values.bulletList || block.attributes.values.numberList);
                 const nestingLevel = block ? (block.attributes.values.nestingLevel || 0) : 0;
-                
-                if (increaseButton) {
-                    increaseButton.disabled = !isListItem;
-                }
-                if (decreaseButton) {
-                    decreaseButton.disabled = !isListItem || nestingLevel === 0;
-                }
+
+                if (increaseButton) increaseButton.disabled = !isListItem;
+                if (decreaseButton) decreaseButton.disabled = !isListItem || nestingLevel === 0;
             });
         }
 
-        // Load notes from localStorage
+        appSettings = loadAppSettings();
         notes = loadNotesFromLocalStorage();
-        console.log('Loaded notes:', notes);
-        
-        // Add a test note if no notes exist
+
         if (notes.length === 0) {
-            const testNote = {
-                id: Date.now().toString(),
-                title: 'Welcome to Meeting Notes!',
-                content: 'This is a sample note to help you get started. Click the + button to create your own notes.',
-                items: [
-                    { text: 'Create your first note', completed: false },
-                    { text: 'Try out the dark mode', completed: false },
-                    { text: 'Explore keyboard shortcuts (Ctrl/Cmd + ?)', completed: false }
-                ],
-                tags: ['welcome', 'getting-started'],
-                createdAt: new Date().toISOString(),
-                pinned: true
-            };
-            notes.push(testNote);
+            notes.push(createWelcomeNote());
             saveNotesToLocalStorage();
-            console.log('Added test note:', testNote);
         }
-        
-        // Initialize UI
-        renderNotes();
-        
-        // Set up event listeners
+
         setupEventListeners();
-        
-        // Initialize dark mode
-        initializeDarkMode();
-        
-        // Show initial status
+        applyAppSettings({ persist: false });
+
         if (notes.length > 0) {
             showMessage(`Loaded ${notes.length} notes successfully`);
         }
@@ -636,57 +836,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error initializing application:', error);
         showMessage('Error loading notes. Please check console for details.', true);
     }
-
-    // Add draft saving when modal is closed
-    if (noteModal) {
-        noteModal.addEventListener('click', (e) => {
-            if (e.target === noteModal) {
-                saveDraft();
-            }
-        });
-    }
-
-    // Add draft saving when close button is clicked
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => {
-            saveDraft();
-        });
-    }
-
-    // Add draft saving when cancel button is clicked
-    if (modalCancelBtn) {
-        modalCancelBtn.addEventListener('click', () => {
-            saveDraft();
-        });
-    }
-
-    // Add draft saving when escape key is pressed
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && noteModal.classList.contains('show')) {
-            saveDraft();
-        }
-    });
-
-    // Add draft saving when form inputs change
-    if (noteForm) {
-        noteForm.addEventListener('input', () => {
-            saveDraft();
-        });
-    }
-
-    if (trixEditorElement) {
-        trixEditorElement.addEventListener('trix-change', () => {
-            saveDraft();
-        });
-    }
 });
 
 // Initialize dark mode
 function initializeDarkMode() {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (isDarkMode) {
-        document.body.classList.add('dark-mode');
-    }
+    appSettings = appSettings || loadAppSettings();
+    applyThemeSetting();
 }
 
 // Set up event listeners
@@ -793,7 +948,6 @@ function setupEventListeners() {
             }
 
              if (
-                isMobileViewport() &&
                 searchSurface?.classList.contains('is-open') &&
                 !searchSurface.contains(e.target) &&
                 !searchToggleBtn?.contains(e.target)
@@ -808,11 +962,6 @@ function setupEventListeners() {
             e.stopPropagation();
             headerMenu.classList.remove('show');
 
-            if (!isMobileViewport()) {
-                focusSearchInput();
-                return;
-            }
-
             const isOpen = searchSurface?.classList.contains('is-open');
             setSearchPanelOpen(!isOpen);
 
@@ -822,13 +971,73 @@ function setupEventListeners() {
         });
     }
 
-    // Dark mode toggle
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            syncSettingsControls();
+            openModal(settingsModal);
+        });
+    }
+
+    settingsThemeInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            if (!input.checked) return;
+            updateSetting('theme', input.value);
+        });
+    });
+
+    if (settingShowTagFilters) {
+        settingShowTagFilters.addEventListener('change', () => {
+            updateSetting('showTagFilters', settingShowTagFilters.checked);
+        });
+    }
+
+    if (settingShowCompletedGeneralTodo) {
+        settingShowCompletedGeneralTodo.addEventListener('change', () => {
+            updateSetting('showCompletedGeneralTodo', settingShowCompletedGeneralTodo.checked);
+        });
+    }
+
+    if (settingShowGeneralTodo) {
+        settingShowGeneralTodo.addEventListener('change', () => {
+            updateSetting('showGeneralTodo', settingShowGeneralTodo.checked);
+        });
+    }
+
+    if (settingShowArchived) {
+        settingShowArchived.addEventListener('change', () => {
+            updateSetting('showArchived', settingShowArchived.checked);
+        });
+    }
+
+    if (settingSortMode) {
+        settingSortMode.addEventListener('change', () => {
+            updateSetting('sortMode', settingSortMode.value);
+        });
+    }
+
+    if (settingsDoneBtn) {
+        settingsDoneBtn.addEventListener('click', () => {
+            closeModal(settingsModal);
+        });
+    }
+
+    if (openHelpModalBtn) {
+        openHelpModalBtn.addEventListener('click', () => {
+            closeModal(settingsModal);
+            openModal(helpModal);
+        });
+    }
+
+    if (confirmDialogCancelBtn) {
+        confirmDialogCancelBtn.addEventListener('click', () => {
+            resolveConfirmDialog(false);
+        });
+    }
+
+    if (confirmDialogConfirmBtn) {
+        confirmDialogConfirmBtn.addEventListener('click', () => {
+            resolveConfirmDialog(true);
         });
     }
 
@@ -846,8 +1055,7 @@ function setupEventListeners() {
         btn.addEventListener('click', () => {
             const modal = btn.closest('.modal');
             if (modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('show');
+                closeManagedModal(modal);
             }
         });
     });
@@ -856,22 +1064,14 @@ function setupEventListeners() {
     const modalCancelBtn = document.getElementById('modalCancelBtn');
     if (modalCancelBtn) {
         modalCancelBtn.addEventListener('click', () => {
-            const noteModal = document.getElementById('noteModal');
-            if (noteModal) {
-                noteModal.style.display = 'none';
-                noteModal.classList.remove('show');
-            }
+            closeNoteEditor();
         });
     }
 
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            // Only close if it's not the note modal
-            if (!e.target.id === 'noteModal') {
-                e.target.style.display = 'none';
-                e.target.classList.remove('show');
-            }
+        if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+            closeManagedModal(e.target);
         }
     });
 
@@ -905,10 +1105,10 @@ function setupEventListeners() {
                 reader.onload = (e) => {
                     try {
                         const xmlText = e.target.result;
-                        const parser = new DOMParser();
+                const parser = new DOMParser();
                         const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
                         
-                        const importedNotes = Array.from(xmlDoc.getElementsByTagName('note')).map(noteEl => ({
+                        const importedNotes = Array.from(xmlDoc.getElementsByTagName('note')).map(noteEl => normalizeNote({
                             id: noteEl.getAttribute('id') || Date.now().toString(),
                             title: unescapeXML(noteEl.getElementsByTagName('title')[0]?.textContent || ''),
                             content: unescapeXML(noteEl.getElementsByTagName('content')[0]?.textContent || ''),
@@ -919,17 +1119,24 @@ function setupEventListeners() {
                             deadline: noteEl.getElementsByTagName('deadline')[0]?.textContent || '',
                             tags: Array.from(noteEl.getElementsByTagName('tag')).map(tag => unescapeXML(tag.textContent)),
                             createdAt: noteEl.getElementsByTagName('createdAt')[0]?.textContent || new Date().toISOString(),
-                            pinned: noteEl.getAttribute('pinned') === 'true'
+                            pinned: noteEl.getAttribute('pinned') === 'true',
+                            archived: noteEl.getAttribute('archived') === 'true'
                         }));
 
                         if (importedNotes.length > 0) {
-                            if (confirm(`Replace existing ${notes.length} notes with ${importedNotes.length} imported notes?`)) {
+                            showConfirmDialog({
+                                title: 'Replace notes?',
+                                message: `Replace the current ${notes.length} notes with ${importedNotes.length} imported notes?`,
+                                confirmLabel: 'Replace notes',
+                                cancelLabel: 'Keep current notes',
+                                tone: 'danger'
+                            }).then(shouldReplace => {
+                                if (!shouldReplace) return;
                                 notes = importedNotes;
                                 saveNotesToLocalStorage();
-                                renderNotes();
-                                updateTagFilterContainer();
+                                applyAppSettings({ persist: false });
                                 showMessage(`Successfully imported ${importedNotes.length} notes`);
-                            }
+                            });
                         } else {
                             showMessage('No valid notes found in the XML file', true);
                         }
@@ -974,16 +1181,6 @@ function setupEventListeners() {
         });
     }
 
-    // Keyboard shortcuts button
-    const keyboardShortcutsBtn = document.getElementById('keyboardShortcutsBtn');
-    const shortcutsModal = document.getElementById('shortcutsModal');
-    if (keyboardShortcutsBtn && shortcutsModal) {
-        keyboardShortcutsBtn.addEventListener('click', () => {
-            shortcutsModal.style.display = 'flex';
-            headerMenu.classList.remove('show');
-        });
-    }
-
     // Clear all notes button
     const clearAllNotesBtn = document.getElementById('clearAllNotesBtn');
     if (clearAllNotesBtn) {
@@ -992,10 +1189,31 @@ function setupEventListeners() {
             clearAllNotes();
         });
     }
+
+    if (noteForm) {
+        noteForm.addEventListener('input', () => {
+            saveDraft();
+        });
+    }
+
+    if (trixEditorElement) {
+        trixEditorElement.addEventListener('trix-change', () => {
+            saveDraft();
+        });
+    }
+
+    if (window.matchMedia) {
+        const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        colorSchemeQuery.addEventListener?.('change', () => {
+            if (appSettings?.theme === 'system') {
+                applyThemeSetting();
+            }
+        });
+    }
 }
 
 // Note Actions
-function openNewNoteModal() {
+async function openNewNoteModal() {
     if (!noteModal || !modalTitle || !noteForm || !noteTagsContainer || !trixEditorElement) {
         console.error('Required modal elements not found');
         return;
@@ -1006,7 +1224,7 @@ function openNewNoteModal() {
     openNoteModal();
 
     // Check for draft
-    const draftRestored = checkAndRestoreDraft();
+    const draftRestored = await checkAndRestoreDraft();
     if (!draftRestored) {
         noteTitleInput.focus();
     }
@@ -1031,16 +1249,18 @@ function saveNote() {
     const tagElements = noteTagsContainer.getElementsByClassName('tag');
     const tags = Array.from(tagElements).map(tag => tag.textContent.trim().replace(/×$/, '').trim());
 
-    const note = {
+    const existingNote = noteId ? notes.find(n => n.id === noteId) : null;
+    const note = normalizeNote({
         id: noteId || Date.now().toString(),
         title: title || 'Untitled Note',
         content,
         deadline,
         items,
         tags,
-        createdAt: noteId ? (notes.find(n => n.id === noteId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-        pinned: noteId ? (notes.find(n => n.id === noteId)?.pinned || false) : false
-    };
+        createdAt: existingNote?.createdAt || new Date().toISOString(),
+        pinned: existingNote?.pinned || false,
+        archived: existingNote?.archived || false
+    });
 
     if (noteId) {
         // Update existing note
@@ -1057,19 +1277,13 @@ function saveNote() {
     saveNotesToLocalStorage();
 
     // Clear draft
-    if (!noteId) {
-        clearDraft();
-    }
+    clearDraft();
 
     // Close modal
-    if (noteModal) {
-        noteModal.style.display = 'none';
-        noteModal.classList.remove('show');
-    }
+    closeNoteEditor({ preserveDraft: false });
 
     // Refresh notes display
-    renderNotes(document.getElementById('searchInput')?.value || '');
-    updateTagFilterContainer();
+    applyAppSettings({ persist: false });
 
     // Show success message
     showMessage('Note saved successfully');
@@ -1079,15 +1293,20 @@ function saveNote() {
 function handleKeyboardShortcuts(e) {
     if (e.key === 'Escape') {
         closeInfoTooltips();
+        const activeModal = Array.from(document.querySelectorAll('.modal.show')).pop();
+        if (activeModal) {
+            closeManagedModal(activeModal);
+            return;
+        }
 
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-            modal.style.display = 'none';
-            modal.classList.remove('show');
-        });
+        if (headerMenu.classList.contains('show')) {
+            headerMenu.classList.remove('show');
+            return;
+        }
 
-        headerMenu.classList.remove('show');
-        setSearchPanelOpen(false);
+        if (searchSurface?.classList.contains('is-open')) {
+            setSearchPanelOpen(false);
+        }
         return;
     }
 
@@ -1115,7 +1334,7 @@ function handleKeyboardShortcuts(e) {
                 break;
             case 'e':
                 e.preventDefault();
-                document.getElementById('darkModeToggle').click();
+                toggleThemePreferenceShortcut();
                 break;
         }
     } else if (e.key === '/') {
@@ -1133,6 +1352,7 @@ function exportNotesToXML() {
         const noteElement = xmlDoc.createElement("note");
         noteElement.setAttribute("id", note.id);
         noteElement.setAttribute("pinned", note.pinned.toString());
+        noteElement.setAttribute("archived", Boolean(note.archived).toString());
 
         // Add title
         const titleElement = xmlDoc.createElement("title");
@@ -1204,29 +1424,19 @@ function exportNotesToXML() {
 }
 
 // Clear all notes
-function clearAllNotes() {
-    if (confirm('Are you sure you want to delete all notes? This action cannot be undone.')) {
-        notes = [];
-        
-        // Add default welcome notes
-        const welcomeNote = {
-            id: Date.now().toString(),
-            title: 'Welcome to Meeting Notes!',
-            content: 'This is a sample note to help you get started. Click the + button to create your own notes.',
-            items: [
-                { text: 'Create your first note', completed: false },
-                { text: 'Try out the dark mode', completed: false },
-                { text: 'Explore keyboard shortcuts (Ctrl/Cmd + ?)', completed: false }
-            ],
-            tags: ['welcome', 'getting-started'],
-            createdAt: new Date().toISOString(),
-            pinned: true
-        };
-        
-        notes.push(welcomeNote);
-        saveNotesToLocalStorage();
-        renderNotes();
-        updateTagFilterContainer();
-        showMessage('All notes have been cleared');
-    }
-} 
+async function clearAllNotes() {
+    const shouldClear = await showConfirmDialog({
+        title: 'Clear all notes?',
+        message: 'Delete every note and reset the workspace to the default welcome note? This cannot be undone.',
+        confirmLabel: 'Clear all notes',
+        cancelLabel: 'Cancel',
+        tone: 'danger'
+    });
+
+    if (!shouldClear) return;
+
+    notes = [createWelcomeNote()];
+    saveNotesToLocalStorage();
+    applyAppSettings({ persist: false });
+    showMessage('All notes have been cleared');
+}
