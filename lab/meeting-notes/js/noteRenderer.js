@@ -115,6 +115,26 @@ function createNoteCard(note) {
     if (note.isVirtual) card.classList.add('virtual-note');
     card.dataset.noteId = note.id;
 
+    if (!note.isVirtual) {
+        card.classList.add('note-card-editable');
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Edit note: ${note.title}`);
+
+        const openEditorFromCard = (event) => {
+            if (event.target.closest('button, input, a, .tag')) return;
+            openEditNoteModal(note);
+        };
+
+        card.addEventListener('click', openEditorFromCard);
+        card.addEventListener('keydown', (event) => {
+            if (event.target !== card) return;
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            openEditNoteModal(note);
+        });
+    }
+
     // Title
     const title = document.createElement('h3');
     title.className = 'note-title';
@@ -140,6 +160,7 @@ function createNoteCard(note) {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = item.completed;
+            checkbox.addEventListener('click', (event) => event.stopPropagation());
             checkbox.onchange = (e) => {
                 const isCompleted = e.target.checked;
                 
@@ -234,7 +255,8 @@ function createNoteCard(note) {
                 const tagElement = document.createElement('span');
                 tagElement.className = 'tag';
                 tagElement.textContent = tag;
-                tagElement.onclick = () => {
+                tagElement.onclick = (event) => {
+                    event.stopPropagation();
                     selectedTags.add(tag);
                     renderNotes(document.getElementById('searchInput')?.value || '');
                     updateTagFilterContainer();
@@ -267,23 +289,21 @@ function createNoteCard(note) {
                 'M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z' : 
                 'M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12M8.8,14L10,12.8V4H14V12.8L15.2,14H8.8Z'}"/>
         </svg>`;
-        pinBtn.onclick = () => togglePinNote(note.id);
+        pinBtn.onclick = (event) => {
+            event.stopPropagation();
+            togglePinNote(note.id);
+        };
         actions.appendChild(pinBtn);
-
-        // Edit button
-        const editBtn = document.createElement('button');
-        editBtn.className = 'edit-btn';
-        editBtn.title = 'Edit note';
-        editBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>';
-        editBtn.onclick = () => openEditNoteModal(note);
-        actions.appendChild(editBtn);
 
         // Delete button
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
         deleteBtn.title = 'Delete note';
         deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>';
-        deleteBtn.onclick = () => deleteNote(note.id);
+        deleteBtn.onclick = (event) => {
+            event.stopPropagation();
+            deleteNote(note.id);
+        };
         actions.appendChild(deleteBtn);
 
         card.appendChild(actions);
@@ -341,30 +361,8 @@ function deleteNote(noteId) {
 }
 
 function openEditNoteModal(note) {
-    const modal = document.getElementById('noteModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const titleInput = document.getElementById('noteTitle');
-    const contentInput = document.getElementById('contentInputArea');
-    const actionItemsInput = document.getElementById('noteActionItems');
-    const deadlineInput = document.getElementById('noteDeadline');
-    const tagsContainer = document.getElementById('noteTags');
-
-    if (modal && modalTitle && titleInput && contentInput && actionItemsInput && deadlineInput && tagsContainer) {
-        modalTitle.textContent = 'Edit Note';
-        titleInput.value = note.title;
-        contentInput.value = note.content || '';
-        actionItemsInput.value = note.items.map(item => item.text).join('\n');
-        deadlineInput.value = note.deadline || '';
-        
-        // Clear and repopulate tags
-        tagsContainer.innerHTML = '';
-        note.tags.forEach(tag => {
-            const tagElement = createTagElement(tag, true);
-            tagsContainer.appendChild(tagElement);
-        });
-
-        currentlyEditingNote = note;
-        modal.classList.add('show');
+    if (typeof openExistingNoteModal === 'function') {
+        openExistingNoteModal(note);
     }
 }
 

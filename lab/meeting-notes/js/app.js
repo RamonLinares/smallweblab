@@ -7,7 +7,9 @@ const DARK_MODE_KEY = 'darkModeEnabled';
 const notesGrid = document.getElementById('notesGrid');
 const addNoteFab = document.getElementById('addNoteFab');
 const noteModal = document.getElementById('noteModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
+const closeModalBtn = document.getElementById('noteModalCloseBtn');
+const noteForm = document.getElementById('noteForm');
+const noteIdInput = document.getElementById('noteId');
 const modalSaveBtn = document.getElementById('modalSaveBtn');
 const modalCancelBtn = document.getElementById('modalCancelBtn');
 const modalTitle = document.getElementById('modalTitle');
@@ -15,16 +17,21 @@ const noteTitleInput = document.getElementById('noteTitle');
 const contentInputArea = document.getElementById('contentInputArea');
 const noteContentHiddenInput = document.getElementById('noteContentHidden');
 const trixEditorWrapper = document.getElementById('trixEditorWrapper');
-const trixEditorElement = document.querySelector("trix-editor");
-const actionItemsArea = document.getElementById('actionItemsArea');
-const noteActionItemsTextArea = document.getElementById('noteActionItems');
+const trixEditorElement = document.querySelector('trix-editor');
+const noteTabButtons = document.querySelectorAll('.note-tab-btn');
+const noteTabPanels = document.querySelectorAll('.note-tab-panel');
+const actionItemsList = document.getElementById('actionItemsList');
 const deadlineGroup = document.getElementById('deadlineGroup');
 const noteDeadlineInput = document.getElementById('noteDeadline');
+const clearDeadlineBtn = document.getElementById('clearDeadlineBtn');
+const noteTagsContainer = document.getElementById('noteTags');
+const infoTooltipButtons = document.querySelectorAll('.info-tooltip-btn');
 const statusDiv = document.getElementById('status');
 const errorDiv = document.getElementById('error');
 const searchInput = document.getElementById('searchInput');
 const searchToggleBtn = document.getElementById('searchToggleBtn');
 const searchPanel = document.getElementById('searchPanel');
+const searchSurface = document.getElementById('searchSurface');
 const menuToggleBtn = document.getElementById('menuToggleBtn');
 const headerMenu = document.getElementById('headerMenu');
 const exportXmlBtn = document.getElementById('exportXmlBtn');
@@ -39,6 +46,25 @@ let dateFilter = 'all';
 let statusFilter = 'all';
 let currentlyEditingNote = null;
 const MOBILE_BREAKPOINT = 768;
+const ACTION_ITEM_BUTTON_ICONS = {
+    add: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 5v14M5 12h14"></path>
+        </svg>
+    `,
+    edit: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+        </svg>
+    `,
+    delete: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+        </svg>
+    `
+};
 
 // Utility Functions
 function clearMessages() {
@@ -82,18 +108,24 @@ function updateHeaderOffset() {
 }
 
 function setSearchPanelOpen(isOpen) {
-    if (!mainHeader || !searchToggleBtn || !searchPanel) return;
+    if (!searchToggleBtn || !searchPanel) return;
 
-    const shouldOpen = isMobileViewport() ? isOpen : false;
+    const shouldOpen = isMobileViewport() && Boolean(isOpen);
 
     if (!shouldOpen && searchPanel.contains(document.activeElement)) {
         document.activeElement.blur();
     }
 
-    mainHeader.classList.toggle('search-open', shouldOpen);
+    searchSurface?.classList.toggle('is-open', shouldOpen);
     searchToggleBtn.classList.toggle('active', shouldOpen);
     searchToggleBtn.setAttribute('aria-expanded', String(shouldOpen));
-    searchPanel.setAttribute('aria-hidden', String(!shouldOpen));
+
+    if (shouldOpen || !isMobileViewport()) {
+        searchPanel.removeAttribute('aria-hidden');
+    } else {
+        searchPanel.setAttribute('aria-hidden', 'true');
+    }
+
     updateHeaderOffset();
 }
 
@@ -112,21 +144,298 @@ function focusSearchInput() {
 }
 
 function syncResponsiveHeaderState() {
-    if (!mainHeader || !searchToggleBtn || !searchPanel) {
+    if (!searchToggleBtn || !searchPanel) {
         updateHeaderOffset();
         return;
     }
 
     if (!isMobileViewport()) {
-        mainHeader.classList.remove('search-open');
+        searchSurface?.classList.remove('is-open');
         searchToggleBtn.classList.remove('active');
         searchToggleBtn.setAttribute('aria-expanded', 'false');
         searchPanel.removeAttribute('aria-hidden');
-    } else if (!mainHeader.classList.contains('search-open')) {
+    } else if (!searchSurface?.classList.contains('is-open')) {
         searchPanel.setAttribute('aria-hidden', 'true');
     }
 
     updateHeaderOffset();
+}
+
+function parseLegacyActionItems(itemsText = '') {
+    return itemsText
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(text => ({ text, completed: false }));
+}
+
+function getActiveEditorTab() {
+    return document.querySelector('.note-tab-btn.active')?.dataset.tabTarget || 'content';
+}
+
+function closeInfoTooltips(except = null) {
+    document.querySelectorAll('.info-tooltip').forEach(tooltip => {
+        if (tooltip === except) return;
+        tooltip.classList.remove('is-open');
+        tooltip.querySelector('.info-tooltip-btn')?.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function positionInfoTooltip(tooltip) {
+    const popover = tooltip?.querySelector('.info-tooltip-popover');
+    if (!popover) return;
+
+    tooltip.style.setProperty('--tooltip-shift', '0px');
+
+    const tooltipRect = popover.getBoundingClientRect();
+    if (!tooltipRect.width) return;
+
+    const viewportPadding = 16;
+    const maxRight = window.innerWidth - viewportPadding;
+    let shift = 0;
+
+    if (tooltipRect.left < viewportPadding) {
+        shift += viewportPadding - tooltipRect.left;
+    }
+
+    if (tooltipRect.right > maxRight) {
+        shift -= tooltipRect.right - maxRight;
+    }
+
+    tooltip.style.setProperty('--tooltip-shift', `${shift}px`);
+}
+
+function syncInfoTooltipPositions() {
+    document.querySelectorAll('.info-tooltip').forEach(positionInfoTooltip);
+}
+
+function setEditorTab(tabName = 'content') {
+    noteTabButtons.forEach(button => {
+        const isActive = button.dataset.tabTarget === tabName;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+        button.tabIndex = isActive ? 0 : -1;
+    });
+
+    noteTabPanels.forEach(panel => {
+        const isActive = panel.dataset.tabPanel === tabName;
+        panel.classList.toggle('active', isActive);
+        panel.hidden = !isActive;
+    });
+
+    requestAnimationFrame(syncInfoTooltipPositions);
+}
+
+function getActionItemText(row) {
+    return row?.querySelector('.action-item-row-input')?.value.trim() || '';
+}
+
+function findNextEmptyActionItemRow(afterRow = null) {
+    if (!actionItemsList) return null;
+
+    const rows = Array.from(actionItemsList.querySelectorAll('.action-item-row'));
+    if (!rows.length) return null;
+
+    const startIndex = afterRow ? rows.indexOf(afterRow) + 1 : 0;
+    const remainingRows = rows.slice(Math.max(startIndex, 0));
+    const nextRow = remainingRows.find(row => !getActionItemText(row));
+
+    return nextRow || rows.find(row => row !== afterRow && !getActionItemText(row)) || null;
+}
+
+function ensureActionItemPlaceholderRow() {
+    if (!actionItemsList) return null;
+
+    const existingEmptyRow = findNextEmptyActionItemRow();
+    if (existingEmptyRow) return existingEmptyRow;
+
+    return createActionItemRow();
+}
+
+function getActionItemButtonState(row) {
+    const hasText = Boolean(getActionItemText(row));
+
+    if (!hasText) return 'add';
+    if (row.dataset.existing === 'true' && row.dataset.isFocused === 'true') return 'edit';
+
+    return 'delete';
+}
+
+function updateActionItemRowButton(row) {
+    const actionButton = row?.querySelector('.action-item-action-btn');
+    if (!actionButton) return;
+
+    const nextState = getActionItemButtonState(row);
+    row.dataset.actionState = nextState;
+
+    actionButton.classList.toggle('is-add', nextState === 'add');
+    actionButton.classList.toggle('is-edit', nextState === 'edit');
+    actionButton.classList.toggle('is-delete', nextState === 'delete');
+    actionButton.innerHTML = ACTION_ITEM_BUTTON_ICONS[nextState];
+
+    const labels = {
+        add: 'Add action item',
+        edit: 'Edit action item',
+        delete: 'Remove action item'
+    };
+
+    actionButton.setAttribute('aria-label', labels[nextState]);
+    actionButton.setAttribute('title', labels[nextState]);
+}
+
+function createActionItemRow(item = {}, { focus = false, insertAfter = null, existing = false } = {}) {
+    if (!actionItemsList) return null;
+
+    const row = document.createElement('div');
+    row.className = 'action-item-row';
+    row.dataset.existing = String(existing && Boolean((item.text || '').trim()));
+    row.dataset.isFocused = 'false';
+    row.dataset.actionState = 'add';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'action-item-row-checkbox';
+    checkbox.checked = Boolean(item.completed);
+    checkbox.setAttribute('aria-label', 'Mark action item complete');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'action-item-row-input';
+    input.placeholder = 'Add a follow-up action';
+    input.value = item.text || '';
+    input.addEventListener('focus', () => {
+        row.dataset.isFocused = 'true';
+        updateActionItemRowButton(row);
+    });
+    input.addEventListener('blur', () => {
+        row.dataset.isFocused = 'false';
+        updateActionItemRowButton(row);
+    });
+    input.addEventListener('input', () => {
+        updateActionItemRowButton(row);
+        ensureActionItemPlaceholderRow();
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+
+        if (!getActionItemText(row)) {
+            input.focus();
+            return;
+        }
+
+        const nextEmptyRow = ensureActionItemPlaceholderRow();
+        const targetRow = nextEmptyRow && nextEmptyRow !== row
+            ? nextEmptyRow
+            : createActionItemRow({}, { insertAfter: row });
+
+        targetRow?.querySelector('.action-item-row-input')?.focus();
+        saveDraft();
+    });
+
+    const actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = 'action-item-action-btn';
+    actionButton.addEventListener('pointerdown', (event) => {
+        if (row.dataset.actionState === 'edit') {
+            event.preventDefault();
+        }
+    });
+    actionButton.addEventListener('click', () => {
+        const currentState = row.dataset.actionState;
+
+        if (currentState === 'delete') {
+            row.remove();
+            ensureActionItemPlaceholderRow();
+            saveDraft();
+            return;
+        }
+
+        input.focus();
+
+        if (currentState === 'edit') {
+            input.select();
+        }
+    });
+
+    row.appendChild(checkbox);
+    row.appendChild(input);
+    row.appendChild(actionButton);
+
+    if (insertAfter?.parentElement === actionItemsList) {
+        insertAfter.insertAdjacentElement('afterend', row);
+    } else {
+        actionItemsList.appendChild(row);
+    }
+
+    if (focus) {
+        requestAnimationFrame(() => input.focus());
+    }
+
+    updateActionItemRowButton(row);
+
+    return row;
+}
+
+function setActionItemsInEditor(items = []) {
+    if (!actionItemsList) return;
+
+    actionItemsList.innerHTML = '';
+    const nextItems = Array.isArray(items) ? items.filter(item => item && (item.text || '').trim()) : [];
+
+    nextItems.forEach(item => createActionItemRow(item, { existing: true }));
+    ensureActionItemPlaceholderRow();
+}
+
+function getActionItemsFromEditor() {
+    if (!actionItemsList) return [];
+
+    return Array.from(actionItemsList.querySelectorAll('.action-item-row'))
+        .map(row => {
+            const text = row.querySelector('.action-item-row-input')?.value.trim() || '';
+            const completed = Boolean(row.querySelector('.action-item-row-checkbox')?.checked);
+
+            return { text, completed };
+        })
+        .filter(item => item.text.length > 0);
+}
+
+function setEditorContent(html = '') {
+    if (!trixEditorElement?.editor) return;
+    trixEditorElement.editor.loadHTML(html || '');
+}
+
+function renderNoteTags(tags = []) {
+    if (!noteTagsContainer) return;
+
+    noteTagsContainer.innerHTML = '';
+    tags.forEach(tag => {
+        const tagElement = createTagElement(tag, true);
+        noteTagsContainer.appendChild(tagElement);
+    });
+}
+
+function populateNoteForm(note = null) {
+    if (!noteForm || !modalTitle || !noteTitleInput) return;
+
+    noteForm.reset();
+    noteIdInput.value = note?.id || '';
+    modalTitle.textContent = note ? 'Edit Note' : 'New Note';
+    noteTitleInput.value = note?.title || '';
+    noteDeadlineInput.value = note?.deadline || '';
+    setEditorContent(note?.content || '');
+    setActionItemsInEditor(note?.items || []);
+    renderNoteTags(note?.tags || []);
+    currentlyEditingNote = note;
+    setEditorTab('content');
+}
+
+function openNoteModal() {
+    if (!noteModal) return;
+    noteModal.style.display = 'flex';
+    noteModal.classList.add('show');
+    requestAnimationFrame(syncInfoTooltipPositions);
 }
 
 const escapeXML = (str) => {
@@ -179,19 +488,21 @@ function loadNotesFromLocalStorage() {
 // Draft Handling
 function saveDraft() {
     if (currentlyEditingNote === null && noteModal.style.display === 'flex') {
-        const tagElements = document.getElementById('noteTags').getElementsByClassName('tag');
+        const tagElements = noteTagsContainer.getElementsByClassName('tag');
         const tags = Array.from(tagElements).map(tag => tag.textContent.trim().replace(/×$/, '').trim());
+        const actionItems = getActionItemsFromEditor();
         
         const draftData = {
             title: noteTitleInput.value,
             content: trixEditorElement.value,
-            itemsText: noteActionItemsTextArea.value,
+            actionItems,
             deadline: noteDeadlineInput.value,
-            tags: tags
+            tags,
+            activeTab: getActiveEditorTab()
         };
         
         try {
-            if (draftData.title.trim() || draftData.content.trim() || draftData.itemsText.trim() || draftData.tags.length > 0) {
+            if (draftData.title.trim() || draftData.content.trim() || draftData.actionItems.length > 0 || draftData.tags.length > 0) {
                 localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
             } else {
                 localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -216,23 +527,16 @@ function checkAndRestoreDraft() {
                 noteDeadlineInput.value = draftData.deadline || '';
                 
                 // Restore Trix editor content
-                if (draftData.content) {
-                    trixEditorElement.value = draftData.content;
-                } else {
-                    trixEditorElement.value = '';
-                }
+                setEditorContent(draftData.content || '');
                 
-                noteActionItemsTextArea.value = draftData.itemsText || '';
+                const restoredItems = Array.isArray(draftData.actionItems)
+                    ? draftData.actionItems
+                    : parseLegacyActionItems(draftData.itemsText || '');
+                setActionItemsInEditor(restoredItems);
                 
                 // Restore tags
-                const tagsContainer = document.getElementById('noteTags');
-                if (tagsContainer && draftData.tags) {
-                    tagsContainer.innerHTML = '';
-                    draftData.tags.forEach(tag => {
-                        const tagElement = createTagElement(tag, true);
-                        tagsContainer.appendChild(tagElement);
-                    });
-                }
+                renderNoteTags(draftData.tags || []);
+                setEditorTab(draftData.activeTab || 'content');
                 
                 return true;
             } catch (error) {
@@ -369,6 +673,12 @@ document.addEventListener('DOMContentLoaded', () => {
             saveDraft();
         });
     }
+
+    if (trixEditorElement) {
+        trixEditorElement.addEventListener('trix-change', () => {
+            saveDraft();
+        });
+    }
 });
 
 // Initialize dark mode
@@ -381,6 +691,37 @@ function initializeDarkMode() {
 
 // Set up event listeners
 function setupEventListeners() {
+    infoTooltipButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+
+            const tooltip = button.closest('.info-tooltip');
+            if (!tooltip) return;
+
+            const shouldOpen = !tooltip.classList.contains('is-open');
+            closeInfoTooltips(shouldOpen ? tooltip : null);
+            tooltip.classList.toggle('is-open', shouldOpen);
+            button.setAttribute('aria-expanded', String(shouldOpen));
+            if (shouldOpen) {
+                requestAnimationFrame(() => positionInfoTooltip(tooltip));
+            }
+        });
+    });
+
+    noteTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            setEditorTab(button.dataset.tabTarget);
+            saveDraft();
+        });
+    });
+
+    if (clearDeadlineBtn) {
+        clearDeadlineBtn.addEventListener('click', () => {
+            noteDeadlineInput.value = '';
+            saveDraft();
+        });
+    }
+
     // Search input
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -445,16 +786,17 @@ function setupEventListeners() {
 
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
+            closeInfoTooltips();
+
             if (!menuToggleBtn.contains(e.target) && !headerMenu.contains(e.target)) {
                 headerMenu.classList.remove('show');
             }
 
              if (
                 isMobileViewport() &&
-                mainHeader &&
-                searchToggleBtn &&
-                mainHeader.classList.contains('search-open') &&
-                !mainHeader.contains(e.target)
+                searchSurface?.classList.contains('is-open') &&
+                !searchSurface.contains(e.target) &&
+                !searchToggleBtn?.contains(e.target)
             ) {
                 setSearchPanelOpen(false);
             }
@@ -471,7 +813,7 @@ function setupEventListeners() {
                 return;
             }
 
-            const isOpen = mainHeader?.classList.contains('search-open');
+            const isOpen = searchSurface?.classList.contains('is-open');
             setSearchPanelOpen(!isOpen);
 
             if (!isOpen) {
@@ -535,8 +877,14 @@ function setupEventListeners() {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
-    window.addEventListener('resize', syncResponsiveHeaderState);
-    window.addEventListener('load', syncResponsiveHeaderState);
+    window.addEventListener('resize', () => {
+        syncResponsiveHeaderState();
+        syncInfoTooltipPositions();
+    });
+    window.addEventListener('load', () => {
+        syncResponsiveHeaderState();
+        syncInfoTooltipPositions();
+    });
 
     // Import XML button
     const importXmlBtn = document.getElementById('importXmlBtn');
@@ -648,50 +996,40 @@ function setupEventListeners() {
 
 // Note Actions
 function openNewNoteModal() {
-    const modal = document.getElementById('noteModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const noteForm = document.getElementById('noteForm');
-    const noteTags = document.getElementById('noteTags');
-    const trixEditor = document.querySelector('trix-editor');
-
-    if (!modal || !modalTitle || !noteForm || !noteTags || !trixEditor) {
+    if (!noteModal || !modalTitle || !noteForm || !noteTagsContainer || !trixEditorElement) {
         console.error('Required modal elements not found');
         return;
     }
 
-    // Reset form and clear fields
-    modalTitle.textContent = 'New Note';
-    noteForm.reset();
-    noteTags.innerHTML = '';
-    trixEditor.editor.loadHTML('');
-    currentlyEditingNote = null;
+    populateNoteForm();
 
-    // Show modal
-    modal.style.display = 'flex';
-    modal.classList.add('show');
-    noteTitleInput.focus();
+    openNoteModal();
 
     // Check for draft
-    checkAndRestoreDraft();
+    const draftRestored = checkAndRestoreDraft();
+    if (!draftRestored) {
+        noteTitleInput.focus();
+    }
+}
+
+function openExistingNoteModal(note) {
+    populateNoteForm(note);
+    openNoteModal();
+    noteTitleInput.focus();
 }
 
 function saveNote() {
-    const noteId = document.getElementById('noteId').value;
-    const title = document.getElementById('noteTitle').value;
-    const content = document.querySelector('trix-editor').value;
-    const deadline = document.getElementById('noteDeadline').value;
-    const actionItems = document.getElementById('noteActionItems').value;
-    const tagElements = document.getElementById('noteTags').getElementsByClassName('tag');
-    const tags = Array.from(tagElements).map(tag => tag.textContent.trim());
+    if (noteForm && !noteForm.reportValidity()) {
+        return;
+    }
 
-    // Parse action items
-    const items = actionItems.split('\n')
-        .map(item => item.trim())
-        .filter(item => item.length > 0)
-        .map(item => ({
-            text: item,
-            completed: false
-        }));
+    const noteId = noteIdInput.value;
+    const title = noteTitleInput.value.trim();
+    const content = trixEditorElement.value;
+    const deadline = noteDeadlineInput.value;
+    const items = getActionItemsFromEditor();
+    const tagElements = noteTagsContainer.getElementsByClassName('tag');
+    const tags = Array.from(tagElements).map(tag => tag.textContent.trim().replace(/×$/, '').trim());
 
     const note = {
         id: noteId || Date.now().toString(),
@@ -719,17 +1057,19 @@ function saveNote() {
     saveNotesToLocalStorage();
 
     // Clear draft
-    localStorage.removeItem('noteDraft');
+    if (!noteId) {
+        clearDraft();
+    }
 
     // Close modal
-    const modal = document.getElementById('noteModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('show');
+    if (noteModal) {
+        noteModal.style.display = 'none';
+        noteModal.classList.remove('show');
     }
 
     // Refresh notes display
     renderNotes(document.getElementById('searchInput')?.value || '');
+    updateTagFilterContainer();
 
     // Show success message
     showMessage('Note saved successfully');
@@ -738,6 +1078,8 @@ function saveNote() {
 // Handle keyboard shortcuts
 function handleKeyboardShortcuts(e) {
     if (e.key === 'Escape') {
+        closeInfoTooltips();
+
         const modals = document.querySelectorAll('.modal.show');
         modals.forEach(modal => {
             modal.style.display = 'none';

@@ -10,41 +10,6 @@
 <body>
     <header class="main-header">
         <h1>Meeting Notes</h1>
-        <div class="message-container">
-            <div id="status" class="status-message"></div>
-            <div id="error" class="error-message"></div>
-        </div>
-        <div id="searchPanel" class="search-container">
-            <div class="search-input-container">
-                <input type="text" id="searchInput" placeholder="Search notes...">
-            </div>
-            <div class="search-filters">
-                <div class="filter-group">
-                    <label for="dateFilter">Date:</label>
-                    <select id="dateFilter">
-                        <option value="all">All Time</option>
-                        <option value="today">Today</option>
-                        <option value="yesterday">Yesterday</option>
-                        <option value="last-week">Last Week</option>
-                        <option value="last-month">Last Month</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="statusFilter">Status:</label>
-                    <select id="statusFilter">
-                        <option value="all">All</option>
-                        <option value="active">Active</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                <button id="clearFiltersBtn" class="clear-filters-btn">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M19,15.59L17.59,17L14,13.41L10.41,17L9,15.59L12.59,12L9,8.41L10.41,7L14,10.59L17.59,7L19,8.41L15.41,12L19,15.59M22,3A2,2 0 0,1 24,5V19A2,2 0 0,1 22,21H7C6.31,21 5.77,20.64 5.41,20.11L0,12L5.41,3.88C5.77,3.35 6.31,3 7,3H22M22,5H7L2.28,12L7,19H22V5Z"/>
-                    </svg>
-                    Clear Filters
-                </button>
-            </div>
-        </div>
         <div class="header-actions">
             <button
                 id="searchToggleBtn"
@@ -117,7 +82,45 @@
         </div>
     </header>
 
+    <div class="message-container" aria-live="polite" aria-atomic="true">
+        <div id="status" class="status-message"></div>
+        <div id="error" class="error-message"></div>
+    </div>
+
     <div class="container">
+        <section id="searchSurface" class="search-surface">
+            <div id="searchPanel" class="search-container">
+                <div class="search-input-container">
+                    <input type="text" id="searchInput" placeholder="Search notes…">
+                </div>
+                <div class="search-filters">
+                    <div class="filter-group">
+                        <label for="dateFilter">Date</label>
+                        <select id="dateFilter">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="last-week">Last Week</option>
+                            <option value="last-month">Last Month</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter">
+                            <option value="all">All</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <button id="clearFiltersBtn" class="clear-filters-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path fill="currentColor" d="M19,15.59L17.59,17L14,13.41L10.41,17L9,15.59L12.59,12L9,8.41L10.41,7L14,10.59L17.59,7L19,8.41L15.41,12L19,15.59M22,3A2,2 0 0,1 24,5V19A2,2 0 0,1 22,21H7C6.31,21 5.77,20.64 5.41,20.11L0,12L5.41,3.88C5.77,3.35 6.31,3 7,3H22M22,5H7L2.28,12L7,19H22V5Z"/>
+                        </svg>
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+        </section>
         <div id="tagFilterContainer" class="tag-filter-container"></div>
         <div id="notesGrid" class="notes-grid"></div>
     </div>
@@ -130,39 +133,199 @@
     </button>
 
     <div id="noteModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2 id="modalTitle">New Note</h2>
-            <form id="noteForm" class="modal-form-scrollable">
+        <div class="modal-content note-modal-content">
+            <button type="button" class="close-btn" id="noteModalCloseBtn" aria-label="Close note editor">&times;</button>
+            <div class="note-modal-header">
+                <div class="note-modal-title-block">
+                    <p class="note-modal-eyebrow">Meeting Capture</p>
+                    <div class="heading-with-help note-modal-title-row">
+                        <h2 id="modalTitle">New Note</h2>
+                        <div class="info-tooltip">
+                            <button
+                                type="button"
+                                class="info-tooltip-btn"
+                                aria-label="About this editor"
+                                aria-expanded="false"
+                            >
+                                i
+                            </button>
+                            <div class="info-tooltip-popover" role="tooltip">
+                                Keep narrative notes and follow-up actions separate while you edit.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form id="noteForm" class="note-form">
                 <input type="hidden" id="noteId">
-                <div>
-                    <label for="noteTitle">Title:</label>
-                    <input type="text" id="noteTitle" required>
-                </div>
-                <div>
-                    <label for="contentInputArea">Content:</label>
-                    <div id="trixEditorWrapper">
-                        <input id="noteContentHidden" type="hidden" name="content">
-                        <trix-editor id="contentInputArea" input="noteContentHidden"></trix-editor>
-                    </div>
-                </div>
-                <div>
-                    <label for="actionItemsArea">Action Items:</label>
-                    <textarea id="noteActionItems" rows="4"></textarea>
-                </div>
-                <div>
-                    <label for="deadlineGroup">Deadline:</label>
-                    <div id="deadlineGroup">
-                        <input type="date" id="noteDeadline">
-                    </div>
-                </div>
-                <div>
-                    <label>Tags:</label>
-                    <div id="noteTags" class="tags-container"></div>
-                    <div class="tag-input-container">
-                        <input type="text" id="tagInput" placeholder="Add a tag...">
-                        <button type="button" id="addTagButton">Add</button>
-                    </div>
+                <div class="note-form-body modal-form-scrollable">
+                    <section class="note-form-section">
+                        <div class="field-heading">
+                            <label for="noteTitle">Title</label>
+                            <span class="field-hint">Required</span>
+                        </div>
+                        <input type="text" id="noteTitle" required placeholder="Quarterly planning sync">
+                    </section>
+                    <section class="note-form-section note-editor-shell">
+                        <div class="note-editor-tabs" role="tablist" aria-label="Note editor sections">
+                            <button
+                                type="button"
+                                class="note-tab-btn active"
+                                id="noteTabButtonContent"
+                                data-tab-target="content"
+                                role="tab"
+                                aria-selected="true"
+                                aria-controls="noteTabContent"
+                            >
+                                Content
+                            </button>
+                            <button
+                                type="button"
+                                class="note-tab-btn"
+                                id="noteTabButtonActions"
+                                data-tab-target="actions"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="noteTabActions"
+                            >
+                                Action Items
+                            </button>
+                            <button
+                                type="button"
+                                class="note-tab-btn"
+                                id="noteTabButtonTags"
+                                data-tab-target="tags"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="noteTabTags"
+                            >
+                                Tags
+                            </button>
+                        </div>
+                        <div
+                            id="noteTabContent"
+                            class="note-tab-panel active"
+                            data-tab-panel="content"
+                            role="tabpanel"
+                            aria-labelledby="noteTabButtonContent"
+                        >
+                            <div class="panel-intro">
+                                <div class="heading-with-help">
+                                    <h3>Meeting notes</h3>
+                                    <div class="info-tooltip">
+                                        <button
+                                            type="button"
+                                            class="info-tooltip-btn"
+                                            aria-label="About meeting notes"
+                                            aria-expanded="false"
+                                        >
+                                            i
+                                        </button>
+                                        <div class="info-tooltip-popover" role="tooltip">
+                                            Capture context, decisions, blockers, and follow-up detail.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="trixEditorWrapper" class="editor-surface">
+                                <input id="noteContentHidden" type="hidden" name="content">
+                                <trix-editor id="contentInputArea" input="noteContentHidden"></trix-editor>
+                            </div>
+                        </div>
+                        <div
+                            id="noteTabActions"
+                            class="note-tab-panel"
+                            data-tab-panel="actions"
+                            role="tabpanel"
+                            aria-labelledby="noteTabButtonActions"
+                            hidden
+                        >
+                            <div class="panel-intro">
+                                <div class="heading-with-help">
+                                    <h3>Follow-up actions</h3>
+                                    <div class="info-tooltip">
+                                        <button
+                                            type="button"
+                                            class="info-tooltip-btn"
+                                            aria-label="About action items"
+                                            aria-expanded="false"
+                                        >
+                                            i
+                                        </button>
+                                        <div class="info-tooltip-popover" role="tooltip">
+                                            These show up as checkboxes in the note card and in the General Todo list.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="note-tab-stack">
+                                <div id="actionItemsList" class="action-items-editor" aria-live="polite"></div>
+                                <section class="note-form-section">
+                                    <div class="field-heading">
+                                        <div class="field-heading-main">
+                                            <label for="noteDeadline">Deadline</label>
+                                            <div class="info-tooltip">
+                                                <button
+                                                    type="button"
+                                                    class="info-tooltip-btn"
+                                                    aria-label="About deadline"
+                                                    aria-expanded="false"
+                                                >
+                                                    i
+                                                </button>
+                                                <div class="info-tooltip-popover" role="tooltip">
+                                                    Leave this blank if there is no follow-up deadline.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="field-hint">Optional</span>
+                                    </div>
+                                    <div id="deadlineGroup" class="deadline-input-row">
+                                        <input type="date" id="noteDeadline">
+                                        <button type="button" id="clearDeadlineBtn" class="ghost-inline-btn">Clear</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                        <div
+                            id="noteTabTags"
+                            class="note-tab-panel"
+                            data-tab-panel="tags"
+                            role="tabpanel"
+                            aria-labelledby="noteTabButtonTags"
+                            hidden
+                        >
+                            <div class="panel-intro">
+                                <div class="heading-with-help">
+                                    <h3>Tags</h3>
+                                    <div class="info-tooltip">
+                                        <button
+                                            type="button"
+                                            class="info-tooltip-btn"
+                                            aria-label="About tags"
+                                            aria-expanded="false"
+                                        >
+                                            i
+                                        </button>
+                                        <div class="info-tooltip-popover" role="tooltip">
+                                            Use tags to group related notes and make them easier to filter later.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <section class="note-form-section">
+                                <div class="field-heading">
+                                    <span class="field-hint">Optional</span>
+                                </div>
+                                <div id="noteTags" class="tags-container"></div>
+                                <div class="tag-input-container">
+                                    <input type="text" id="tagInput" placeholder="Add a tag…">
+                                    <button type="button" id="addTagButton">Add</button>
+                                </div>
+                                <p class="field-helper">Press Enter or type commas to add more than one tag quickly.</p>
+                            </section>
+                        </div>
+                    </section>
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="modalCancelBtn">Cancel</button>
