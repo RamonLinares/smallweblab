@@ -525,18 +525,6 @@ body.dark-mode {
     color: #4a4a4a;
 }
 
-#settingsDoneBtn {
-    min-width: 118px;
-    background: #1a73e8;
-    color: #ffffff;
-    box-shadow: 0 10px 22px rgba(26, 115, 232, 0.22);
-}
-
-#settingsDoneBtn:hover {
-    background: #1558b0;
-    box-shadow: 0 12px 26px rgba(21, 88, 176, 0.26);
-}
-
 .dark-mode #modalCancelBtn {
     background-color: #363636;
     color: #e0e0e0;
@@ -557,17 +545,6 @@ body.dark-mode {
 .dark-mode #confirmDialogCancelBtn {
     background: #273244;
     color: #e2e8f0;
-}
-
-.dark-mode #settingsDoneBtn {
-    background: #3b82f6;
-    color: #ffffff;
-    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.28);
-}
-
-.dark-mode #settingsDoneBtn:hover {
-    background: #2563eb;
-    box-shadow: 0 14px 30px rgba(37, 99, 235, 0.34);
 }
 
 /* Add icons to buttons */
@@ -2405,11 +2382,11 @@ trix-toolbar .trix-button-group--file-tools {
 .settings-modal-content,
 .help-modal-content,
 .confirm-modal-content {
-    width: min(640px, calc(100vw - 32px));
-    max-width: 640px;
-    max-height: min(760px, calc(100vh - 48px));
-    border-radius: 24px;
-    padding: 24px;
+    width: min(680px, calc(100vw - 32px));
+    max-width: 680px;
+    max-height: min(820px, calc(100vh - 32px));
+    border-radius: 28px;
+    padding: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -2417,6 +2394,7 @@ trix-toolbar .trix-button-group--file-tools {
 
 .confirm-modal-content {
     max-width: 460px;
+    padding: 24px;
     gap: 18px;
 }
 
@@ -2432,19 +2410,22 @@ trix-toolbar .trix-button-group--file-tools {
 }
 
 .settings-modal-header {
-    margin-bottom: 16px;
-    padding-right: 36px;
+    margin-bottom: 0;
+    padding-right: 0;
 }
 
 .settings-modal-header p {
-    margin-top: 6px;
-    color: #5f6c7b;
+    margin-top: 0;
 }
 
 .settings-modal-body {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     gap: 20px;
+    padding: 20px 24px 24px;
+    scrollbar-gutter: stable;
 }
 
 .settings-section {
@@ -2506,12 +2487,76 @@ trix-toolbar .trix-button-group--file-tools {
     gap: 8px;
 }
 
+.settings-dropdown-field {
+    position: relative;
+}
+
 .settings-field select {
     min-height: 48px;
     padding: 0.75rem 0.875rem;
     border: 1px solid #d6dee8;
     border-radius: 16px;
     background: #ffffff;
+}
+
+.settings-select-trigger {
+    min-height: 48px;
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid #d6dee8;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.settings-select-trigger svg {
+    flex-shrink: 0;
+}
+
+.settings-select-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 12;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid #d6dee8;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    overflow-y: auto;
+}
+
+.settings-select-menu.is-open {
+    display: flex;
+}
+
+.settings-select-option {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #334155;
+    padding: 10px 12px;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.settings-select-option:hover,
+.settings-select-option.is-selected {
+    background: #e8f0fe;
+    color: #1a73e8;
 }
 
 .help-list {
@@ -2599,10 +2644,27 @@ trix-toolbar .trix-button-group--file-tools {
 
 .dark-mode .settings-choice-card,
 .dark-mode .settings-toggle,
-.dark-mode .settings-field select {
+.dark-mode .settings-field select,
+.dark-mode .settings-select-trigger {
     background: #202833;
     border-color: #3d4758;
     color: #e2e8f0;
+}
+
+.dark-mode .settings-select-menu {
+    background: #202833;
+    border-color: #3d4758;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.32);
+}
+
+.dark-mode .settings-select-option {
+    color: #e2e8f0;
+}
+
+.dark-mode .settings-select-option:hover,
+.dark-mode .settings-select-option.is-selected {
+    background: #273449;
+    color: #93c5fd;
 }
 
 .dark-mode .settings-choice-card:has(input:checked) {
@@ -2617,8 +2679,11 @@ trix-toolbar .trix-button-group--file-tools {
     .confirm-modal-content {
         width: calc(100vw - 24px);
         max-height: calc(100dvh - 24px);
-        padding: 20px 18px;
         border-radius: 20px;
+    }
+
+    .confirm-modal-content {
+        padding: 20px 18px;
     }
 
     .settings-choice-group {
@@ -2627,5 +2692,656 @@ trix-toolbar .trix-button-group--file-tools {
 
     .tag-filter-section {
         padding: 14px 16px;
+    }
+}
+
+/* Material 3 cleanup pass */
+:root {
+    --md-sys-color-primary: #275ea7;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #d8e2ff;
+    --md-sys-color-on-primary-container: #0b1b3f;
+    --md-sys-color-secondary-container: #e8edf4;
+    --md-sys-color-on-secondary-container: #233040;
+    --md-sys-color-surface: #f6f8fc;
+    --md-sys-color-surface-container-low: #ffffff;
+    --md-sys-color-surface-container: #ffffff;
+    --md-sys-color-surface-container-high: #f0f3f8;
+    --md-sys-color-surface-container-highest: #e7ebf2;
+    --md-sys-color-on-surface: #1a1d24;
+    --md-sys-color-on-surface-variant: #5b6574;
+    --md-sys-color-outline: #c2c9d4;
+    --md-sys-color-outline-variant: #dde3ec;
+    --md-sys-color-inverse-surface: #2c313a;
+    --md-sys-color-inverse-on-surface: #f2f5fb;
+    --md-sys-color-error: #b3261e;
+    --md-sys-color-error-container: #f9dedc;
+    --md-sys-color-on-error-container: #410e0b;
+    --md-sys-elevation-1: 0 1px 2px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.06);
+    --md-sys-elevation-2: 0 12px 32px rgba(15, 23, 42, 0.12);
+    --md-sys-elevation-3: 0 20px 40px rgba(15, 23, 42, 0.16);
+    --background-color: var(--md-sys-color-surface-container);
+    --text-color: var(--md-sys-color-on-surface);
+    --accent-color: var(--md-sys-color-primary);
+}
+
+body.dark-mode {
+    --md-sys-color-primary: #aac7ff;
+    --md-sys-color-on-primary: #0a2f6b;
+    --md-sys-color-primary-container: #15315c;
+    --md-sys-color-on-primary-container: #d8e2ff;
+    --md-sys-color-secondary-container: #2a3443;
+    --md-sys-color-on-secondary-container: #dce5f2;
+    --md-sys-color-surface: #11161d;
+    --md-sys-color-surface-container-low: #171c24;
+    --md-sys-color-surface-container: #1a212c;
+    --md-sys-color-surface-container-high: #212a36;
+    --md-sys-color-surface-container-highest: #2a3441;
+    --md-sys-color-on-surface: #eef2f8;
+    --md-sys-color-on-surface-variant: #a7b4c6;
+    --md-sys-color-outline: #4c5a6e;
+    --md-sys-color-outline-variant: #344254;
+    --md-sys-color-inverse-surface: #e7edf6;
+    --md-sys-color-inverse-on-surface: #1c1f26;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-error-container: #601410;
+    --md-sys-color-on-error-container: #ffdad6;
+    --md-sys-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.22);
+    --md-sys-elevation-2: 0 18px 36px rgba(0, 0, 0, 0.28);
+    --md-sys-elevation-3: 0 24px 48px rgba(0, 0, 0, 0.34);
+    --background-color: var(--md-sys-color-surface-container);
+    --text-color: var(--md-sys-color-on-surface);
+    --accent-color: var(--md-sys-color-primary);
+}
+
+body {
+    font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+}
+
+.main-header,
+.search-surface,
+.tag-filter-section,
+.note-card,
+.settings-modal-content,
+.help-modal-content,
+.confirm-modal-content {
+    background: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+    box-shadow: var(--md-sys-elevation-1);
+}
+
+.main-header {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container) 88%, transparent);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: none;
+}
+
+.main-header h1,
+.note-title,
+.search-surface-header h2,
+.tag-filter-header h2,
+.settings-section h3,
+.panel-intro h3,
+.field-heading label {
+    color: var(--md-sys-color-on-surface);
+}
+
+.menu-toggle-btn,
+.clear-filters-btn,
+.secondary-inline-btn,
+.ghost-inline-btn,
+.filter-group select,
+.settings-select-trigger,
+#searchInput,
+#tagInput,
+.tags-container,
+.settings-choice-card,
+.settings-toggle,
+.settings-field select {
+    border-color: var(--md-sys-color-outline);
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+}
+
+.menu-toggle-btn:hover,
+.menu-toggle-btn.active,
+.clear-filters-btn:hover,
+.secondary-inline-btn:hover,
+.ghost-inline-btn:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.field-hint,
+.note-state-pill.is-archived,
+.filter-tag {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-color: transparent;
+}
+
+.filter-tag.selected,
+.filter-tag:hover {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-color: transparent;
+}
+
+.note-card {
+    border-radius: 24px;
+    padding: 20px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.note-card:hover {
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+.note-card.pinned {
+    border-left: none;
+    background: color-mix(in srgb, var(--md-sys-color-primary-container) 44%, var(--md-sys-color-surface-container));
+}
+
+.note-card.archived {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 86%, var(--md-sys-color-surface-container));
+}
+
+.note-card.archived:hover {
+    box-shadow: var(--md-sys-elevation-1);
+}
+
+.note-card-title-row {
+    align-items: flex-start;
+}
+
+.note-state-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.note-state-pill {
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.note-state-pill.is-pinned {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.note-content,
+.note-date,
+.note-deadline,
+.field-helper,
+.settings-modal-header p,
+.help-list,
+.confirm-dialog-copy p {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.note-footer {
+    align-items: center;
+    gap: 12px;
+}
+
+.note-actions {
+    margin-left: auto;
+    position: relative;
+}
+
+.note-overflow {
+    position: relative;
+}
+
+.note-actions .note-overflow-trigger {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 20px;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    padding: 0;
+}
+
+.note-actions .note-overflow-trigger:hover,
+.note-actions .note-overflow-trigger[aria-expanded="true"] {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-color: transparent;
+}
+
+.note-overflow-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    min-width: 220px;
+    padding: 8px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 18px;
+    background: var(--md-sys-color-surface-container-high);
+    box-shadow: var(--md-sys-elevation-3);
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 20;
+}
+
+.note-overflow.is-open .note-overflow-menu {
+    display: flex;
+}
+
+.note-actions .note-overflow-menu .note-overflow-item {
+    width: 100%;
+    height: auto;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--md-sys-color-on-surface);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+}
+
+.note-actions .note-overflow-menu .note-overflow-item:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    transform: none;
+}
+
+.note-overflow-item.danger {
+    color: var(--md-sys-color-error);
+}
+
+.note-modal-content {
+    width: min(920px, calc(100vw - 32px));
+    max-width: 920px;
+    max-height: min(92vh, calc(100vh - 32px));
+    padding: 0;
+    border-radius: 28px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container);
+    box-shadow: var(--md-sys-elevation-3);
+}
+
+.note-modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 0;
+    padding: 16px 24px;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container) 94%, transparent);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.note-modal-nav-btn,
+.dialog-shell-nav-btn {
+    position: static;
+    right: auto;
+    top: auto;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.note-modal-nav-btn:hover,
+.dialog-shell-nav-btn:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.dialog-shell-header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container, #ffffff) 94%, transparent);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #dde3ec);
+}
+
+.dialog-shell-title-block {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dialog-shell-title-block h2 {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.dialog-shell-title-block p {
+    margin: 0;
+    color: #5f6c7b;
+    line-height: 1.55;
+}
+
+.dialog-shell-action-btn {
+    min-width: 80px;
+    min-height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 20px;
+    background: var(--md-sys-color-primary, #1a73e8);
+    color: var(--md-sys-color-on-primary, #ffffff);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(26, 115, 232, 0.22);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dialog-shell-action-btn:hover {
+    background: var(--md-sys-color-primary, #1558b0);
+    box-shadow: 0 12px 26px rgba(21, 88, 176, 0.26);
+    transform: translateY(-1px);
+}
+
+.dialog-shell-action-btn-secondary {
+    background: var(--md-sys-color-secondary-container, #e8edf4);
+    color: var(--md-sys-color-on-secondary-container, #233040);
+    box-shadow: none;
+}
+
+.dialog-shell-action-btn-secondary:hover {
+    background: var(--md-sys-color-surface-container-highest, #dfe5ed);
+    color: var(--md-sys-color-on-surface, #1a1d24);
+    box-shadow: none;
+}
+
+.note-modal-title-block {
+    min-width: 0;
+}
+
+.note-modal-title-row {
+    gap: 8px;
+}
+
+.note-modal-title-block h2 {
+    font-size: 1.375rem;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.note-modal-eyebrow {
+    display: none;
+}
+
+#modalSaveBtn {
+    min-width: 88px;
+    min-height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 20px;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+#modalSaveBtn::before {
+    display: none;
+}
+
+#modalSaveBtn:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 88%, black);
+    transform: none;
+    box-shadow: none;
+}
+
+.note-form {
+    gap: 0;
+}
+
+.note-form-body {
+    padding: 20px 24px 24px;
+    gap: 22px;
+}
+
+.modal-form-scrollable {
+    padding-right: 0;
+}
+
+.note-editor-shell {
+    padding: 16px;
+    border-radius: 24px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.note-editor-tabs {
+    gap: 8px;
+    padding: 4px;
+    background: var(--md-sys-color-secondary-container);
+}
+
+.note-tab-btn {
+    min-height: 44px;
+    border-radius: 999px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+
+.note-tab-btn.active {
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: none;
+}
+
+.editor-surface {
+    border-radius: 24px;
+    border-color: var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container);
+    box-shadow: none;
+}
+
+.editor-surface trix-toolbar {
+    padding: 12px;
+    border-bottom-color: var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.editor-surface trix-toolbar .trix-button {
+    border-radius: 12px;
+    background: var(--md-sys-color-surface-container);
+}
+
+.editor-surface trix-editor {
+    min-height: 320px;
+    padding: 20px;
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+}
+
+.add-note-fab {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+.add-note-fab:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary-container) 88%, var(--md-sys-color-primary));
+    color: var(--md-sys-color-on-primary-container);
+    box-shadow: var(--md-sys-elevation-3);
+}
+
+.message-container {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 1200;
+}
+
+.snackbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    width: min(520px, 100%);
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    box-shadow: var(--md-sys-elevation-3);
+    opacity: 0;
+    transform: translateY(18px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.snackbar.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.snackbar.is-error {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+}
+
+body.snackbar-visible .add-note-fab {
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 78px);
+}
+
+.settings-modal-content,
+.help-modal-content,
+.confirm-modal-content {
+    border-radius: 28px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container);
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+.settings-select-trigger,
+.settings-select-menu {
+    border-color: var(--md-sys-color-outline);
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+}
+
+.settings-select-menu {
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+.settings-select-option:hover,
+.settings-select-option.is-selected {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+@media (max-width: 768px) {
+    #noteModal {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    #settingsModal,
+    #helpModal {
+        align-items: stretch;
+    }
+
+    .note-modal-content {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+    }
+
+    .settings-modal-content,
+    .help-modal-content {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+    }
+
+    .note-modal-header {
+        padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+        gap: 12px;
+    }
+
+    .settings-modal-header-shell {
+        padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+        gap: 12px;
+    }
+
+    .note-modal-title-block h2 {
+        font-size: 1.25rem;
+    }
+
+    .dialog-shell-title-block h2 {
+        font-size: 1.25rem;
+    }
+
+    .note-form-body {
+        padding: 16px 16px calc(env(safe-area-inset-bottom) + 24px);
+        gap: 18px;
+    }
+
+    .settings-modal-body {
+        padding: 16px 16px calc(env(safe-area-inset-bottom) + 24px);
+        gap: 18px;
+    }
+
+    .note-editor-shell {
+        padding: 12px;
+    }
+
+    .editor-surface trix-editor {
+        min-height: 280px;
+        padding: 16px;
+    }
+
+    .dialog-shell-action-btn {
+        min-width: 72px;
+        padding: 0 16px;
+    }
+
+    body.snackbar-visible .add-note-fab {
+        bottom: calc(max(12px, env(safe-area-inset-bottom)) + 74px);
     }
 }

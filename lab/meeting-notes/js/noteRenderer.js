@@ -195,11 +195,25 @@ function createNoteCard(note) {
     title.textContent = note.title;
     titleRow.appendChild(title);
 
+    const stateGroup = document.createElement('div');
+    stateGroup.className = 'note-state-group';
+
+    if (note.pinned) {
+        const pinnedBadge = document.createElement('span');
+        pinnedBadge.className = 'note-state-pill is-pinned';
+        pinnedBadge.textContent = 'Pinned';
+        stateGroup.appendChild(pinnedBadge);
+    }
+
     if (note.archived) {
         const archivedBadge = document.createElement('span');
-        archivedBadge.className = 'note-state-pill';
+        archivedBadge.className = 'note-state-pill is-archived';
         archivedBadge.textContent = 'Archived';
-        titleRow.appendChild(archivedBadge);
+        stateGroup.appendChild(archivedBadge);
+    }
+
+    if (stateGroup.children.length > 0) {
+        titleRow.appendChild(stateGroup);
     }
 
     header.appendChild(titleRow);
@@ -267,7 +281,11 @@ function createNoteCard(note) {
                 tagElement.textContent = tag;
                 tagElement.onclick = event => {
                     event.stopPropagation();
-                    selectedTags.add(tag);
+                    if (selectedTags.has(tag)) {
+                        selectedTags.delete(tag);
+                    } else {
+                        selectedTags.add(tag);
+                    }
                     renderNotes(getCurrentSearchTerm());
                     updateTagFilterContainer();
                 };
@@ -296,43 +314,76 @@ function createNoteCard(note) {
         const actions = document.createElement('div');
         actions.className = 'note-actions';
 
-        const pinBtn = document.createElement('button');
-        pinBtn.className = 'pin-btn';
-        if (note.pinned) pinBtn.classList.add('pinned');
-        pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
-        pinBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path fill="currentColor" d="${note.pinned ?
-                'M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z' :
-                'M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12M8.8,14L10,12.8V4H14V12.8L15.2,14H8.8Z'}"></path>
-        </svg>`;
-        pinBtn.onclick = event => {
-            event.stopPropagation();
-            togglePinNote(note.id);
-        };
-        actions.appendChild(pinBtn);
+        const overflow = document.createElement('div');
+        overflow.className = 'note-overflow';
 
-        const archiveBtn = document.createElement('button');
-        archiveBtn.className = 'archive-btn';
-        if (note.archived) archiveBtn.classList.add('active');
-        archiveBtn.title = note.archived ? 'Restore note' : 'Archive note';
-        archiveBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path fill="currentColor" d="M20.54 5.23 19.15 3.55A2 2 0 0 0 17.62 3H6.38a2 2 0 0 0-1.53.55L3.46 5.23A2 2 0 0 0 3 6.5V8a2 2 0 0 0 2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0 2-2V6.5a2 2 0 0 0-.46-1.27ZM6.24 5h11.52l.81 1H5.43ZM17 18H7v-8h10Zm-6-5h2v2h-2Z"></path>
+        const overflowButton = document.createElement('button');
+        overflowButton.type = 'button';
+        overflowButton.className = 'note-overflow-trigger';
+        overflowButton.setAttribute('aria-label', `Open actions for ${note.title}`);
+        overflowButton.setAttribute('aria-haspopup', 'menu');
+        overflowButton.setAttribute('aria-expanded', 'false');
+        overflowButton.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="12" cy="5" r="1.9" fill="currentColor"></circle>
+            <circle cx="12" cy="12" r="1.9" fill="currentColor"></circle>
+            <circle cx="12" cy="19" r="1.9" fill="currentColor"></circle>
         </svg>`;
-        archiveBtn.onclick = event => {
-            event.stopPropagation();
-            toggleArchiveNote(note.id);
-        };
-        actions.appendChild(archiveBtn);
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.title = 'Delete note';
-        deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path></svg>';
-        deleteBtn.onclick = event => {
+        const overflowMenu = document.createElement('div');
+        overflowMenu.className = 'note-overflow-menu';
+        overflowMenu.setAttribute('role', 'menu');
+
+        const menuActions = [
+            {
+                label: note.pinned ? 'Unpin note' : 'Pin note',
+                icon: `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path fill="currentColor" d="${note.pinned ?
+                        'M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z' :
+                        'M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12M8.8,14L10,12.8V4H14V12.8L15.2,14H8.8Z'}"></path>
+                </svg>`,
+                onSelect: () => togglePinNote(note.id)
+            },
+            {
+                label: note.archived ? 'Restore note' : 'Archive note',
+                icon: `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path fill="currentColor" d="M20.54 5.23 19.15 3.55A2 2 0 0 0 17.62 3H6.38a2 2 0 0 0-1.53.55L3.46 5.23A2 2 0 0 0 3 6.5V8a2 2 0 0 0 2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0 2-2V6.5a2 2 0 0 0-.46-1.27ZM6.24 5h11.52l.81 1H5.43ZM17 18H7v-8h10Zm-6-5h2v2h-2Z"></path>
+                </svg>`,
+                onSelect: () => toggleArchiveNote(note.id)
+            },
+            {
+                label: 'Delete note',
+                className: 'danger',
+                icon: `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path>
+                </svg>`,
+                onSelect: () => deleteNote(note.id)
+            }
+        ];
+
+        menuActions.forEach(action => {
+            const menuItem = document.createElement('button');
+            menuItem.type = 'button';
+            menuItem.className = `note-overflow-item${action.className ? ` ${action.className}` : ''}`;
+            menuItem.setAttribute('role', 'menuitem');
+            menuItem.innerHTML = `${action.icon}<span>${action.label}</span>`;
+            menuItem.addEventListener('click', event => {
+                event.stopPropagation();
+                setNoteOverflowMenuOpen(overflow, false);
+                action.onSelect();
+            });
+            overflowMenu.appendChild(menuItem);
+        });
+
+        overflowButton.addEventListener('click', event => {
             event.stopPropagation();
-            deleteNote(note.id);
-        };
-        actions.appendChild(deleteBtn);
+            const shouldOpen = !overflow.classList.contains('is-open');
+            closeNoteOverflowMenus(shouldOpen ? overflow : null);
+            setNoteOverflowMenuOpen(overflow, shouldOpen);
+        });
+
+        overflow.appendChild(overflowButton);
+        overflow.appendChild(overflowMenu);
+        actions.appendChild(overflow);
 
         footer.appendChild(actions);
         card.appendChild(footer);

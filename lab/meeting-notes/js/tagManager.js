@@ -117,18 +117,21 @@ function updateTagFilterContainer() {
         const tagElement = document.createElement('button');
         tagElement.type = 'button';
         tagElement.className = 'filter-tag';
+        tagElement.setAttribute('aria-pressed', String(selectedTags.has(tag)));
         if (selectedTags.has(tag)) {
             tagElement.classList.add('selected');
         }
         tagElement.textContent = tag;
         
-        tagElement.addEventListener('click', () => {
-            tagElement.classList.toggle('selected');
+        tagElement.addEventListener('click', event => {
             if (selectedTags.has(tag)) {
                 selectedTags.delete(tag);
             } else {
                 selectedTags.add(tag);
             }
+
+            event.currentTarget.blur();
+            updateTagFilterContainer();
             renderNotes(document.getElementById('searchInput')?.value || '');
         });
         

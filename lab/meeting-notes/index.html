@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meeting Notes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.css">
 </head>
@@ -39,6 +42,14 @@
                     </svg>
                     Settings
                 </button>
+                <button id="helpBtn" class="menu-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Help
+                </button>
                 <button id="exportXmlBtn" class="menu-item">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -70,8 +81,7 @@
     </header>
 
     <div class="message-container" aria-live="polite" aria-atomic="true">
-        <div id="status" class="status-message"></div>
-        <div id="error" class="error-message"></div>
+        <div id="snackbar" class="snackbar" role="status"></div>
     </div>
 
     <div class="container">
@@ -167,10 +177,14 @@
 
     <div id="noteModal" class="modal">
         <div class="modal-content note-modal-content">
-            <button type="button" class="close-btn" id="noteModalCloseBtn" aria-label="Close note editor">&times;</button>
             <div class="note-modal-header">
+                <button type="button" class="close-btn note-modal-nav-btn" id="noteModalCloseBtn" aria-label="Close note editor">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
                 <div class="note-modal-title-block">
-                    <p class="note-modal-eyebrow">Meeting Capture</p>
                     <div class="heading-with-help note-modal-title-row">
                         <h2 id="modalTitle">New Note</h2>
                         <div class="info-tooltip">
@@ -192,6 +206,7 @@
                         </div>
                     </div>
                 </div>
+                <button type="button" id="modalSaveBtn">Save</button>
             </div>
             <form id="noteForm" class="note-form">
                 <input type="hidden" id="noteId">
@@ -380,10 +395,6 @@
                         </div>
                     </section>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" id="modalCancelBtn">Cancel</button>
-                    <button type="submit" id="modalSaveBtn">Save</button>
-                </div>
             </form>
         </div>
     </div>
@@ -403,10 +414,36 @@
 
     <div id="settingsModal" class="modal">
         <div class="modal-content settings-modal-content">
-            <button type="button" class="close-btn" id="settingsModalCloseBtn" aria-label="Close settings">&times;</button>
-            <div class="settings-modal-header">
-                <h2>Settings</h2>
-                <p>Adjust theme, dashboard behavior, and what appears in your notes view.</p>
+            <div class="dialog-shell-header settings-modal-header-shell">
+                <button type="button" class="close-btn dialog-shell-nav-btn" id="settingsModalCloseBtn" aria-label="Close settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="dialog-shell-title-block settings-modal-header">
+                    <div class="heading-with-help note-modal-title-row">
+                        <h2>Settings</h2>
+                        <div class="info-tooltip">
+                            <button
+                                type="button"
+                                class="info-tooltip-btn"
+                                aria-label="About settings"
+                                aria-expanded="false"
+                            >
+                                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <circle cx="8" cy="8" r="6.25"></circle>
+                                    <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                    <path d="M8 7v4.1"></path>
+                                </svg>
+                            </button>
+                            <div class="info-tooltip-popover" role="tooltip">
+                                Adjust theme, dashboard behavior, and what appears in your notes view.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="settingsDoneBtn" class="dialog-shell-action-btn">Save</button>
             </div>
             <div class="settings-modal-body modal-form-scrollable">
                 <section class="settings-section">
@@ -444,34 +481,65 @@
                         <input type="checkbox" id="settingShowArchived">
                         <span>Show archived cards</span>
                     </label>
-                    <div class="settings-field">
-                        <label for="settingSortMode">Sort cards by</label>
-                        <select id="settingSortMode">
-                            <option value="created-desc">Date created, newer first</option>
-                            <option value="created-asc">Date created, older first</option>
-                            <option value="deadline-asc">Deadline, closer first</option>
-                            <option value="deadline-desc">Deadline, further first</option>
-                        </select>
+                    <div class="settings-field settings-dropdown-field">
+                        <label for="settingSortTrigger">Sort cards by</label>
+                        <button
+                            type="button"
+                            id="settingSortTrigger"
+                            class="settings-select-trigger"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                            aria-controls="settingSortMenu"
+                        >
+                            <span id="settingSortValue">Date created, newer first</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div id="settingSortMenu" class="settings-select-menu" role="listbox" aria-labelledby="settingSortTrigger" hidden>
+                            <button type="button" class="settings-select-option" data-sort-value="created-desc" role="option" aria-selected="true">Date created, newer first</button>
+                            <button type="button" class="settings-select-option" data-sort-value="created-asc" role="option" aria-selected="false">Date created, older first</button>
+                            <button type="button" class="settings-select-option" data-sort-value="deadline-asc" role="option" aria-selected="false">Deadline, closer first</button>
+                            <button type="button" class="settings-select-option" data-sort-value="deadline-desc" role="option" aria-selected="false">Deadline, further first</button>
+                        </div>
                     </div>
                 </section>
-                <section class="settings-section">
-                    <h3>Help</h3>
-                    <p class="field-helper">Open the usage guide and keyboard shortcuts in a dedicated help dialog.</p>
-                    <button type="button" id="openHelpModalBtn" class="secondary-inline-btn">Open Help</button>
-                </section>
-            </div>
-            <div class="modal-actions">
-                <button type="button" id="settingsDoneBtn">Done</button>
             </div>
         </div>
     </div>
 
     <div id="helpModal" class="modal">
         <div class="modal-content settings-modal-content help-modal-content">
-            <button type="button" class="close-btn" id="helpModalCloseBtn" aria-label="Close help">&times;</button>
-            <div class="settings-modal-header">
-                <h2>Help</h2>
-                <p>Meeting Notes keeps meeting context, follow-up actions, deadlines, and tags together in one workspace.</p>
+            <div class="dialog-shell-header settings-modal-header-shell">
+                <button type="button" class="close-btn dialog-shell-nav-btn" id="helpModalCloseBtn" aria-label="Close help">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="dialog-shell-title-block settings-modal-header">
+                    <div class="heading-with-help note-modal-title-row">
+                        <h2>Help</h2>
+                        <div class="info-tooltip">
+                            <button
+                                type="button"
+                                class="info-tooltip-btn"
+                                aria-label="About help"
+                                aria-expanded="false"
+                            >
+                                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <circle cx="8" cy="8" r="6.25"></circle>
+                                    <circle cx="8" cy="4.85" r="0.9" fill="currentColor" stroke="none"></circle>
+                                    <path d="M8 7v4.1"></path>
+                                </svg>
+                            </button>
+                            <div class="info-tooltip-popover" role="tooltip">
+                                Meeting Notes keeps meeting context, follow-up actions, deadlines, and tags together in one workspace.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="helpDoneBtn" class="dialog-shell-action-btn dialog-shell-action-btn-secondary">Close</button>
             </div>
             <div class="settings-modal-body modal-form-scrollable">
                 <section class="settings-section">

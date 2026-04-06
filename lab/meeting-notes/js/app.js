@@ -8,11 +8,9 @@ const DARK_MODE_KEY = 'darkModeEnabled';
 const notesGrid = document.getElementById('notesGrid');
 const addNoteFab = document.getElementById('addNoteFab');
 const noteModal = document.getElementById('noteModal');
-const closeModalBtn = document.getElementById('noteModalCloseBtn');
 const noteForm = document.getElementById('noteForm');
 const noteIdInput = document.getElementById('noteId');
 const modalSaveBtn = document.getElementById('modalSaveBtn');
-const modalCancelBtn = document.getElementById('modalCancelBtn');
 const modalTitle = document.getElementById('modalTitle');
 const noteTitleInput = document.getElementById('noteTitle');
 const contentInputArea = document.getElementById('contentInputArea');
@@ -27,8 +25,7 @@ const noteDeadlineInput = document.getElementById('noteDeadline');
 const clearDeadlineBtn = document.getElementById('clearDeadlineBtn');
 const noteTagsContainer = document.getElementById('noteTags');
 const infoTooltipButtons = document.querySelectorAll('.info-tooltip-btn');
-const statusDiv = document.getElementById('status');
-const errorDiv = document.getElementById('error');
+const snackbar = document.getElementById('snackbar');
 const searchInput = document.getElementById('searchInput');
 const searchToggleBtn = document.getElementById('searchToggleBtn');
 const searchPanel = document.getElementById('searchPanel');
@@ -37,13 +34,14 @@ const tagFilterSection = document.getElementById('tagFilterSection');
 const menuToggleBtn = document.getElementById('menuToggleBtn');
 const headerMenu = document.getElementById('headerMenu');
 const settingsBtn = document.getElementById('settingsBtn');
+const helpBtn = document.getElementById('helpBtn');
 const exportXmlBtn = document.getElementById('exportXmlBtn');
 const importXmlBtn = document.getElementById('importXmlBtn');
 const importXmlInput = document.getElementById('importXmlInput');
 const settingsModal = document.getElementById('settingsModal');
 const settingsDoneBtn = document.getElementById('settingsDoneBtn');
-const openHelpModalBtn = document.getElementById('openHelpModalBtn');
 const helpModal = document.getElementById('helpModal');
+const helpDoneBtn = document.getElementById('helpDoneBtn');
 const confirmDialog = document.getElementById('confirmDialog');
 const confirmDialogTitle = document.getElementById('confirmDialogTitle');
 const confirmDialogMessage = document.getElementById('confirmDialogMessage');
@@ -54,7 +52,10 @@ const settingShowTagFilters = document.getElementById('settingShowTagFilters');
 const settingShowCompletedGeneralTodo = document.getElementById('settingShowCompletedGeneralTodo');
 const settingShowGeneralTodo = document.getElementById('settingShowGeneralTodo');
 const settingShowArchived = document.getElementById('settingShowArchived');
-const settingSortMode = document.getElementById('settingSortMode');
+const settingSortTrigger = document.getElementById('settingSortTrigger');
+const settingSortValue = document.getElementById('settingSortValue');
+const settingSortMenu = document.getElementById('settingSortMenu');
+const settingSortOptions = document.querySelectorAll('.settings-select-option');
 const mainHeader = document.querySelector('.main-header');
 
 // Global variables
@@ -64,7 +65,9 @@ let dateFilter = 'all';
 let statusFilter = 'all';
 let currentlyEditingNote = null;
 let appSettings = null;
+let pendingSettings = null;
 let confirmDialogResolver = null;
+let snackbarTimeout = null;
 const MOBILE_BREAKPOINT = 768;
 const DEFAULT_APP_SETTINGS = {
     theme: 'system',
@@ -93,36 +96,48 @@ const ACTION_ITEM_BUTTON_ICONS = {
         </svg>
     `
 };
+const SORT_MODE_LABELS = {
+    'created-desc': 'Date created, newer first',
+    'created-asc': 'Date created, older first',
+    'deadline-asc': 'Deadline, closer first',
+    'deadline-desc': 'Deadline, further first'
+};
 
 // Utility Functions
 function clearMessages() {
-    const statusDiv = document.getElementById('status');
-    const errorDiv = document.getElementById('error');
-    if (statusDiv) statusDiv.textContent = '';
-    if (errorDiv) errorDiv.textContent = '';
+    if (!snackbar) return;
+
+    if (snackbarTimeout) {
+        clearTimeout(snackbarTimeout);
+        snackbarTimeout = null;
+    }
+
+    snackbar.textContent = '';
+    snackbar.classList.remove('is-visible', 'is-error');
+    snackbar.setAttribute('role', 'status');
+    document.body.classList.remove('snackbar-visible');
 }
 
 function showMessage(message, isError = false) {
     if (!message) return;
-    
-    const statusDiv = document.getElementById('status');
-    const errorDiv = document.getElementById('error');
-    const targetDiv = isError ? errorDiv : statusDiv;
-    
-    if (!targetDiv) {
+
+    if (!snackbar) {
         console.log(isError ? 'Error: ' : 'Status: ', message);
         return;
     }
-    
+
     clearMessages();
-    targetDiv.textContent = message;
-    
-    // Auto-hide after delay
-    setTimeout(() => {
-        if (targetDiv.textContent === message) {
-            targetDiv.textContent = '';
+    snackbar.textContent = message;
+    snackbar.classList.add('is-visible');
+    snackbar.classList.toggle('is-error', isError);
+    snackbar.setAttribute('role', isError ? 'alert' : 'status');
+    document.body.classList.add('snackbar-visible');
+
+    snackbarTimeout = setTimeout(() => {
+        if (snackbar.textContent === message) {
+            clearMessages();
         }
-    }, isError ? 5000 : 3000);
+    }, isError ? 5600 : 3600);
 }
 
 function isMobileViewport() {
@@ -157,6 +172,7 @@ function focusSearchInput() {
     if (!searchInput) return;
 
     headerMenu?.classList.remove('show');
+    closeNoteOverflowMenus();
     setSearchPanelOpen(true);
 
     requestAnimationFrame(() => {
@@ -177,6 +193,86 @@ function syncResponsiveHeaderState() {
     searchPanel.setAttribute('aria-hidden', String(!isOpen));
 
     updateHeaderOffset();
+}
+
+function setNoteOverflowMenuOpen(wrapper, shouldOpen) {
+    if (!wrapper) return;
+
+    wrapper.classList.toggle('is-open', shouldOpen);
+    wrapper.querySelector('.note-overflow-trigger')?.setAttribute('aria-expanded', String(shouldOpen));
+}
+
+function closeNoteOverflowMenus(except = null) {
+    document.querySelectorAll('.note-overflow').forEach(wrapper => {
+        if (wrapper === except) return;
+        setNoteOverflowMenuOpen(wrapper, false);
+    });
+}
+
+function positionSettingsSortMenu() {
+    if (!settingSortTrigger || !settingSortMenu) return;
+
+    const scrollContainer = settingSortTrigger.closest('.modal-form-scrollable');
+    const anchorRect = settingSortTrigger.getBoundingClientRect();
+    const boundsRect = scrollContainer?.getBoundingClientRect() || {
+        top: 16,
+        bottom: window.innerHeight - 16
+    };
+    const viewportPadding = 12;
+    const spaceBelow = Math.max(120, boundsRect.bottom - anchorRect.bottom - viewportPadding);
+    settingSortMenu.style.maxHeight = `${spaceBelow}px`;
+
+    const menuRect = settingSortMenu.getBoundingClientRect();
+    const overflowBottom = menuRect.bottom - (boundsRect.bottom - viewportPadding);
+
+    if (overflowBottom > 0) {
+        if (scrollContainer) {
+            scrollContainer.scrollBy({ top: overflowBottom });
+        } else {
+            window.scrollBy({ top: overflowBottom });
+        }
+
+        requestAnimationFrame(() => {
+            if (!settingSortTrigger || !settingSortMenu) return;
+
+            const updatedAnchorRect = settingSortTrigger.getBoundingClientRect();
+            const updatedBoundsRect = scrollContainer?.getBoundingClientRect() || {
+                top: 16,
+                bottom: window.innerHeight - 16
+            };
+            const updatedSpaceBelow = Math.max(120, updatedBoundsRect.bottom - updatedAnchorRect.bottom - viewportPadding);
+            settingSortMenu.style.maxHeight = `${updatedSpaceBelow}px`;
+        });
+    }
+}
+
+function setSettingsSortMenuOpen(shouldOpen) {
+    if (!settingSortTrigger || !settingSortMenu) return;
+
+    settingSortTrigger.setAttribute('aria-expanded', String(shouldOpen));
+    settingSortMenu.hidden = !shouldOpen;
+    settingSortMenu.classList.toggle('is-open', shouldOpen);
+
+    if (shouldOpen) {
+        requestAnimationFrame(positionSettingsSortMenu);
+    } else {
+        settingSortMenu.style.maxHeight = '';
+    }
+}
+
+function syncSettingsSortControl(settings = appSettings) {
+    const activeSortMode = settings?.sortMode || DEFAULT_APP_SETTINGS.sortMode;
+    const activeLabel = SORT_MODE_LABELS[activeSortMode] || SORT_MODE_LABELS[DEFAULT_APP_SETTINGS.sortMode];
+
+    if (settingSortValue) {
+        settingSortValue.textContent = activeLabel;
+    }
+
+    settingSortOptions.forEach(option => {
+        const isSelected = option.dataset.sortValue === activeSortMode;
+        option.classList.toggle('is-selected', isSelected);
+        option.setAttribute('aria-selected', String(isSelected));
+    });
 }
 
 function parseLegacyActionItems(itemsText = '') {
@@ -225,6 +321,13 @@ function positionInfoTooltip(tooltip) {
 
 function syncInfoTooltipPositions() {
     document.querySelectorAll('.info-tooltip').forEach(positionInfoTooltip);
+}
+
+function cloneSettings(settings = DEFAULT_APP_SETTINGS) {
+    return {
+        ...DEFAULT_APP_SETTINGS,
+        ...settings
+    };
 }
 
 function setEditorTab(tabName = 'content') {
@@ -489,6 +592,11 @@ function closeManagedModal(modal, { preserveDraft = true } = {}) {
         return;
     }
 
+    if (modal === settingsModal) {
+        closeSettingsModal();
+        return;
+    }
+
     closeModal(modal);
 }
 
@@ -585,16 +693,16 @@ function applyThemeSetting() {
     document.documentElement.style.colorScheme = shouldUseDarkMode ? 'dark' : 'light';
 }
 
-function syncSettingsControls() {
+function syncSettingsControls(settings = appSettings) {
     settingsThemeInputs.forEach(input => {
-        input.checked = input.value === appSettings?.theme;
+        input.checked = input.value === settings?.theme;
     });
 
-    if (settingShowTagFilters) settingShowTagFilters.checked = Boolean(appSettings?.showTagFilters);
-    if (settingShowCompletedGeneralTodo) settingShowCompletedGeneralTodo.checked = Boolean(appSettings?.showCompletedGeneralTodo);
-    if (settingShowGeneralTodo) settingShowGeneralTodo.checked = Boolean(appSettings?.showGeneralTodo);
-    if (settingShowArchived) settingShowArchived.checked = Boolean(appSettings?.showArchived);
-    if (settingSortMode) settingSortMode.value = appSettings?.sortMode || DEFAULT_APP_SETTINGS.sortMode;
+    if (settingShowTagFilters) settingShowTagFilters.checked = Boolean(settings?.showTagFilters);
+    if (settingShowCompletedGeneralTodo) settingShowCompletedGeneralTodo.checked = Boolean(settings?.showCompletedGeneralTodo);
+    if (settingShowGeneralTodo) settingShowGeneralTodo.checked = Boolean(settings?.showGeneralTodo);
+    if (settingShowArchived) settingShowArchived.checked = Boolean(settings?.showArchived);
+    syncSettingsSortControl(settings);
 }
 
 function applyAppSettings({ persist = true } = {}) {
@@ -624,6 +732,50 @@ function toggleThemePreferenceShortcut() {
     if (!appSettings) return;
     const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
     updateSetting('theme', nextTheme);
+}
+
+function openSettingsModal() {
+    pendingSettings = cloneSettings(appSettings);
+    syncSettingsControls(pendingSettings);
+    setSettingsSortMenuOpen(false);
+    openModal(settingsModal);
+}
+
+function closeSettingsModal({ discardChanges = true } = {}) {
+    setSettingsSortMenuOpen(false);
+
+    if (discardChanges) {
+        pendingSettings = null;
+        syncSettingsControls(appSettings);
+    }
+
+    closeModal(settingsModal);
+}
+
+function updatePendingSetting(settingName, value) {
+    if (!pendingSettings) {
+        pendingSettings = cloneSettings(appSettings);
+    }
+
+    pendingSettings = {
+        ...pendingSettings,
+        [settingName]: value
+    };
+
+    syncSettingsControls(pendingSettings);
+}
+
+function savePendingSettings() {
+    if (!pendingSettings) {
+        closeSettingsModal();
+        return;
+    }
+
+    appSettings = cloneSettings(pendingSettings);
+    pendingSettings = null;
+    applyAppSettings();
+    closeModal(settingsModal);
+    showMessage('Settings saved');
 }
 
 function resolveConfirmDialog(result) {
@@ -827,14 +979,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         applyAppSettings({ persist: false });
 
-        if (notes.length > 0) {
-            showMessage(`Loaded ${notes.length} notes successfully`);
-        }
-
         syncResponsiveHeaderState();
     } catch (error) {
         console.error('Error initializing application:', error);
-        showMessage('Error loading notes. Please check console for details.', true);
+        showMessage('Could not load notes. Check the console for details.', true);
     }
 });
 
@@ -925,7 +1073,7 @@ function setupEventListeners() {
             // Re-render notes
             renderNotes();
             
-            showMessage('All filters cleared');
+            showMessage('Filters cleared');
         });
     }
 
@@ -936,6 +1084,7 @@ function setupEventListeners() {
         menuToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             setSearchPanelOpen(false);
+            closeNoteOverflowMenus();
             headerMenu.classList.toggle('show');
         });
 
@@ -945,6 +1094,14 @@ function setupEventListeners() {
 
             if (!menuToggleBtn.contains(e.target) && !headerMenu.contains(e.target)) {
                 headerMenu.classList.remove('show');
+            }
+
+            if (!e.target.closest('.note-overflow')) {
+                closeNoteOverflowMenus();
+            }
+
+            if (!e.target.closest('.settings-dropdown-field')) {
+                setSettingsSortMenuOpen(false);
             }
 
              if (
@@ -961,6 +1118,7 @@ function setupEventListeners() {
         searchToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
 
             const isOpen = searchSurface?.classList.contains('is-open');
             setSearchPanelOpen(!isOpen);
@@ -974,58 +1132,74 @@ function setupEventListeners() {
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
-            syncSettingsControls();
-            openModal(settingsModal);
+            closeNoteOverflowMenus();
+            openSettingsModal();
+        });
+    }
+
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
+            openModal(helpModal);
         });
     }
 
     settingsThemeInputs.forEach(input => {
         input.addEventListener('change', () => {
             if (!input.checked) return;
-            updateSetting('theme', input.value);
+            updatePendingSetting('theme', input.value);
         });
     });
 
     if (settingShowTagFilters) {
         settingShowTagFilters.addEventListener('change', () => {
-            updateSetting('showTagFilters', settingShowTagFilters.checked);
+            updatePendingSetting('showTagFilters', settingShowTagFilters.checked);
         });
     }
 
     if (settingShowCompletedGeneralTodo) {
         settingShowCompletedGeneralTodo.addEventListener('change', () => {
-            updateSetting('showCompletedGeneralTodo', settingShowCompletedGeneralTodo.checked);
+            updatePendingSetting('showCompletedGeneralTodo', settingShowCompletedGeneralTodo.checked);
         });
     }
 
     if (settingShowGeneralTodo) {
         settingShowGeneralTodo.addEventListener('change', () => {
-            updateSetting('showGeneralTodo', settingShowGeneralTodo.checked);
+            updatePendingSetting('showGeneralTodo', settingShowGeneralTodo.checked);
         });
     }
 
     if (settingShowArchived) {
         settingShowArchived.addEventListener('change', () => {
-            updateSetting('showArchived', settingShowArchived.checked);
+            updatePendingSetting('showArchived', settingShowArchived.checked);
         });
     }
 
-    if (settingSortMode) {
-        settingSortMode.addEventListener('change', () => {
-            updateSetting('sortMode', settingSortMode.value);
+    if (settingSortTrigger) {
+        settingSortTrigger.addEventListener('click', event => {
+            event.stopPropagation();
+            setSettingsSortMenuOpen(settingSortMenu?.hidden ?? true);
         });
     }
+
+    settingSortOptions.forEach(option => {
+        option.addEventListener('click', event => {
+            event.stopPropagation();
+            updatePendingSetting('sortMode', option.dataset.sortValue);
+            setSettingsSortMenuOpen(false);
+        });
+    });
 
     if (settingsDoneBtn) {
         settingsDoneBtn.addEventListener('click', () => {
-            closeModal(settingsModal);
+            savePendingSettings();
         });
     }
 
-    if (openHelpModalBtn) {
-        openHelpModalBtn.addEventListener('click', () => {
-            closeModal(settingsModal);
-            openModal(helpModal);
+    if (helpDoneBtn) {
+        helpDoneBtn.addEventListener('click', () => {
+            closeModal(helpModal);
         });
     }
 
@@ -1045,6 +1219,7 @@ function setupEventListeners() {
     const addNoteFab = document.getElementById('addNoteFab');
     if (addNoteFab) {
         addNoteFab.addEventListener('click', () => {
+            closeNoteOverflowMenus();
             openNewNoteModal();
         });
     }
@@ -1060,14 +1235,6 @@ function setupEventListeners() {
         });
     });
 
-    // Modal cancel button
-    const modalCancelBtn = document.getElementById('modalCancelBtn');
-    if (modalCancelBtn) {
-        modalCancelBtn.addEventListener('click', () => {
-            closeNoteEditor();
-        });
-    }
-
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
@@ -1080,10 +1247,16 @@ function setupEventListeners() {
     window.addEventListener('resize', () => {
         syncResponsiveHeaderState();
         syncInfoTooltipPositions();
+        if (settingSortMenu && !settingSortMenu.hidden) {
+            positionSettingsSortMenu();
+        }
     });
     window.addEventListener('load', () => {
         syncResponsiveHeaderState();
         syncInfoTooltipPositions();
+        if (settingSortMenu && !settingSortMenu.hidden) {
+            positionSettingsSortMenu();
+        }
     });
 
     // Import XML button
@@ -1091,6 +1264,7 @@ function setupEventListeners() {
     if (importXmlBtn) {
         importXmlBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
             importXmlInput.click();
         });
     }
@@ -1135,7 +1309,7 @@ function setupEventListeners() {
                                 notes = importedNotes;
                                 saveNotesToLocalStorage();
                                 applyAppSettings({ persist: false });
-                                showMessage(`Successfully imported ${importedNotes.length} notes`);
+                                showMessage(`Imported ${importedNotes.length} notes`);
                             });
                         } else {
                             showMessage('No valid notes found in the XML file', true);
@@ -1177,6 +1351,7 @@ function setupEventListeners() {
     if (exportXmlBtn) {
         exportXmlBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
             exportNotesToXML();
         });
     }
@@ -1186,6 +1361,7 @@ function setupEventListeners() {
     if (clearAllNotesBtn) {
         clearAllNotesBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
             clearAllNotes();
         });
     }
@@ -1286,13 +1462,24 @@ function saveNote() {
     applyAppSettings({ persist: false });
 
     // Show success message
-    showMessage('Note saved successfully');
+    showMessage('Note saved');
 }
 
 // Handle keyboard shortcuts
 function handleKeyboardShortcuts(e) {
     if (e.key === 'Escape') {
         closeInfoTooltips();
+
+        if (settingSortMenu && !settingSortMenu.hidden) {
+            setSettingsSortMenuOpen(false);
+            return;
+        }
+
+        if (document.querySelector('.note-overflow.is-open')) {
+            closeNoteOverflowMenus();
+            return;
+        }
+
         const activeModal = Array.from(document.querySelectorAll('.modal.show')).pop();
         if (activeModal) {
             closeManagedModal(activeModal);
@@ -1420,7 +1607,7 @@ function exportNotesToXML() {
     
     // Close the menu
     headerMenu.classList.remove('show');
-    showMessage('Notes exported successfully');
+    showMessage('XML exported');
 }
 
 // Clear all notes
@@ -1438,5 +1625,5 @@ async function clearAllNotes() {
     notes = [createWelcomeNote()];
     saveNotesToLocalStorage();
     applyAppSettings({ persist: false });
-    showMessage('All notes have been cleared');
+    showMessage('Workspace reset');
 }
