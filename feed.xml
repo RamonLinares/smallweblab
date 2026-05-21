@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Small Web Lab RSS Feed</title>
+    <link>https://smallweblab.com/</link>
+    <description>Small Web Lab is a home for shipped web products: editorial sites, browser games, AI experiments, and practical browser prototypes.</description>
+    <language>en</language>
+    <lastBuildDate>Thu, 21 May 2026 12:28:49 GMT</lastBuildDate>
+    <generator>ZenithPress</generator>
+    <atom:link href="https://smallweblab.com/feed.xml" rel="self" type="application/rss+xml" />
+    <image><url>https://smallweblab.com/assets/breakshot3d-cover.jpg</url><title>Small Web Lab RSS Feed</title><link>https://smallweblab.com/</link></image>
+    <item>
+      <title>LensDigest</title>
+      <link>https://smallweblab.com/posts/lensdigest/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/lensdigest/</guid>
+      <description>A daily photography and videography digest built for search, reading flow, and fast publishing.</description>
+      <pubDate>Thu, 21 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Products</category>
+      <category>SEO</category>
+      <category>Photography</category>
+      <category>Editorial UX</category>
+      <category>Static Site</category>
+      <content:encoded><![CDATA[<p><a href="https://lensdigest.com/">Open LensDigest</a></p>
+<p>LensDigest is the editorial site in the lab: a photography and videography digest built around frequent publishing, clean search intent, and fast reading.</p>
+<p>The interesting part is the operating system around the site. The product needs to turn a broad camera niche into consistently packaged pages that are useful to readers and legible to search engines.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>High-frequency publishing without making the site feel disposable.</li>
+<li>Clear page structure for camera, video, creator, and gear topics.</li>
+<li>A lightweight static delivery model that can keep up with daily updates.</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Breakshot 3D</title>
+      <link>https://smallweblab.com/posts/breakshot-3d/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/breakshot-3d/</guid>
+      <description>A playable 3D pool game in the browser with local matches, CPU play, and rules-driven support pages.</description>
+      <pubDate>Wed, 20 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Games</category>
+      <category>3D</category>
+      <category>Browser Game</category>
+      <category>Game Physics</category>
+      <category>Search Capture</category>
+      <content:encoded><![CDATA[<p><a href="https://breakshot3d.com/">Open Breakshot 3D</a></p>
+<p>Breakshot 3D is a standalone browser pool game with local play, CPU matches, and a support layer of rules and guides.</p>
+<p>The product is not just the game loop. It also tests whether useful search pages around aiming, spin, rules, and play modes can help a browser game become discoverable.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>Browser-based 3D gameplay that loads quickly enough to be approachable.</li>
+<li>A rules and guide layer that supports players outside the main game canvas.</li>
+<li>The boundary between a game prototype and a standalone product domain.</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Arcana Muse</title>
+      <link>https://smallweblab.com/posts/arcana-muse/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/arcana-muse/</guid>
+      <description>An AI tarot experience focused on reflection, rituals, and practical guidance instead of vague fortune telling.</description>
+      <pubDate>Tue, 19 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>AI</category>
+      <category>AI UX</category>
+      <category>Prompt Design</category>
+      <category>Tarot</category>
+      <category>Reflection</category>
+      <content:encoded><![CDATA[<p><a href="https://arcanamuse.com/">Open Arcana Muse</a></p>
+<p>Arcana Muse is the AI product in the portfolio: a tarot-guidance experience built around reflection, ritual, and follow-up context.</p>
+<p>The useful design question is how to make an AI interaction feel specific without pretending to predict the future. The product leans into interpretation, practical framing, and repeat visits.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>A consumer AI interface with a strong theme and clear boundaries.</li>
+<li>Prompting that supports reflection rather than generic horoscope copy.</li>
+<li>A product surface where visual mood, memory, and advice all need to fit together.</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Ping Pong 3D</title>
+      <link>https://smallweblab.com/posts/ping-pong-3d/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/ping-pong-3d/</guid>
+      <description>A compact 3D table-tennis game kept in the lab as a playable browser prototype.</description>
+      <pubDate>Mon, 18 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Lab</category>
+      <category>3D Gameplay</category>
+      <category>Mini-site</category>
+      <category>Auto-synced</category>
+      <category>Prototype</category>
+      <content:encoded><![CDATA[<p><a href="/lab/ping-pong-3d/">Play Ping Pong 3D</a></p>
+<p>Ping Pong 3D is a compact browser table-tennis prototype. It stays discoverable inside Small Web Lab while remaining a small standalone experiment.</p>
+<p>The route is synced from its own repository, which makes it a useful reference pattern for future mini-sites that should live under <code>smallweblab.com/lab/</code>.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>A small 3D game surface that can be embedded as a static route.</li>
+<li>Independent prototype development with central-site publication.</li>
+<li>Keeping rougher experiments playable without giving each one a separate domain.</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Asteroids 3D</title>
+      <link>https://smallweblab.com/posts/asteroids-3d/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/asteroids-3d/</guid>
+      <description>A browser asteroid shooter from an earlier wave of vibe coding, preserved as a playable lab snapshot.</description>
+      <pubDate>Sun, 17 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Lab</category>
+      <category>Space Shooter</category>
+      <category>Retro Prototype</category>
+      <category>Early Cursor</category>
+      <category>Prototype</category>
+      <content:encoded><![CDATA[<p><a href="/lab/asteroids-3d/">Play Asteroids 3D</a></p>
+<p>Asteroids 3D is an older browser shooter prototype. It is rougher than the newer lab entries, which is part of why it belongs here.</p>
+<p>Small Web Lab has room for experiments that are still interesting even when they are not polished enough to graduate into standalone products.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>Preserving older AI-assisted build experiments as playable snapshots.</li>
+<li>A simple route pattern for prototypes that do not need a full product wrapper.</li>
+<li>The difference between a shipped public artifact and a finished product.</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Rally Rush</title>
+      <link>https://smallweblab.com/posts/rally-rush/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/rally-rush/</guid>
+      <description>A lightweight browser rally game with quick circuit selection, arcade controls, and a straightforward race loop.</description>
+      <pubDate>Sat, 16 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Games</category>
+      <category>Arcade Racing</category>
+      <category>Three.js</category>
+      <category>Auto-synced</category>
+      <category>Prototype</category>
+      <content:encoded><![CDATA[<p><a href="/lab/rally-rush/">Play Rally Rush</a></p>
+<p>Rally Rush is a lightweight browser rally game with quick circuit selection, arcade controls, and a simple race loop.</p>
+<p>It is synced from its own repository into the lab and is especially useful as a reference for road generation, track feel, and visual terrain inside a small static prototype.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>Arcade driving feel in a browser route.</li>
+<li>Three.js scenes that remain simple enough to ship as a static mini-site.</li>
+<li>Keeping a playable prototype connected to a larger portfolio without over-packaging it.</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Meeting Notes</title>
+      <link>https://smallweblab.com/posts/meeting-notes/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/meeting-notes/</guid>
+      <description>A lightweight browser note workspace for meeting details, action items, deadlines, tags, and quick follow-up search.</description>
+      <pubDate>Fri, 15 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Tools</category>
+      <category>Notes</category>
+      <category>Local-first</category>
+      <category>Productivity</category>
+      <category>Auto-synced</category>
+      <content:encoded><![CDATA[<p><a href="/lab/meeting-notes/">Open Meeting Notes</a></p>
+<p>Meeting Notes expands the lab beyond games into practical browser tooling. It is a local-first workspace for capturing meeting details, action items, deadlines, tags, and quick follow-up search from one screen.</p>
+<p>The prototype stays in its own repository, syncs into the lab from <code>main</code>, and gives the catalog a more practical product shape.</p>
+<h2>What It Tests</h2>
+<ul>
+<li>Local-first utility design inside a small browser app.</li>
+<li>A productivity surface that stays useful without accounts or server storage.</li>
+<li>The same synced prototype route pattern used by the games.</li>
+</ul>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

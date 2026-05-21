@@ -1,0 +1,149 @@
+[
+  {
+    "title": "LensDigest",
+    "slug": "lensdigest",
+    "url": "https://smallweblab.com/posts/lensdigest/",
+    "markdownUrl": "https://smallweblab.com/posts/lensdigest/index.html.md",
+    "category": "products",
+    "categoryName": "Products",
+    "categoryUrl": "/categories/products/",
+    "description": "A daily photography and videography digest built for search, reading flow, and fast publishing.",
+    "date": "2026-05-21",
+    "dateModified": "2026-05-21T12:10:47.814Z",
+    "formattedDate": "May 21, 2026",
+    "readingTime": 1,
+    "wordCount": 95,
+    "tags": [
+      "SEO",
+      "Photography",
+      "Editorial UX",
+      "Static Site"
+    ]
+  },
+  {
+    "title": "Breakshot 3D",
+    "slug": "breakshot-3d",
+    "url": "https://smallweblab.com/posts/breakshot-3d/",
+    "markdownUrl": "https://smallweblab.com/posts/breakshot-3d/index.html.md",
+    "category": "games",
+    "categoryName": "Games",
+    "categoryUrl": "/categories/games/",
+    "description": "A playable 3D pool game in the browser with local matches, CPU play, and rules-driven support pages.",
+    "date": "2026-05-20",
+    "dateModified": "2026-05-21T12:10:47.814Z",
+    "formattedDate": "May 20, 2026",
+    "readingTime": 1,
+    "wordCount": 94,
+    "tags": [
+      "3D",
+      "Browser Game",
+      "Game Physics",
+      "Search Capture"
+    ]
+  },
+  {
+    "title": "Arcana Muse",
+    "slug": "arcana-muse",
+    "url": "https://smallweblab.com/posts/arcana-muse/",
+    "markdownUrl": "https://smallweblab.com/posts/arcana-muse/index.html.md",
+    "category": "ai",
+    "categoryName": "AI",
+    "categoryUrl": "/categories/ai/",
+    "description": "An AI tarot experience focused on reflection, rituals, and practical guidance instead of vague fortune telling.",
+    "date": "2026-05-19",
+    "dateModified": "2026-05-21T12:10:47.815Z",
+    "formattedDate": "May 19, 2026",
+    "readingTime": 1,
+    "wordCount": 92,
+    "tags": [
+      "AI UX",
+      "Prompt Design",
+      "Tarot",
+      "Reflection"
+    ]
+  },
+  {
+    "title": "Ping Pong 3D",
+    "slug": "ping-pong-3d",
+    "url": "https://smallweblab.com/posts/ping-pong-3d/",
+    "markdownUrl": "https://smallweblab.com/posts/ping-pong-3d/index.html.md",
+    "category": "lab",
+    "categoryName": "Lab",
+    "categoryUrl": "/categories/lab/",
+    "description": "A compact 3D table-tennis game kept in the lab as a playable browser prototype.",
+    "date": "2026-05-18",
+    "dateModified": "2026-05-21T12:10:47.815Z",
+    "formattedDate": "May 18, 2026",
+    "readingTime": 1,
+    "wordCount": 86,
+    "tags": [
+      "3D Gameplay",
+      "Mini-site",
+      "Auto-synced",
+      "Prototype"
+    ]
+  },
+  {
+    "title": "Asteroids 3D",
+    "slug": "asteroids-3d",
+    "url": "https://smallweblab.com/posts/asteroids-3d/",
+    "markdownUrl": "https://smallweblab.com/posts/asteroids-3d/index.html.md",
+    "category": "lab",
+    "categoryName": "Lab",
+    "categoryUrl": "/categories/lab/",
+    "description": "A browser asteroid shooter from an earlier wave of vibe coding, preserved as a playable lab snapshot.",
+    "date": "2026-05-17",
+    "dateModified": "2026-05-21T12:10:47.815Z",
+    "formattedDate": "May 17, 2026",
+    "readingTime": 1,
+    "wordCount": 90,
+    "tags": [
+      "Space Shooter",
+      "Retro Prototype",
+      "Early Cursor",
+      "Prototype"
+    ]
+  },
+  {
+    "title": "Rally Rush",
+    "slug": "rally-rush",
+    "url": "https://smallweblab.com/posts/rally-rush/",
+    "markdownUrl": "https://smallweblab.com/posts/rally-rush/index.html.md",
+    "category": "games",
+    "categoryName": "Games",
+    "categoryUrl": "/categories/games/",
+    "description": "A lightweight browser rally game with quick circuit selection, arcade controls, and a straightforward race loop.",
+    "date": "2026-05-16",
+    "dateModified": "2026-05-21T12:10:47.816Z",
+    "formattedDate": "May 16, 2026",
+    "readingTime": 1,
+    "wordCount": 90,
+    "tags": [
+      "Arcade Racing",
+      "Three.js",
+      "Auto-synced",
+      "Prototype"
+    ]
+  },
+  {
+    "title": "Meeting Notes",
+    "slug": "meeting-notes",
+    "url": "https://smallweblab.com/posts/meeting-notes/",
+    "markdownUrl": "https://smallweblab.com/posts/meeting-notes/index.html.md",
+    "category": "tools",
+    "categoryName": "Tools",
+    "categoryUrl": "/categories/tools/",
+    "description": "A lightweight browser note workspace for meeting details, action items, deadlines, tags, and quick follow-up search.",
+    "date": "2026-05-15",
+    "dateModified": "2026-05-21T12:10:47.816Z",
+    "formattedDate": "May 15, 2026",
+    "readingTime": 1,
+    "wordCount": 92,
+    "tags": [
+      "Notes",
+      "Local-first",
+      "Productivity",
+      "Auto-synced"
+    ]
+  }
+]
