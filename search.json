@@ -1,5 +1,27 @@
 [
   {
+    "title": "BlogSystem",
+    "slug": "blogsystem",
+    "url": "https://smallweblab.com/posts/blogsystem/",
+    "markdownUrl": "https://smallweblab.com/posts/blogsystem/index.html.md",
+    "category": "tools",
+    "categoryName": "Tools",
+    "categoryUrl": "/categories/tools/",
+    "description": "A database-free blogging system with a local admin dashboard, static publishing, visual themes, search, categories, RSS, and GitHub Pages deployment.",
+    "date": "2026-05-22",
+    "dateModified": "2026-05-22T03:11:03.213Z",
+    "formattedDate": "May 22, 2026",
+    "readingTime": 7,
+    "wordCount": 1218,
+    "tags": [
+      "Static Site",
+      "CMS",
+      "Markdown",
+      "GitHub Pages",
+      "Publishing"
+    ]
+  },
+  {
     "title": "LensDigest",
     "slug": "lensdigest",
     "url": "https://smallweblab.com/posts/lensdigest/",
