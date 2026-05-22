@@ -88,35 +88,50 @@ function initializeTagInput() {
 // Update tag filter container
 function updateTagFilterContainer() {
     const container = document.getElementById('tagFilterContainer');
-    if (!container) return;
+    const section = document.getElementById('tagFilterSection');
+    if (!container || !section) return;
 
     // Get all unique tags from notes
     const allTags = new Set();
     notes.forEach(note => {
-        if (note.tags) {
+        if (note.tags && (!note.archived || appSettings?.showArchived)) {
             note.tags.forEach(tag => allTags.add(tag));
+        }
+    });
+
+    Array.from(selectedTags).forEach(tag => {
+        if (!allTags.has(tag)) {
+            selectedTags.delete(tag);
         }
     });
 
     // Clear container
     container.innerHTML = '';
 
+    const shouldShowSection = Boolean(appSettings?.showTagFilters) && allTags.size > 0;
+    section.hidden = !shouldShowSection;
+    if (!shouldShowSection) return;
+
     // Add tag filters
     Array.from(allTags).sort().forEach(tag => {
-        const tagElement = document.createElement('span');
+        const tagElement = document.createElement('button');
+        tagElement.type = 'button';
         tagElement.className = 'filter-tag';
+        tagElement.setAttribute('aria-pressed', String(selectedTags.has(tag)));
         if (selectedTags.has(tag)) {
             tagElement.classList.add('selected');
         }
         tagElement.textContent = tag;
         
-        tagElement.addEventListener('click', () => {
-            tagElement.classList.toggle('selected');
+        tagElement.addEventListener('click', event => {
             if (selectedTags.has(tag)) {
                 selectedTags.delete(tag);
             } else {
                 selectedTags.add(tag);
             }
+
+            event.currentTarget.blur();
+            updateTagFilterContainer();
             renderNotes(document.getElementById('searchInput')?.value || '');
         });
         

@@ -1,33 +1,62 @@
 // Constants
 const LOCAL_STORAGE_KEY = 'meetingNotes';
 const DRAFT_STORAGE_KEY = 'noteDraftData';
+const SETTINGS_STORAGE_KEY = 'meetingNotesSettings';
 const DARK_MODE_KEY = 'darkModeEnabled';
 
 // DOM Elements
 const notesGrid = document.getElementById('notesGrid');
 const addNoteFab = document.getElementById('addNoteFab');
 const noteModal = document.getElementById('noteModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
+const noteForm = document.getElementById('noteForm');
+const noteIdInput = document.getElementById('noteId');
 const modalSaveBtn = document.getElementById('modalSaveBtn');
-const modalCancelBtn = document.getElementById('modalCancelBtn');
 const modalTitle = document.getElementById('modalTitle');
 const noteTitleInput = document.getElementById('noteTitle');
 const contentInputArea = document.getElementById('contentInputArea');
 const noteContentHiddenInput = document.getElementById('noteContentHidden');
 const trixEditorWrapper = document.getElementById('trixEditorWrapper');
-const trixEditorElement = document.querySelector("trix-editor");
-const actionItemsArea = document.getElementById('actionItemsArea');
-const noteActionItemsTextArea = document.getElementById('noteActionItems');
+const trixEditorElement = document.querySelector('trix-editor');
+const noteTabButtons = document.querySelectorAll('.note-tab-btn');
+const noteTabPanels = document.querySelectorAll('.note-tab-panel');
+const actionItemsList = document.getElementById('actionItemsList');
 const deadlineGroup = document.getElementById('deadlineGroup');
 const noteDeadlineInput = document.getElementById('noteDeadline');
-const statusDiv = document.getElementById('status');
-const errorDiv = document.getElementById('error');
+const clearDeadlineBtn = document.getElementById('clearDeadlineBtn');
+const noteTagsContainer = document.getElementById('noteTags');
+const infoTooltipButtons = document.querySelectorAll('.info-tooltip-btn');
+const snackbar = document.getElementById('snackbar');
 const searchInput = document.getElementById('searchInput');
+const searchToggleBtn = document.getElementById('searchToggleBtn');
+const searchPanel = document.getElementById('searchPanel');
+const searchSurface = document.getElementById('searchSurface');
+const tagFilterSection = document.getElementById('tagFilterSection');
 const menuToggleBtn = document.getElementById('menuToggleBtn');
 const headerMenu = document.getElementById('headerMenu');
+const settingsBtn = document.getElementById('settingsBtn');
+const helpBtn = document.getElementById('helpBtn');
 const exportXmlBtn = document.getElementById('exportXmlBtn');
 const importXmlBtn = document.getElementById('importXmlBtn');
 const importXmlInput = document.getElementById('importXmlInput');
+const settingsModal = document.getElementById('settingsModal');
+const settingsDoneBtn = document.getElementById('settingsDoneBtn');
+const helpModal = document.getElementById('helpModal');
+const helpDoneBtn = document.getElementById('helpDoneBtn');
+const confirmDialog = document.getElementById('confirmDialog');
+const confirmDialogTitle = document.getElementById('confirmDialogTitle');
+const confirmDialogMessage = document.getElementById('confirmDialogMessage');
+const confirmDialogCancelBtn = document.getElementById('confirmDialogCancelBtn');
+const confirmDialogConfirmBtn = document.getElementById('confirmDialogConfirmBtn');
+const settingsThemeInputs = document.querySelectorAll('input[name="themeSetting"]');
+const settingShowTagFilters = document.getElementById('settingShowTagFilters');
+const settingShowCompletedGeneralTodo = document.getElementById('settingShowCompletedGeneralTodo');
+const settingShowGeneralTodo = document.getElementById('settingShowGeneralTodo');
+const settingShowArchived = document.getElementById('settingShowArchived');
+const settingSortTrigger = document.getElementById('settingSortTrigger');
+const settingSortValue = document.getElementById('settingSortValue');
+const settingSortMenu = document.getElementById('settingSortMenu');
+const settingSortOptions = document.querySelectorAll('.settings-select-option');
+const mainHeader = document.querySelector('.main-header');
 
 // Global variables
 let notes = [];
@@ -35,36 +64,757 @@ let selectedTags = new Set();
 let dateFilter = 'all';
 let statusFilter = 'all';
 let currentlyEditingNote = null;
+let appSettings = null;
+let pendingSettings = null;
+let confirmDialogResolver = null;
+let snackbarTimeout = null;
+const MOBILE_BREAKPOINT = 768;
+const DEFAULT_APP_SETTINGS = {
+    theme: 'system',
+    showTagFilters: true,
+    showCompletedGeneralTodo: true,
+    showGeneralTodo: true,
+    showArchived: false,
+    sortMode: 'created-desc'
+};
+const ACTION_ITEM_BUTTON_ICONS = {
+    add: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 5v14M5 12h14"></path>
+        </svg>
+    `,
+    edit: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+        </svg>
+    `,
+    delete: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+        </svg>
+    `
+};
+const SORT_MODE_LABELS = {
+    'created-desc': 'Date created, newer first',
+    'created-asc': 'Date created, older first',
+    'deadline-asc': 'Deadline, closer first',
+    'deadline-desc': 'Deadline, further first'
+};
 
 // Utility Functions
 function clearMessages() {
-    const statusDiv = document.getElementById('status');
-    const errorDiv = document.getElementById('error');
-    if (statusDiv) statusDiv.textContent = '';
-    if (errorDiv) errorDiv.textContent = '';
+    if (!snackbar) return;
+
+    if (snackbarTimeout) {
+        clearTimeout(snackbarTimeout);
+        snackbarTimeout = null;
+    }
+
+    snackbar.textContent = '';
+    snackbar.classList.remove('is-visible', 'is-error');
+    snackbar.setAttribute('role', 'status');
+    document.body.classList.remove('snackbar-visible');
 }
 
 function showMessage(message, isError = false) {
     if (!message) return;
-    
-    const statusDiv = document.getElementById('status');
-    const errorDiv = document.getElementById('error');
-    const targetDiv = isError ? errorDiv : statusDiv;
-    
-    if (!targetDiv) {
+
+    if (!snackbar) {
         console.log(isError ? 'Error: ' : 'Status: ', message);
         return;
     }
-    
+
     clearMessages();
-    targetDiv.textContent = message;
-    
-    // Auto-hide after delay
-    setTimeout(() => {
-        if (targetDiv.textContent === message) {
-            targetDiv.textContent = '';
+    snackbar.textContent = message;
+    snackbar.classList.add('is-visible');
+    snackbar.classList.toggle('is-error', isError);
+    snackbar.setAttribute('role', isError ? 'alert' : 'status');
+    document.body.classList.add('snackbar-visible');
+
+    snackbarTimeout = setTimeout(() => {
+        if (snackbar.textContent === message) {
+            clearMessages();
         }
-    }, isError ? 5000 : 3000);
+    }, isError ? 5600 : 3600);
+}
+
+function isMobileViewport() {
+    return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function updateHeaderOffset() {
+    if (!mainHeader) return;
+    const headerHeight = Math.ceil(mainHeader.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--header-offset', `${headerHeight}px`);
+}
+
+function setSearchPanelOpen(isOpen) {
+    if (!searchToggleBtn || !searchPanel || !searchSurface) return;
+
+    const shouldOpen = Boolean(isOpen);
+
+    if (!shouldOpen && searchPanel.contains(document.activeElement)) {
+        document.activeElement.blur();
+    }
+
+    searchSurface.classList.toggle('is-open', shouldOpen);
+    searchSurface.setAttribute('aria-hidden', String(!shouldOpen));
+    searchToggleBtn.classList.toggle('active', shouldOpen);
+    searchToggleBtn.setAttribute('aria-expanded', String(shouldOpen));
+    searchPanel.setAttribute('aria-hidden', String(!shouldOpen));
+
+    updateHeaderOffset();
+}
+
+function focusSearchInput() {
+    if (!searchInput) return;
+
+    headerMenu?.classList.remove('show');
+    closeNoteOverflowMenus();
+    setSearchPanelOpen(true);
+
+    requestAnimationFrame(() => {
+        searchInput.focus();
+    });
+}
+
+function syncResponsiveHeaderState() {
+    if (!searchToggleBtn || !searchPanel || !searchSurface) {
+        updateHeaderOffset();
+        return;
+    }
+
+    const isOpen = searchSurface.classList.contains('is-open');
+    searchToggleBtn.classList.toggle('active', isOpen);
+    searchToggleBtn.setAttribute('aria-expanded', String(isOpen));
+    searchSurface.setAttribute('aria-hidden', String(!isOpen));
+    searchPanel.setAttribute('aria-hidden', String(!isOpen));
+
+    updateHeaderOffset();
+}
+
+function setNoteOverflowMenuOpen(wrapper, shouldOpen) {
+    if (!wrapper) return;
+
+    wrapper.classList.toggle('is-open', shouldOpen);
+    wrapper.querySelector('.note-overflow-trigger')?.setAttribute('aria-expanded', String(shouldOpen));
+}
+
+function closeNoteOverflowMenus(except = null) {
+    document.querySelectorAll('.note-overflow').forEach(wrapper => {
+        if (wrapper === except) return;
+        setNoteOverflowMenuOpen(wrapper, false);
+    });
+}
+
+function positionSettingsSortMenu() {
+    if (!settingSortTrigger || !settingSortMenu) return;
+
+    const scrollContainer = settingSortTrigger.closest('.modal-form-scrollable');
+    const anchorRect = settingSortTrigger.getBoundingClientRect();
+    const boundsRect = scrollContainer?.getBoundingClientRect() || {
+        top: 16,
+        bottom: window.innerHeight - 16
+    };
+    const viewportPadding = 12;
+    const spaceBelow = Math.max(120, boundsRect.bottom - anchorRect.bottom - viewportPadding);
+    settingSortMenu.style.maxHeight = `${spaceBelow}px`;
+
+    const menuRect = settingSortMenu.getBoundingClientRect();
+    const overflowBottom = menuRect.bottom - (boundsRect.bottom - viewportPadding);
+
+    if (overflowBottom > 0) {
+        if (scrollContainer) {
+            scrollContainer.scrollBy({ top: overflowBottom });
+        } else {
+            window.scrollBy({ top: overflowBottom });
+        }
+
+        requestAnimationFrame(() => {
+            if (!settingSortTrigger || !settingSortMenu) return;
+
+            const updatedAnchorRect = settingSortTrigger.getBoundingClientRect();
+            const updatedBoundsRect = scrollContainer?.getBoundingClientRect() || {
+                top: 16,
+                bottom: window.innerHeight - 16
+            };
+            const updatedSpaceBelow = Math.max(120, updatedBoundsRect.bottom - updatedAnchorRect.bottom - viewportPadding);
+            settingSortMenu.style.maxHeight = `${updatedSpaceBelow}px`;
+        });
+    }
+}
+
+function setSettingsSortMenuOpen(shouldOpen) {
+    if (!settingSortTrigger || !settingSortMenu) return;
+
+    settingSortTrigger.setAttribute('aria-expanded', String(shouldOpen));
+    settingSortMenu.hidden = !shouldOpen;
+    settingSortMenu.classList.toggle('is-open', shouldOpen);
+
+    if (shouldOpen) {
+        requestAnimationFrame(positionSettingsSortMenu);
+    } else {
+        settingSortMenu.style.maxHeight = '';
+    }
+}
+
+function syncSettingsSortControl(settings = appSettings) {
+    const activeSortMode = settings?.sortMode || DEFAULT_APP_SETTINGS.sortMode;
+    const activeLabel = SORT_MODE_LABELS[activeSortMode] || SORT_MODE_LABELS[DEFAULT_APP_SETTINGS.sortMode];
+
+    if (settingSortValue) {
+        settingSortValue.textContent = activeLabel;
+    }
+
+    settingSortOptions.forEach(option => {
+        const isSelected = option.dataset.sortValue === activeSortMode;
+        option.classList.toggle('is-selected', isSelected);
+        option.setAttribute('aria-selected', String(isSelected));
+    });
+}
+
+function parseLegacyActionItems(itemsText = '') {
+    return itemsText
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(text => ({ text, completed: false }));
+}
+
+function getActiveEditorTab() {
+    return document.querySelector('.note-tab-btn.active')?.dataset.tabTarget || 'content';
+}
+
+function closeInfoTooltips(except = null) {
+    document.querySelectorAll('.info-tooltip').forEach(tooltip => {
+        if (tooltip === except) return;
+        tooltip.classList.remove('is-open');
+        tooltip.querySelector('.info-tooltip-btn')?.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function positionInfoTooltip(tooltip) {
+    const popover = tooltip?.querySelector('.info-tooltip-popover');
+    if (!popover) return;
+
+    tooltip.style.setProperty('--tooltip-shift', '0px');
+
+    const tooltipRect = popover.getBoundingClientRect();
+    if (!tooltipRect.width) return;
+
+    const viewportPadding = 16;
+    const maxRight = window.innerWidth - viewportPadding;
+    let shift = 0;
+
+    if (tooltipRect.left < viewportPadding) {
+        shift += viewportPadding - tooltipRect.left;
+    }
+
+    if (tooltipRect.right > maxRight) {
+        shift -= tooltipRect.right - maxRight;
+    }
+
+    tooltip.style.setProperty('--tooltip-shift', `${shift}px`);
+}
+
+function syncInfoTooltipPositions() {
+    document.querySelectorAll('.info-tooltip').forEach(positionInfoTooltip);
+}
+
+function cloneSettings(settings = DEFAULT_APP_SETTINGS) {
+    return {
+        ...DEFAULT_APP_SETTINGS,
+        ...settings
+    };
+}
+
+function setEditorTab(tabName = 'content') {
+    noteTabButtons.forEach(button => {
+        const isActive = button.dataset.tabTarget === tabName;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+        button.tabIndex = isActive ? 0 : -1;
+    });
+
+    noteTabPanels.forEach(panel => {
+        const isActive = panel.dataset.tabPanel === tabName;
+        panel.classList.toggle('active', isActive);
+        panel.hidden = !isActive;
+    });
+
+    requestAnimationFrame(syncInfoTooltipPositions);
+}
+
+function getActionItemText(row) {
+    return row?.querySelector('.action-item-row-input')?.value.trim() || '';
+}
+
+function findNextEmptyActionItemRow(afterRow = null) {
+    if (!actionItemsList) return null;
+
+    const rows = Array.from(actionItemsList.querySelectorAll('.action-item-row'));
+    if (!rows.length) return null;
+
+    const startIndex = afterRow ? rows.indexOf(afterRow) + 1 : 0;
+    const remainingRows = rows.slice(Math.max(startIndex, 0));
+    const nextRow = remainingRows.find(row => !getActionItemText(row));
+
+    return nextRow || rows.find(row => row !== afterRow && !getActionItemText(row)) || null;
+}
+
+function ensureActionItemPlaceholderRow() {
+    if (!actionItemsList) return null;
+
+    const existingEmptyRow = findNextEmptyActionItemRow();
+    if (existingEmptyRow) return existingEmptyRow;
+
+    return createActionItemRow();
+}
+
+function getActionItemButtonState(row) {
+    const hasText = Boolean(getActionItemText(row));
+
+    if (!hasText) return 'add';
+    if (row.dataset.existing === 'true' && row.dataset.isFocused === 'true') return 'edit';
+
+    return 'delete';
+}
+
+function updateActionItemRowButton(row) {
+    const actionButton = row?.querySelector('.action-item-action-btn');
+    if (!actionButton) return;
+
+    const nextState = getActionItemButtonState(row);
+    row.dataset.actionState = nextState;
+
+    actionButton.classList.toggle('is-add', nextState === 'add');
+    actionButton.classList.toggle('is-edit', nextState === 'edit');
+    actionButton.classList.toggle('is-delete', nextState === 'delete');
+    actionButton.innerHTML = ACTION_ITEM_BUTTON_ICONS[nextState];
+
+    const labels = {
+        add: 'Add action item',
+        edit: 'Edit action item',
+        delete: 'Remove action item'
+    };
+
+    actionButton.setAttribute('aria-label', labels[nextState]);
+    actionButton.setAttribute('title', labels[nextState]);
+}
+
+function createActionItemRow(item = {}, { focus = false, insertAfter = null, existing = false } = {}) {
+    if (!actionItemsList) return null;
+
+    const row = document.createElement('div');
+    row.className = 'action-item-row';
+    row.dataset.existing = String(existing && Boolean((item.text || '').trim()));
+    row.dataset.isFocused = 'false';
+    row.dataset.actionState = 'add';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'action-item-row-checkbox';
+    checkbox.checked = Boolean(item.completed);
+    checkbox.setAttribute('aria-label', 'Mark action item complete');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'action-item-row-input';
+    input.placeholder = 'Add a follow-up action';
+    input.value = item.text || '';
+    input.addEventListener('focus', () => {
+        row.dataset.isFocused = 'true';
+        updateActionItemRowButton(row);
+    });
+    input.addEventListener('blur', () => {
+        row.dataset.isFocused = 'false';
+        updateActionItemRowButton(row);
+    });
+    input.addEventListener('input', () => {
+        updateActionItemRowButton(row);
+        ensureActionItemPlaceholderRow();
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+
+        if (!getActionItemText(row)) {
+            input.focus();
+            return;
+        }
+
+        const nextEmptyRow = ensureActionItemPlaceholderRow();
+        const targetRow = nextEmptyRow && nextEmptyRow !== row
+            ? nextEmptyRow
+            : createActionItemRow({}, { insertAfter: row });
+
+        targetRow?.querySelector('.action-item-row-input')?.focus();
+        saveDraft();
+    });
+
+    const actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = 'action-item-action-btn';
+    actionButton.addEventListener('pointerdown', (event) => {
+        if (row.dataset.actionState === 'edit') {
+            event.preventDefault();
+        }
+    });
+    actionButton.addEventListener('click', () => {
+        const currentState = row.dataset.actionState;
+
+        if (currentState === 'delete') {
+            row.remove();
+            ensureActionItemPlaceholderRow();
+            saveDraft();
+            return;
+        }
+
+        input.focus();
+
+        if (currentState === 'edit') {
+            input.select();
+        }
+    });
+
+    row.appendChild(checkbox);
+    row.appendChild(input);
+    row.appendChild(actionButton);
+
+    if (insertAfter?.parentElement === actionItemsList) {
+        insertAfter.insertAdjacentElement('afterend', row);
+    } else {
+        actionItemsList.appendChild(row);
+    }
+
+    if (focus) {
+        requestAnimationFrame(() => input.focus());
+    }
+
+    updateActionItemRowButton(row);
+
+    return row;
+}
+
+function setActionItemsInEditor(items = []) {
+    if (!actionItemsList) return;
+
+    actionItemsList.innerHTML = '';
+    const nextItems = Array.isArray(items) ? items.filter(item => item && (item.text || '').trim()) : [];
+
+    nextItems.forEach(item => createActionItemRow(item, { existing: true }));
+    ensureActionItemPlaceholderRow();
+}
+
+function getActionItemsFromEditor() {
+    if (!actionItemsList) return [];
+
+    return Array.from(actionItemsList.querySelectorAll('.action-item-row'))
+        .map(row => {
+            const text = row.querySelector('.action-item-row-input')?.value.trim() || '';
+            const completed = Boolean(row.querySelector('.action-item-row-checkbox')?.checked);
+
+            return { text, completed };
+        })
+        .filter(item => item.text.length > 0);
+}
+
+function setEditorContent(html = '') {
+    if (!trixEditorElement?.editor) return;
+    trixEditorElement.editor.loadHTML(html || '');
+}
+
+function renderNoteTags(tags = []) {
+    if (!noteTagsContainer) return;
+
+    noteTagsContainer.innerHTML = '';
+    tags.forEach(tag => {
+        const tagElement = createTagElement(tag, true);
+        noteTagsContainer.appendChild(tagElement);
+    });
+}
+
+function populateNoteForm(note = null) {
+    if (!noteForm || !modalTitle || !noteTitleInput) return;
+
+    noteForm.reset();
+    noteIdInput.value = note?.id || '';
+    modalTitle.textContent = note ? 'Edit Note' : 'New Note';
+    noteTitleInput.value = note?.title || '';
+    noteDeadlineInput.value = note?.deadline || '';
+    setEditorContent(note?.content || '');
+    setActionItemsInEditor(note?.items || []);
+    renderNoteTags(note?.tags || []);
+    currentlyEditingNote = note;
+    setEditorTab('content');
+}
+
+function openNoteModal() {
+    openModal(noteModal);
+}
+
+function openModal(modal) {
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    requestAnimationFrame(syncInfoTooltipPositions);
+}
+
+function closeModal(modal) {
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'true');
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+}
+
+function closeNoteEditor({ preserveDraft = true } = {}) {
+    if (preserveDraft) {
+        saveDraft();
+    }
+
+    closeModal(noteModal);
+}
+
+function closeManagedModal(modal, { preserveDraft = true } = {}) {
+    if (!modal) return;
+
+    if (modal === confirmDialog) {
+        resolveConfirmDialog(false);
+        return;
+    }
+
+    if (modal === noteModal) {
+        closeNoteEditor({ preserveDraft });
+        return;
+    }
+
+    if (modal === settingsModal) {
+        closeSettingsModal();
+        return;
+    }
+
+    closeModal(modal);
+}
+
+function createWelcomeNote() {
+    return {
+        id: Date.now().toString(),
+        title: 'Welcome to Meeting Notes!',
+        content: 'This is a sample note to help you get started. Click the + button to create your own notes.',
+        items: [
+            { text: 'Create your first note', completed: false },
+            { text: 'Try out the dark mode', completed: false },
+            { text: 'Explore keyboard shortcuts (Ctrl/Cmd + ?)', completed: false }
+        ],
+        tags: ['welcome', 'getting-started'],
+        createdAt: new Date().toISOString(),
+        pinned: true,
+        archived: false
+    };
+}
+
+function normalizeNote(note = {}) {
+    const normalizedItems = Array.isArray(note.items)
+        ? note.items
+            .map(item => {
+                if (typeof item === 'string') {
+                    return { text: item.trim(), completed: false };
+                }
+
+                if (!item || typeof item !== 'object') return null;
+
+                return {
+                    text: String(item.text || '').trim(),
+                    completed: Boolean(item.completed ?? item.done)
+                };
+            })
+            .filter(item => item?.text)
+        : [];
+
+    const normalizedTags = Array.isArray(note.tags)
+        ? note.tags.map(tag => String(tag).trim().replace(/×$/, '').trim()).filter(Boolean)
+        : [];
+
+    return {
+        id: String(note.id || Date.now()),
+        title: String(note.title || '').trim(),
+        content: typeof note.content === 'string' ? note.content : '',
+        items: normalizedItems,
+        deadline: typeof note.deadline === 'string' ? note.deadline : '',
+        tags: normalizedTags,
+        createdAt: note.createdAt || new Date().toISOString(),
+        pinned: Boolean(note.pinned),
+        archived: Boolean(note.archived)
+    };
+}
+
+function getLegacyThemeSetting() {
+    const legacyDarkMode = localStorage.getItem('darkMode');
+    if (legacyDarkMode === 'true') return 'dark';
+    if (legacyDarkMode === 'false') return 'light';
+    return DEFAULT_APP_SETTINGS.theme;
+}
+
+function loadAppSettings() {
+    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (savedSettings) {
+        try {
+            const parsed = JSON.parse(savedSettings);
+            return { ...DEFAULT_APP_SETTINGS, ...parsed };
+        } catch (error) {
+            console.error('Error parsing app settings:', error);
+        }
+    }
+
+    return {
+        ...DEFAULT_APP_SETTINGS,
+        theme: getLegacyThemeSetting()
+    };
+}
+
+function saveAppSettings() {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+    } catch (error) {
+        console.error('Error saving app settings:', error);
+    }
+}
+
+function applyThemeSetting() {
+    if (!appSettings) return;
+
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const shouldUseDarkMode = appSettings.theme === 'dark' || (appSettings.theme === 'system' && prefersDark);
+    document.body.classList.toggle('dark-mode', shouldUseDarkMode);
+    document.documentElement.style.colorScheme = shouldUseDarkMode ? 'dark' : 'light';
+}
+
+function syncSettingsControls(settings = appSettings) {
+    settingsThemeInputs.forEach(input => {
+        input.checked = input.value === settings?.theme;
+    });
+
+    if (settingShowTagFilters) settingShowTagFilters.checked = Boolean(settings?.showTagFilters);
+    if (settingShowCompletedGeneralTodo) settingShowCompletedGeneralTodo.checked = Boolean(settings?.showCompletedGeneralTodo);
+    if (settingShowGeneralTodo) settingShowGeneralTodo.checked = Boolean(settings?.showGeneralTodo);
+    if (settingShowArchived) settingShowArchived.checked = Boolean(settings?.showArchived);
+    syncSettingsSortControl(settings);
+}
+
+function applyAppSettings({ persist = true } = {}) {
+    if (!appSettings) return;
+
+    if (!appSettings.showTagFilters && selectedTags.size > 0) {
+        selectedTags.clear();
+    }
+
+    applyThemeSetting();
+    if (persist) saveAppSettings();
+    syncSettingsControls();
+    updateTagFilterContainer();
+    renderNotes(searchInput?.value || '');
+}
+
+function updateSetting(settingName, value) {
+    if (!appSettings) return;
+    appSettings = {
+        ...appSettings,
+        [settingName]: value
+    };
+    applyAppSettings();
+}
+
+function toggleThemePreferenceShortcut() {
+    if (!appSettings) return;
+    const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+    updateSetting('theme', nextTheme);
+}
+
+function openSettingsModal() {
+    pendingSettings = cloneSettings(appSettings);
+    syncSettingsControls(pendingSettings);
+    setSettingsSortMenuOpen(false);
+    openModal(settingsModal);
+}
+
+function closeSettingsModal({ discardChanges = true } = {}) {
+    setSettingsSortMenuOpen(false);
+
+    if (discardChanges) {
+        pendingSettings = null;
+        syncSettingsControls(appSettings);
+    }
+
+    closeModal(settingsModal);
+}
+
+function updatePendingSetting(settingName, value) {
+    if (!pendingSettings) {
+        pendingSettings = cloneSettings(appSettings);
+    }
+
+    pendingSettings = {
+        ...pendingSettings,
+        [settingName]: value
+    };
+
+    syncSettingsControls(pendingSettings);
+}
+
+function savePendingSettings() {
+    if (!pendingSettings) {
+        closeSettingsModal();
+        return;
+    }
+
+    appSettings = cloneSettings(pendingSettings);
+    pendingSettings = null;
+    applyAppSettings();
+    closeModal(settingsModal);
+    showMessage('Settings saved');
+}
+
+function resolveConfirmDialog(result) {
+    if (confirmDialogResolver) {
+        confirmDialogResolver(result);
+        confirmDialogResolver = null;
+    }
+
+    confirmDialogConfirmBtn?.classList.remove('danger');
+    closeModal(confirmDialog);
+}
+
+function showConfirmDialog({
+    title = 'Confirm action',
+    message = '',
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    tone = 'default'
+} = {}) {
+    if (!confirmDialog || !confirmDialogTitle || !confirmDialogMessage || !confirmDialogConfirmBtn || !confirmDialogCancelBtn) {
+        return Promise.resolve(false);
+    }
+
+    if (confirmDialogResolver) {
+        confirmDialogResolver(false);
+        confirmDialogResolver = null;
+    }
+
+    confirmDialogTitle.textContent = title;
+    confirmDialogMessage.textContent = message;
+    confirmDialogConfirmBtn.textContent = confirmLabel;
+    confirmDialogCancelBtn.textContent = cancelLabel;
+    confirmDialogConfirmBtn.classList.toggle('danger', tone === 'danger');
+
+    openModal(confirmDialog);
+
+    return new Promise(resolve => {
+        confirmDialogResolver = resolve;
+    });
 }
 
 const escapeXML = (str) => {
@@ -105,7 +855,7 @@ function loadNotesFromLocalStorage() {
     if (savedNotes) {
         try {
             const parsedNotes = JSON.parse(savedNotes);
-            return Array.isArray(parsedNotes) ? parsedNotes : [];
+            return Array.isArray(parsedNotes) ? parsedNotes.map(normalizeNote) : [];
         } catch (error) {
             console.error('Error parsing notes from localStorage:', error);
             return [];
@@ -117,19 +867,21 @@ function loadNotesFromLocalStorage() {
 // Draft Handling
 function saveDraft() {
     if (currentlyEditingNote === null && noteModal.style.display === 'flex') {
-        const tagElements = document.getElementById('noteTags').getElementsByClassName('tag');
+        const tagElements = noteTagsContainer.getElementsByClassName('tag');
         const tags = Array.from(tagElements).map(tag => tag.textContent.trim().replace(/×$/, '').trim());
+        const actionItems = getActionItemsFromEditor();
         
         const draftData = {
             title: noteTitleInput.value,
             content: trixEditorElement.value,
-            itemsText: noteActionItemsTextArea.value,
+            actionItems,
             deadline: noteDeadlineInput.value,
-            tags: tags
+            tags,
+            activeTab: getActiveEditorTab()
         };
         
         try {
-            if (draftData.title.trim() || draftData.content.trim() || draftData.itemsText.trim() || draftData.tags.length > 0) {
+            if (draftData.title.trim() || draftData.content.trim() || draftData.actionItems.length > 0 || draftData.tags.length > 0) {
                 localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
             } else {
                 localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -144,33 +896,33 @@ function clearDraft() {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
 }
 
-function checkAndRestoreDraft() {
+async function checkAndRestoreDraft() {
     const draftJson = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (draftJson) {
-        if (confirm("You have an unsaved draft. Restore it?")) {
+        const shouldRestore = await showConfirmDialog({
+            title: 'Restore draft?',
+            message: 'You have an unsaved note draft. Restore it into the editor?',
+            confirmLabel: 'Restore draft',
+            cancelLabel: 'Discard draft'
+        });
+
+        if (shouldRestore) {
             try {
                 const draftData = JSON.parse(draftJson);
                 noteTitleInput.value = draftData.title || '';
                 noteDeadlineInput.value = draftData.deadline || '';
                 
                 // Restore Trix editor content
-                if (draftData.content) {
-                    trixEditorElement.value = draftData.content;
-                } else {
-                    trixEditorElement.value = '';
-                }
+                setEditorContent(draftData.content || '');
                 
-                noteActionItemsTextArea.value = draftData.itemsText || '';
+                const restoredItems = Array.isArray(draftData.actionItems)
+                    ? draftData.actionItems
+                    : parseLegacyActionItems(draftData.itemsText || '');
+                setActionItemsInEditor(restoredItems);
                 
                 // Restore tags
-                const tagsContainer = document.getElementById('noteTags');
-                if (tagsContainer && draftData.tags) {
-                    tagsContainer.innerHTML = '';
-                    draftData.tags.forEach(tag => {
-                        const tagElement = createTagElement(tag, true);
-                        tagsContainer.appendChild(tagElement);
-                    });
-                }
+                renderNoteTags(draftData.tags || []);
+                setEditorTab(draftData.activeTab || 'content');
                 
                 return true;
             } catch (error) {
@@ -187,136 +939,92 @@ function checkAndRestoreDraft() {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        // Initialize Trix Editor
         const trixEditor = document.querySelector('trix-editor');
         if (trixEditor) {
-            // Enable list nesting by default
             trixEditor.addEventListener('trix-initialize', () => {
                 const toolbar = trixEditor.toolbarElement;
                 const increaseButton = toolbar.querySelector('.trix-button--icon-increase-nesting-level');
                 const decreaseButton = toolbar.querySelector('.trix-button--icon-decrease-nesting-level');
-                
-                if (increaseButton) {
-                    increaseButton.disabled = false;
-                }
-                if (decreaseButton) {
-                    decreaseButton.disabled = false;
-                }
+
+                if (increaseButton) increaseButton.disabled = false;
+                if (decreaseButton) decreaseButton.disabled = false;
             });
 
-            // Handle selection changes
             trixEditor.addEventListener('trix-selection-change', () => {
                 const toolbar = trixEditor.toolbarElement;
                 const increaseButton = toolbar.querySelector('.trix-button--icon-increase-nesting-level');
                 const decreaseButton = toolbar.querySelector('.trix-button--icon-decrease-nesting-level');
-                
+
                 const editor = trixEditor.editor;
                 const selectedRange = editor.getSelectedRange();
                 const [startPosition] = selectedRange;
                 const block = editor.getDocument().getBlockAtPosition(startPosition);
-                
+
                 const isListItem = block && (block.attributes.values.bulletList || block.attributes.values.numberList);
                 const nestingLevel = block ? (block.attributes.values.nestingLevel || 0) : 0;
-                
-                if (increaseButton) {
-                    increaseButton.disabled = !isListItem;
-                }
-                if (decreaseButton) {
-                    decreaseButton.disabled = !isListItem || nestingLevel === 0;
-                }
+
+                if (increaseButton) increaseButton.disabled = !isListItem;
+                if (decreaseButton) decreaseButton.disabled = !isListItem || nestingLevel === 0;
             });
         }
 
-        // Load notes from localStorage
+        appSettings = loadAppSettings();
         notes = loadNotesFromLocalStorage();
-        console.log('Loaded notes:', notes);
-        
-        // Add a test note if no notes exist
+
         if (notes.length === 0) {
-            const testNote = {
-                id: Date.now().toString(),
-                title: 'Welcome to Meeting Notes!',
-                content: 'This is a sample note to help you get started. Click the + button to create your own notes.',
-                items: [
-                    { text: 'Create your first note', completed: false },
-                    { text: 'Try out the dark mode', completed: false },
-                    { text: 'Explore keyboard shortcuts (Ctrl/Cmd + ?)', completed: false }
-                ],
-                tags: ['welcome', 'getting-started'],
-                createdAt: new Date().toISOString(),
-                pinned: true
-            };
-            notes.push(testNote);
+            notes.push(createWelcomeNote());
             saveNotesToLocalStorage();
-            console.log('Added test note:', testNote);
         }
-        
-        // Initialize UI
-        renderNotes();
-        
-        // Set up event listeners
+
         setupEventListeners();
-        
-        // Initialize dark mode
-        initializeDarkMode();
-        
-        // Show initial status
-        if (notes.length > 0) {
-            showMessage(`Loaded ${notes.length} notes successfully`);
-        }
+        applyAppSettings({ persist: false });
+
+        syncResponsiveHeaderState();
     } catch (error) {
         console.error('Error initializing application:', error);
-        showMessage('Error loading notes. Please check console for details.', true);
-    }
-
-    // Add draft saving when modal is closed
-    if (noteModal) {
-        noteModal.addEventListener('click', (e) => {
-            if (e.target === noteModal) {
-                saveDraft();
-            }
-        });
-    }
-
-    // Add draft saving when close button is clicked
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => {
-            saveDraft();
-        });
-    }
-
-    // Add draft saving when cancel button is clicked
-    if (modalCancelBtn) {
-        modalCancelBtn.addEventListener('click', () => {
-            saveDraft();
-        });
-    }
-
-    // Add draft saving when escape key is pressed
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && noteModal.classList.contains('show')) {
-            saveDraft();
-        }
-    });
-
-    // Add draft saving when form inputs change
-    if (noteForm) {
-        noteForm.addEventListener('input', () => {
-            saveDraft();
-        });
+        showMessage('Could not load notes. Check the console for details.', true);
     }
 });
 
 // Initialize dark mode
 function initializeDarkMode() {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (isDarkMode) {
-        document.body.classList.add('dark-mode');
-    }
+    appSettings = appSettings || loadAppSettings();
+    applyThemeSetting();
 }
 
 // Set up event listeners
 function setupEventListeners() {
+    infoTooltipButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+
+            const tooltip = button.closest('.info-tooltip');
+            if (!tooltip) return;
+
+            const shouldOpen = !tooltip.classList.contains('is-open');
+            closeInfoTooltips(shouldOpen ? tooltip : null);
+            tooltip.classList.toggle('is-open', shouldOpen);
+            button.setAttribute('aria-expanded', String(shouldOpen));
+            if (shouldOpen) {
+                requestAnimationFrame(() => positionInfoTooltip(tooltip));
+            }
+        });
+    });
+
+    noteTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            setEditorTab(button.dataset.tabTarget);
+            saveDraft();
+        });
+    });
+
+    if (clearDeadlineBtn) {
+        clearDeadlineBtn.addEventListener('click', () => {
+            noteDeadlineInput.value = '';
+            saveDraft();
+        });
+    }
+
     // Search input
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -365,7 +1073,7 @@ function setupEventListeners() {
             // Re-render notes
             renderNotes();
             
-            showMessage('All filters cleared');
+            showMessage('Filters cleared');
         });
     }
 
@@ -375,24 +1083,135 @@ function setupEventListeners() {
     if (menuToggleBtn && headerMenu) {
         menuToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            setSearchPanelOpen(false);
+            closeNoteOverflowMenus();
             headerMenu.classList.toggle('show');
         });
 
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
+            closeInfoTooltips();
+
             if (!menuToggleBtn.contains(e.target) && !headerMenu.contains(e.target)) {
                 headerMenu.classList.remove('show');
+            }
+
+            if (!e.target.closest('.note-overflow')) {
+                closeNoteOverflowMenus();
+            }
+
+            if (!e.target.closest('.settings-dropdown-field')) {
+                setSettingsSortMenuOpen(false);
+            }
+
+             if (
+                searchSurface?.classList.contains('is-open') &&
+                !searchSurface.contains(e.target) &&
+                !searchToggleBtn?.contains(e.target)
+            ) {
+                setSearchPanelOpen(false);
             }
         });
     }
 
-    // Dark mode toggle
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    if (searchToggleBtn) {
+        searchToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
+
+            const isOpen = searchSurface?.classList.contains('is-open');
+            setSearchPanelOpen(!isOpen);
+
+            if (!isOpen) {
+                focusSearchInput();
+            }
+        });
+    }
+
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
+            openSettingsModal();
+        });
+    }
+
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
+            openModal(helpModal);
+        });
+    }
+
+    settingsThemeInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            if (!input.checked) return;
+            updatePendingSetting('theme', input.value);
+        });
+    });
+
+    if (settingShowTagFilters) {
+        settingShowTagFilters.addEventListener('change', () => {
+            updatePendingSetting('showTagFilters', settingShowTagFilters.checked);
+        });
+    }
+
+    if (settingShowCompletedGeneralTodo) {
+        settingShowCompletedGeneralTodo.addEventListener('change', () => {
+            updatePendingSetting('showCompletedGeneralTodo', settingShowCompletedGeneralTodo.checked);
+        });
+    }
+
+    if (settingShowGeneralTodo) {
+        settingShowGeneralTodo.addEventListener('change', () => {
+            updatePendingSetting('showGeneralTodo', settingShowGeneralTodo.checked);
+        });
+    }
+
+    if (settingShowArchived) {
+        settingShowArchived.addEventListener('change', () => {
+            updatePendingSetting('showArchived', settingShowArchived.checked);
+        });
+    }
+
+    if (settingSortTrigger) {
+        settingSortTrigger.addEventListener('click', event => {
+            event.stopPropagation();
+            setSettingsSortMenuOpen(settingSortMenu?.hidden ?? true);
+        });
+    }
+
+    settingSortOptions.forEach(option => {
+        option.addEventListener('click', event => {
+            event.stopPropagation();
+            updatePendingSetting('sortMode', option.dataset.sortValue);
+            setSettingsSortMenuOpen(false);
+        });
+    });
+
+    if (settingsDoneBtn) {
+        settingsDoneBtn.addEventListener('click', () => {
+            savePendingSettings();
+        });
+    }
+
+    if (helpDoneBtn) {
+        helpDoneBtn.addEventListener('click', () => {
+            closeModal(helpModal);
+        });
+    }
+
+    if (confirmDialogCancelBtn) {
+        confirmDialogCancelBtn.addEventListener('click', () => {
+            resolveConfirmDialog(false);
+        });
+    }
+
+    if (confirmDialogConfirmBtn) {
+        confirmDialogConfirmBtn.addEventListener('click', () => {
+            resolveConfirmDialog(true);
         });
     }
 
@@ -400,6 +1219,7 @@ function setupEventListeners() {
     const addNoteFab = document.getElementById('addNoteFab');
     if (addNoteFab) {
         addNoteFab.addEventListener('click', () => {
+            closeNoteOverflowMenus();
             openNewNoteModal();
         });
     }
@@ -410,43 +1230,41 @@ function setupEventListeners() {
         btn.addEventListener('click', () => {
             const modal = btn.closest('.modal');
             if (modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('show');
+                closeManagedModal(modal);
             }
         });
     });
 
-    // Modal cancel button
-    const modalCancelBtn = document.getElementById('modalCancelBtn');
-    if (modalCancelBtn) {
-        modalCancelBtn.addEventListener('click', () => {
-            const noteModal = document.getElementById('noteModal');
-            if (noteModal) {
-                noteModal.style.display = 'none';
-                noteModal.classList.remove('show');
-            }
-        });
-    }
-
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            // Only close if it's not the note modal
-            if (!e.target.id === 'noteModal') {
-                e.target.style.display = 'none';
-                e.target.classList.remove('show');
-            }
+        if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+            closeManagedModal(e.target);
         }
     });
 
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
+    window.addEventListener('resize', () => {
+        syncResponsiveHeaderState();
+        syncInfoTooltipPositions();
+        if (settingSortMenu && !settingSortMenu.hidden) {
+            positionSettingsSortMenu();
+        }
+    });
+    window.addEventListener('load', () => {
+        syncResponsiveHeaderState();
+        syncInfoTooltipPositions();
+        if (settingSortMenu && !settingSortMenu.hidden) {
+            positionSettingsSortMenu();
+        }
+    });
 
     // Import XML button
     const importXmlBtn = document.getElementById('importXmlBtn');
     if (importXmlBtn) {
         importXmlBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
             importXmlInput.click();
         });
     }
@@ -461,10 +1279,10 @@ function setupEventListeners() {
                 reader.onload = (e) => {
                     try {
                         const xmlText = e.target.result;
-                        const parser = new DOMParser();
+                const parser = new DOMParser();
                         const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
                         
-                        const importedNotes = Array.from(xmlDoc.getElementsByTagName('note')).map(noteEl => ({
+                        const importedNotes = Array.from(xmlDoc.getElementsByTagName('note')).map(noteEl => normalizeNote({
                             id: noteEl.getAttribute('id') || Date.now().toString(),
                             title: unescapeXML(noteEl.getElementsByTagName('title')[0]?.textContent || ''),
                             content: unescapeXML(noteEl.getElementsByTagName('content')[0]?.textContent || ''),
@@ -475,17 +1293,24 @@ function setupEventListeners() {
                             deadline: noteEl.getElementsByTagName('deadline')[0]?.textContent || '',
                             tags: Array.from(noteEl.getElementsByTagName('tag')).map(tag => unescapeXML(tag.textContent)),
                             createdAt: noteEl.getElementsByTagName('createdAt')[0]?.textContent || new Date().toISOString(),
-                            pinned: noteEl.getAttribute('pinned') === 'true'
+                            pinned: noteEl.getAttribute('pinned') === 'true',
+                            archived: noteEl.getAttribute('archived') === 'true'
                         }));
 
                         if (importedNotes.length > 0) {
-                            if (confirm(`Replace existing ${notes.length} notes with ${importedNotes.length} imported notes?`)) {
+                            showConfirmDialog({
+                                title: 'Replace notes?',
+                                message: `Replace the current ${notes.length} notes with ${importedNotes.length} imported notes?`,
+                                confirmLabel: 'Replace notes',
+                                cancelLabel: 'Keep current notes',
+                                tone: 'danger'
+                            }).then(shouldReplace => {
+                                if (!shouldReplace) return;
                                 notes = importedNotes;
                                 saveNotesToLocalStorage();
-                                renderNotes();
-                                updateTagFilterContainer();
-                                showMessage(`Successfully imported ${importedNotes.length} notes`);
-                            }
+                                applyAppSettings({ persist: false });
+                                showMessage(`Imported ${importedNotes.length} notes`);
+                            });
                         } else {
                             showMessage('No valid notes found in the XML file', true);
                         }
@@ -526,17 +1351,8 @@ function setupEventListeners() {
     if (exportXmlBtn) {
         exportXmlBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
             exportNotesToXML();
-        });
-    }
-
-    // Keyboard shortcuts button
-    const keyboardShortcutsBtn = document.getElementById('keyboardShortcutsBtn');
-    const shortcutsModal = document.getElementById('shortcutsModal');
-    if (keyboardShortcutsBtn && shortcutsModal) {
-        keyboardShortcutsBtn.addEventListener('click', () => {
-            shortcutsModal.style.display = 'flex';
-            headerMenu.classList.remove('show');
         });
     }
 
@@ -545,68 +1361,82 @@ function setupEventListeners() {
     if (clearAllNotesBtn) {
         clearAllNotesBtn.addEventListener('click', () => {
             headerMenu.classList.remove('show');
+            closeNoteOverflowMenus();
             clearAllNotes();
+        });
+    }
+
+    if (noteForm) {
+        noteForm.addEventListener('input', () => {
+            saveDraft();
+        });
+    }
+
+    if (trixEditorElement) {
+        trixEditorElement.addEventListener('trix-change', () => {
+            saveDraft();
+        });
+    }
+
+    if (window.matchMedia) {
+        const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        colorSchemeQuery.addEventListener?.('change', () => {
+            if (appSettings?.theme === 'system') {
+                applyThemeSetting();
+            }
         });
     }
 }
 
 // Note Actions
-function openNewNoteModal() {
-    const modal = document.getElementById('noteModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const noteForm = document.getElementById('noteForm');
-    const noteTags = document.getElementById('noteTags');
-    const trixEditor = document.querySelector('trix-editor');
-
-    if (!modal || !modalTitle || !noteForm || !noteTags || !trixEditor) {
+async function openNewNoteModal() {
+    if (!noteModal || !modalTitle || !noteForm || !noteTagsContainer || !trixEditorElement) {
         console.error('Required modal elements not found');
         return;
     }
 
-    // Reset form and clear fields
-    modalTitle.textContent = 'New Note';
-    noteForm.reset();
-    noteTags.innerHTML = '';
-    trixEditor.editor.loadHTML('');
-    currentlyEditingNote = null;
+    populateNoteForm();
 
-    // Show modal
-    modal.style.display = 'flex';
-    modal.classList.add('show');
-    noteTitleInput.focus();
+    openNoteModal();
 
     // Check for draft
-    checkAndRestoreDraft();
+    const draftRestored = await checkAndRestoreDraft();
+    if (!draftRestored) {
+        noteTitleInput.focus();
+    }
+}
+
+function openExistingNoteModal(note) {
+    populateNoteForm(note);
+    openNoteModal();
+    noteTitleInput.focus();
 }
 
 function saveNote() {
-    const noteId = document.getElementById('noteId').value;
-    const title = document.getElementById('noteTitle').value;
-    const content = document.querySelector('trix-editor').value;
-    const deadline = document.getElementById('noteDeadline').value;
-    const actionItems = document.getElementById('noteActionItems').value;
-    const tagElements = document.getElementById('noteTags').getElementsByClassName('tag');
-    const tags = Array.from(tagElements).map(tag => tag.textContent.trim());
+    if (noteForm && !noteForm.reportValidity()) {
+        return;
+    }
 
-    // Parse action items
-    const items = actionItems.split('\n')
-        .map(item => item.trim())
-        .filter(item => item.length > 0)
-        .map(item => ({
-            text: item,
-            completed: false
-        }));
+    const noteId = noteIdInput.value;
+    const title = noteTitleInput.value.trim();
+    const content = trixEditorElement.value;
+    const deadline = noteDeadlineInput.value;
+    const items = getActionItemsFromEditor();
+    const tagElements = noteTagsContainer.getElementsByClassName('tag');
+    const tags = Array.from(tagElements).map(tag => tag.textContent.trim().replace(/×$/, '').trim());
 
-    const note = {
+    const existingNote = noteId ? notes.find(n => n.id === noteId) : null;
+    const note = normalizeNote({
         id: noteId || Date.now().toString(),
         title: title || 'Untitled Note',
         content,
         deadline,
         items,
         tags,
-        createdAt: noteId ? (notes.find(n => n.id === noteId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-        pinned: noteId ? (notes.find(n => n.id === noteId)?.pinned || false) : false
-    };
+        createdAt: existingNote?.createdAt || new Date().toISOString(),
+        pinned: existingNote?.pinned || false,
+        archived: existingNote?.archived || false
+    });
 
     if (noteId) {
         // Update existing note
@@ -623,24 +1453,50 @@ function saveNote() {
     saveNotesToLocalStorage();
 
     // Clear draft
-    localStorage.removeItem('noteDraft');
+    clearDraft();
 
     // Close modal
-    const modal = document.getElementById('noteModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-    }
+    closeNoteEditor({ preserveDraft: false });
 
     // Refresh notes display
-    renderNotes(document.getElementById('searchInput')?.value || '');
+    applyAppSettings({ persist: false });
 
     // Show success message
-    showMessage('Note saved successfully');
+    showMessage('Note saved');
 }
 
 // Handle keyboard shortcuts
 function handleKeyboardShortcuts(e) {
+    if (e.key === 'Escape') {
+        closeInfoTooltips();
+
+        if (settingSortMenu && !settingSortMenu.hidden) {
+            setSettingsSortMenuOpen(false);
+            return;
+        }
+
+        if (document.querySelector('.note-overflow.is-open')) {
+            closeNoteOverflowMenus();
+            return;
+        }
+
+        const activeModal = Array.from(document.querySelectorAll('.modal.show')).pop();
+        if (activeModal) {
+            closeManagedModal(activeModal);
+            return;
+        }
+
+        if (headerMenu.classList.contains('show')) {
+            headerMenu.classList.remove('show');
+            return;
+        }
+
+        if (searchSurface?.classList.contains('is-open')) {
+            setSearchPanelOpen(false);
+        }
+        return;
+    }
+
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
         return;
     }
@@ -661,21 +1517,16 @@ function handleKeyboardShortcuts(e) {
                 break;
             case 'f':
                 e.preventDefault();
-                document.getElementById('searchInput').focus();
+                focusSearchInput();
                 break;
             case 'e':
                 e.preventDefault();
-                document.getElementById('darkModeToggle').click();
+                toggleThemePreferenceShortcut();
                 break;
         }
     } else if (e.key === '/') {
         e.preventDefault();
-        document.getElementById('searchInput').focus();
-    } else if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-            modal.classList.remove('show');
-        });
+        focusSearchInput();
     }
 }
 
@@ -688,6 +1539,7 @@ function exportNotesToXML() {
         const noteElement = xmlDoc.createElement("note");
         noteElement.setAttribute("id", note.id);
         noteElement.setAttribute("pinned", note.pinned.toString());
+        noteElement.setAttribute("archived", Boolean(note.archived).toString());
 
         // Add title
         const titleElement = xmlDoc.createElement("title");
@@ -755,33 +1607,23 @@ function exportNotesToXML() {
     
     // Close the menu
     headerMenu.classList.remove('show');
-    showMessage('Notes exported successfully');
+    showMessage('XML exported');
 }
 
 // Clear all notes
-function clearAllNotes() {
-    if (confirm('Are you sure you want to delete all notes? This action cannot be undone.')) {
-        notes = [];
-        
-        // Add default welcome notes
-        const welcomeNote = {
-            id: Date.now().toString(),
-            title: 'Welcome to Meeting Notes!',
-            content: 'This is a sample note to help you get started. Click the + button to create your own notes.',
-            items: [
-                { text: 'Create your first note', completed: false },
-                { text: 'Try out the dark mode', completed: false },
-                { text: 'Explore keyboard shortcuts (Ctrl/Cmd + ?)', completed: false }
-            ],
-            tags: ['welcome', 'getting-started'],
-            createdAt: new Date().toISOString(),
-            pinned: true
-        };
-        
-        notes.push(welcomeNote);
-        saveNotesToLocalStorage();
-        renderNotes();
-        updateTagFilterContainer();
-        showMessage('All notes have been cleared');
-    }
-} 
+async function clearAllNotes() {
+    const shouldClear = await showConfirmDialog({
+        title: 'Clear all notes?',
+        message: 'Delete every note and reset the workspace to the default welcome note? This cannot be undone.',
+        confirmLabel: 'Clear all notes',
+        cancelLabel: 'Cancel',
+        tone: 'danger'
+    });
+
+    if (!shouldClear) return;
+
+    notes = [createWelcomeNote()];
+    saveNotesToLocalStorage();
+    applyAppSettings({ persist: false });
+    showMessage('Workspace reset');
+}
