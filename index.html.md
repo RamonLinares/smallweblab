@@ -13,8 +13,8 @@ Language: English (en)
 - [Tools](https://smallweblab.com/categories/tools/): Practical browser utilities and local-first workflows.
 
 ## Posts
-- [BlogSystem](https://smallweblab.com/posts/blogsystem/): A database-free blogging system with a local admin dashboard, static publishing, visual themes, search, categories, RSS, and GitHub Pages deployment.
 - [Rally Rush II](https://smallweblab.com/posts/rally-rush-ii/): A second-generation browser rally game with richer stage selection, cars, race modes, weather, assists, and a more complete 3D racing loop.
+- [BlogSystem](https://smallweblab.com/posts/blogsystem/): A database-free blogging system with a local admin dashboard, static publishing, visual themes, search, categories, RSS, and GitHub Pages deployment.
 - [LensDigest](https://smallweblab.com/posts/lensdigest/): A daily photography and videography digest built for search, reading flow, and fast publishing.
 - [Breakshot 3D](https://smallweblab.com/posts/breakshot-3d/): A playable 3D pool game in the browser with local matches, CPU play, and rules-driven support pages.
 - [Arcana Muse](https://smallweblab.com/posts/arcana-muse/): An AI tarot experience focused on reflection, rituals, and practical guidance instead of vague fortune telling.

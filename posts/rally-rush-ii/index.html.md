@@ -3,7 +3,7 @@
 > A second-generation browser rally game with richer stage selection, cars, race modes, weather, assists, and a more complete 3D racing loop.
 
 Canonical URL: https://smallweblab.com/posts/rally-rush-ii/
-Published: 2026-05-21
+Published: 2026-05-22
 Modified: 2026-05-22
 Author: SmallWebLab
 Category: Games
