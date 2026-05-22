@@ -16,8 +16,8 @@ logic through the package dependency.
 - `scripts/sync_prototypes.py`: mirrors configured prototype repos into `lab/<slug>/`
 - `scripts/copy_site_static.js`: copies site-owned static prototype routes into `out/`
 - `.github/workflows/sync-prototypes.yml`: keeps prototype snapshots current
-- `.github/workflows/deploy-pages.yml`: builds `out/` and deploys it to GitHub Pages
-- `CNAME`: GitHub Pages custom domain for `smallweblab.com`
+- `.github/workflows/deploy-pages.yml`: builds `out/`, applies the GitHub Pages `/smallweblab` path prefix, and deploys it
+- `wrangler.toml`: Cloudflare Pages project name and `out/` build output directory
 - `favicon.ico`: legacy site favicon asset
 - `out/`: generated static website output, ignored by git
 
@@ -53,16 +53,20 @@ For Cloudflare Pages, use:
 - Build command: `npm run build`
 - Build output directory: `out`
 
+`wrangler.toml` also pins the Cloudflare Pages output directory to `./out` so
+Git-backed Cloudflare deployments publish the generated Quiremark site instead
+of the repository root.
+
 For GitHub Pages, `.github/workflows/deploy-pages.yml` builds the site on pushes
-to `main` and deploys the generated `out/` artifact with GitHub Actions. In the
-repository settings, Pages should use **GitHub Actions** as its source and
-`smallweblab.com` as its custom domain.
+to `main`, rewrites generated root-relative URLs for the `/smallweblab` project
+path, and deploys the generated `out/` artifact with GitHub Actions. In the
+repository settings, Pages should use **GitHub Actions** as its source.
 
 The compiler writes HTML, category pages, post pages, search assets, RSS,
 `robots.txt`, `sitemap.xml`, `llms.txt`, and `llms-full.txt`.
 
 `npm run build` runs the Quiremark publish command and then copies the
-site-owned `lab/` prototype routes, `favicon.ico`, and `CNAME` into `out/`.
+site-owned `lab/` prototype routes and `favicon.ico` into `out/`.
 
 `QUIREMARK_DATA_DIR` is the Quiremark data-directory environment variable. This
 external-site workflow normally uses `--site-root .`; set `QUIREMARK_DATA_DIR`
