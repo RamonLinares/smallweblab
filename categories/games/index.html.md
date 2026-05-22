@@ -7,5 +7,6 @@ Site: Small Web Lab
 Language: English (en)
 
 ## Posts
+- [Rally Rush II](https://smallweblab.com/posts/rally-rush-ii/): A second-generation browser rally game with richer stage selection, cars, race modes, weather, assists, and a more complete 3D racing loop.
 - [Breakshot 3D](https://smallweblab.com/posts/breakshot-3d/): A playable 3D pool game in the browser with local matches, CPU play, and rules-driven support pages.
 - [Rally Rush](https://smallweblab.com/posts/rally-rush/): A lightweight browser rally game with quick circuit selection, arcade controls, and a straightforward race loop.

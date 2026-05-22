@@ -22,6 +22,28 @@
     ]
   },
   {
+    "title": "Rally Rush II",
+    "slug": "rally-rush-ii",
+    "url": "https://smallweblab.com/posts/rally-rush-ii/",
+    "markdownUrl": "https://smallweblab.com/posts/rally-rush-ii/index.html.md",
+    "category": "games",
+    "categoryName": "Games",
+    "categoryUrl": "/categories/games/",
+    "description": "A second-generation browser rally game with richer stage selection, cars, race modes, weather, assists, and a more complete 3D racing loop.",
+    "date": "2026-05-22",
+    "dateModified": "2026-05-22T04:06:07.593Z",
+    "formattedDate": "May 22, 2026",
+    "readingTime": 6,
+    "wordCount": 1064,
+    "tags": [
+      "Browser Game",
+      "Three.js",
+      "Racing",
+      "WebGL",
+      "AI Build"
+    ]
+  },
+  {
     "title": "LensDigest",
     "slug": "lensdigest",
     "url": "https://smallweblab.com/posts/lensdigest/",

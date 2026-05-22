@@ -5,7 +5,7 @@
     <link>https://smallweblab.com/</link>
     <description>Small Web Lab is a home for shipped web products: editorial sites, browser games, AI experiments, and practical browser prototypes.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 22 May 2026 03:19:13 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 22 May 2026 04:06:15 GMT</lastBuildDate>
     <generator>ZenithPress</generator>
     <atom:link href="https://smallweblab.com/feed.xml" rel="self" type="application/rss+xml" />
     <image><url>https://smallweblab.com/assets/breakshot3d-cover.jpg</url><title>Small Web Lab RSS Feed</title><link>https://smallweblab.com/</link></image>
@@ -108,6 +108,86 @@
 <h2>The Takeaway</h2>
 <p>BlogSystem is a strong fit for a personal lab, a product changelog, a small editorial site, or a portfolio of AI-made projects. It does not try to be a massive hosted CMS. It is more focused than that: a local publishing machine for turning structured Markdown into a deployable static website.</p>
 <p>That focus is what makes it interesting. It gives a solo builder enough interface to move quickly, enough static output to host cheaply, and enough file-based structure to stay in control.</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Rally Rush II</title>
+      <link>https://smallweblab.com/posts/rally-rush-ii/</link>
+      <guid isPermaLink="true">https://smallweblab.com/posts/rally-rush-ii/</guid>
+      <description>A second-generation browser rally game with richer stage selection, cars, race modes, weather, assists, and a more complete 3D racing loop.</description>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>SmallWebLab</dc:creator>
+      <category>Games</category>
+      <category>Browser Game</category>
+      <category>Three.js</category>
+      <category>Racing</category>
+      <category>WebGL</category>
+      <category>AI Build</category>
+      <content:encoded><![CDATA[<p><a href="https://ramonlinares.github.io/RallyRushII/">Play Rally Rush II</a><br><a href="https://github.com/RamonLinares/RallyRushII">Open RallyRushII on GitHub</a></p>
+<p>Rally Rush II is the second generation of the Rally Rush browser racing experiment. The first version proved that a lightweight Three.js rally game could live as a static web prototype. This version pushes the idea closer to a configurable racing sandbox: more stages, more setup choices, more vehicle handling detail, and a stronger sense that the game can grow into a real arcade-rally platform.</p>
+<p>The important jump is not just visual polish. Rally Rush II turns the original road-driving prototype into a broader racing system with selectable environments, cars, weather, race types, difficulty, assists, traffic, timing, and camera tools.</p>
+<h2>What It Does</h2>
+<p>Rally Rush II lets you open a browser, choose a stage, select a car, tune the race setup, and start driving without installing anything. It is still a static site, but it behaves like a self-contained game launcher.</p>
+<p>The current stage list is much more ambitious than the first Rally Rush:</p>
+<ul>
+<li><strong>Scotland</strong>: wet Highland roads and green valley terrain.</li>
+<li><strong>Desert</strong>: wide sun-baked roads through dunes and mesas.</li>
+<li><strong>Alpine</strong>: tight mountain asphalt with snow banks.</li>
+<li><strong>Tokyo</strong>: neon city expressway driving with urban scenery.</li>
+<li><strong>Lakes</strong>: forest roads, shorelines, rocks, and open curves.</li>
+<li><strong>Rainforest Mud</strong>: dense jungle, mud-road textures, spray, and reduced visibility.</li>
+<li><strong>Mediterranean Coast</strong>: cliff roads, sea views, walls, pines, and coastal bends.</li>
+<li><strong>Valle Verde</strong>: a fictional 14-turn Mediterranean circuit with pit lane, grandstands, paddock details, kerbs, and a proper track layout.</li>
+</ul>
+<p><img src="/assets/rally-rush-ii-menu.png" alt="Rally Rush II stage and garage menu"></p>
+<p>The menu is not just a title screen. It acts like a compact race setup interface: stage cards, car selection, race type, time of day, weather, difficulty, driving assist, and launch button all sit in one place.</p>
+<h2>What Makes Version Two Different</h2>
+<p>The first Rally Rush was valuable because it had a working browser rally loop. Rally Rush II is different because it starts to separate the game into systems.</p>
+<p>The biggest differences are:</p>
+<ul>
+<li><strong>Race modes</strong>: Traffic mode, Rally mode, and Grid mode change the objective and what appears on the road.</li>
+<li><strong>Difficulty profiles</strong>: Rookie, Pro, and Expert tune traffic count and traffic speed behavior.</li>
+<li><strong>Driving assists</strong>: Full, Sport, and Manual change road-following, heading recovery, steering response, and curve slip.</li>
+<li><strong>Vehicle choice</strong>: Rally R is the balanced rally car; Apex GT is faster and more stable but less drift-focused.</li>
+<li><strong>Weather and time of day</strong>: clear, rain, fog, day, sunset, and night combinations change the feel of the drive.</li>
+<li><strong>Stage-specific world building</strong>: Tokyo, Rainforest, Lakes, Coastal, and Valle Verde each have their own scenery logic instead of being simple reskins.</li>
+<li><strong>Camera tooling</strong>: chase, cockpit, track overview, and camera-tuning controls make it easier to inspect and refine the driving view.</li>
+<li><strong>Persistent best times</strong>: local storage keeps times by stage, difficulty, assist, and race mode.</li>
+</ul>
+<p>This is the difference between "a road with a car" and "a racing game that has a shape."</p>
+<h2>The Driving Loop</h2>
+<p>In the live build I tested Valle Verde with rain enabled. Even from a short run, the version-two goals are visible: a heavier HUD, stronger car presentation, weather effects, road furniture, stage signage, and track-side structures. The cover image for this entry comes from that live play pass.</p>
+<p>The player-facing loop is straightforward:</p>
+<pre><code class="language-text">Choose stage -&gt; choose car -&gt; choose race setup -&gt; start race -&gt; drive -&gt; finish -&gt; compare result
+</code></pre>
+<p>Under the hood, the game is doing more than that. It builds road and terrain data for the chosen environment, creates stage decoration, places traffic or grid opponents depending on the race mode, applies vehicle handling and assist profiles, updates camera behavior, and writes best times back to local storage.</p>
+<h2>What It Excels At</h2>
+<p>Rally Rush II excels at <strong>scope expansion without leaving the browser</strong>.</p>
+<p>The strongest parts are:</p>
+<ul>
+<li><strong>Menu density</strong>: many meaningful choices are exposed without burying the player in separate screens.</li>
+<li><strong>Stage variety</strong>: the game now has distinct environment identities instead of one repeated terrain idea.</li>
+<li><strong>Static deployment</strong>: the whole thing can be played from GitHub Pages.</li>
+<li><strong>Configurable handling</strong>: assists and vehicle stats create a path toward both arcade and more demanding driving.</li>
+<li><strong>Environment ambition</strong>: Valle Verde, Tokyo, Lakes, Rainforest, and Coastal all point toward a richer procedural scenery system.</li>
+<li><strong>Iteration friendliness</strong>: because it is still plain HTML, CSS, JavaScript, Three.js, and assets, it remains easy to inspect and keep evolving with AI assistance.</li>
+</ul>
+<p>For Small Web Lab, this is exactly the kind of project worth documenting: not a finished commercial game, but a working artifact where AI-assisted iteration produced a noticeable second-generation leap.</p>
+<h2>Areas For Improvement</h2>
+<p>Rally Rush II is more ambitious than the first game, and that also makes the next improvements clearer:</p>
+<ul>
+<li><strong>Input onboarding</strong>: the menu is polished, but the driving controls could be made more visible before the race starts, especially for keyboard players.</li>
+<li><strong>Loading communication</strong>: the asset loading screen exists, but large 3D assets and stage generation could benefit from clearer per-stage expectations.</li>
+<li><strong>Race feedback</strong>: modes, timing, sectors, and position are present, but the player could use more direct goals and feedback during the first minute.</li>
+<li><strong>Collision and recovery feel</strong>: a richer racing game needs clear off-road recovery, reset, crash, and penalty behavior.</li>
+<li><strong>Performance budgets</strong>: the most detailed stages need careful limits for lights, instancing, textures, and draw calls so the game stays playable on modest devices.</li>
+<li><strong>Mobile-first controls</strong>: touch controls exist, but the game would benefit from dedicated mobile layout testing around HUD weight and visibility.</li>
+<li><strong>Sound design</strong>: stage-specific music is already present; engine, surface, collision, and weather audio would make the driving loop feel much more complete.</li>
+</ul>
+<p>None of these are blockers to the experiment. They are the natural next layer now that Rally Rush II has moved beyond a simple prototype.</p>
+<h2>The Takeaway</h2>
+<p>Rally Rush II shows what happens when a browser prototype gets a second development pass instead of being left as a one-off. The original Rally Rush was a proof of concept. Version two is closer to a platform: multiple stages, cars, modes, assists, weather, cameras, and a growing library of environment systems.</p>
+<p>It still has rough edges, but it is a strong AI-built game milestone because the improvement is structural. It is not just prettier. It has more game inside it.</p>
 ]]></content:encoded>
     </item>
     <item>
