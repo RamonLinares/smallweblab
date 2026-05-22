@@ -6,7 +6,8 @@ const outDir = path.join(siteRoot, 'out');
 
 const entries = [
   { source: 'lab', target: 'lab' },
-  { source: 'favicon.ico', target: 'favicon.ico' }
+  { source: 'favicon.ico', target: 'favicon.ico' },
+  { source: 'CNAME', target: 'CNAME' }
 ];
 
 fs.mkdirSync(outDir, { recursive: true });

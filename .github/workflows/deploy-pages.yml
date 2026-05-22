@@ -35,9 +35,6 @@ jobs:
       - name: Build static site
         run: npm run build
 
-      - name: Prepare GitHub Pages URLs
-        run: node scripts/prepare_github_pages.js
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
