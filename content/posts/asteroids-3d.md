@@ -5,7 +5,7 @@ description: "A browser asteroid shooter from an earlier wave of vibe coding, pr
 date: "2026-05-17"
 category: "lab"
 tags: ["Space Shooter", "Retro Prototype", "Early Cursor", "Prototype"]
-coverImage: "/lab/asteroids-3d/assets/game_title.jpeg"
+coverImage: "/content/images/asteroids-3d-game-title.jpeg"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ Small Web Lab has room for experiments that are still interesting even when they
 - Preserving older AI-assisted build experiments as playable snapshots.
 - A simple route pattern for prototypes that do not need a full product wrapper.
 - The difference between a shipped public artifact and a finished product.
-

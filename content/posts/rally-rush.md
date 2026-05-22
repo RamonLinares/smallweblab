@@ -5,7 +5,7 @@ description: "A lightweight browser rally game with quick circuit selection, arc
 date: "2026-05-16"
 category: "games"
 tags: ["Arcade Racing", "Three.js", "Auto-synced", "Prototype"]
-coverImage: "/lab/rally-rush/assets/game_logo.jpeg"
+coverImage: "/content/images/rally-rush-game-logo.jpeg"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ It is synced from its own repository into the lab and is especially useful as a 
 - Arcade driving feel in a browser route.
 - Three.js scenes that remain simple enough to ship as a static mini-site.
 - Keeping a playable prototype connected to a larger portfolio without over-packaging it.
-

@@ -8,8 +8,9 @@ GitHub Actions workflow.
 
 - Add or edit entries in `lab/catalog.json`.
 - Each entry can define a `sync` block that mirrors a source repo into `lab/<slug>/`.
-- The BlogSystem compiler copies this folder into `out/lab/` during `npm run build`.
-- The BlogSystem compiler also adds catalog routes to the generated `out/sitemap.xml`.
+- Quiremark publishes the Markdown site from `content/`.
+- `npm run build` copies this site-owned folder into `out/lab/` after Quiremark publish.
+- Keep this folder as the source snapshot for prototype routes and references.
 - Do not hand-edit synced prototype folders because the next sync will overwrite them.
 
 Future Codex threads should read:
@@ -17,8 +18,10 @@ Future Codex threads should read:
 - `lab/catalog.json`
 - `lab/README.md`
 - `scripts/sync_prototypes.py`
+- `scripts/copy_site_static.js`
 - `.github/workflows/sync-prototypes.yml`
-- `server.js`
+- `content/settings.json`
+- `package.json`
 
 Branch policy for this repo:
 

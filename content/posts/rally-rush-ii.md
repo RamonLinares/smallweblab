@@ -5,7 +5,7 @@ description: "A second-generation browser rally game with richer stage selection
 date: "2026-05-22T06:30:53+02:00"
 category: "games"
 tags: ["Browser Game", "Three.js", "Racing", "WebGL", "AI Build"]
-coverImage: "/assets/rally-rush-ii-gameplay.png"
+coverImage: "/content/images/rally-rush-ii-gameplay.png"
 draft: false
 ---
 
@@ -31,7 +31,7 @@ The current stage list is much more ambitious than the first Rally Rush:
 - **Mediterranean Coast**: cliff roads, sea views, walls, pines, and coastal bends.
 - **Valle Verde**: a fictional 14-turn Mediterranean circuit with pit lane, grandstands, paddock details, kerbs, and a proper track layout.
 
-![Rally Rush II stage and garage menu](/assets/rally-rush-ii-menu.png)
+![Rally Rush II stage and garage menu](/content/images/rally-rush-ii-menu.png)
 
 The menu is not just a title screen. It acts like a compact race setup interface: stage cards, car selection, race type, time of day, weather, difficulty, driving assist, and launch button all sit in one place.
 

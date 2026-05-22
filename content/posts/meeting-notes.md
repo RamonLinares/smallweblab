@@ -5,7 +5,7 @@ description: "A lightweight browser note workspace for meeting details, action i
 date: "2026-05-15"
 category: "tools"
 tags: ["Notes", "Local-first", "Productivity", "Auto-synced"]
-coverImage: "/assets/meeting-notes-preview.png"
+coverImage: "/content/images/meeting-notes-preview.png"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ The prototype stays in its own repository, syncs into the lab from `main`, and g
 - Local-first utility design inside a small browser app.
 - A productivity surface that stays useful without accounts or server storage.
 - The same synced prototype route pattern used by the games.
-

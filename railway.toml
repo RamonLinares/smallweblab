@@ -1,0 +1,10 @@
+[build]
+builder = "RAILPACK"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npx --yes serve@14 out --listen tcp://0.0.0.0:$PORT"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

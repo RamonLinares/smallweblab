@@ -3,11 +3,11 @@
   "siteSubtitle": "Shipped sites, games, and AI experiments.",
   "authorName": "SmallWebLab",
   "authorBio": "I build small internet products, browser games, and AI-assisted web experiments, ship them live, and refine what proves useful.",
-  "authorAvatar": "/assets/lensdigest-mark.png",
+  "authorAvatar": "/content/images/lensdigest-mark.png",
   "siteUrl": "https://smallweblab.com",
   "seoDescription": "Small Web Lab is a home for shipped web products: editorial sites, browser games, AI experiments, and practical browser prototypes.",
   "seoKeywords": "small web lab, browser games, AI experiments, web products, static sites, product lab",
-  "seoImage": "/assets/breakshot3d-cover.jpg",
+  "seoImage": "/content/images/breakshot3d-cover.jpg",
   "allowIndexing": true,
   "socialLinks": {
     "github": "https://github.com/RamonLinares",
@@ -15,7 +15,7 @@
     "linkedin": "",
     "instagram": ""
   },
-  "selectedTemplate": "nordic-minimal",
+  "selectedTemplate": "lensdigest-magazine",
   "locale": "en",
   "features": {
     "search": true,
@@ -78,8 +78,8 @@
     "newsletterEmailLabel": "",
     "footerRights": "Built as a static product lab.",
     "footerCreditLabel": "Powered by",
-    "footerCreditText": "BlogSystem",
-    "footerCreditUrl": "https://github.com/RamonLinares/BlogSystem"
+    "footerCreditText": "Quiremark",
+    "footerCreditUrl": "https://github.com/RamonLinares/Quiremark"
   },
   "widgets": [
     {

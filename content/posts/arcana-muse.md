@@ -5,7 +5,7 @@ description: "An AI tarot experience focused on reflection, rituals, and practic
 date: "2026-05-19"
 category: "ai"
 tags: ["AI UX", "Prompt Design", "Tarot", "Reflection"]
-coverImage: "/assets/arcanamuse-cover.jpg"
+coverImage: "/content/images/arcanamuse-cover.jpg"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ The useful design question is how to make an AI interaction feel specific withou
 - A consumer AI interface with a strong theme and clear boundaries.
 - Prompting that supports reflection rather than generic horoscope copy.
 - A product surface where visual mood, memory, and advice all need to fit together.
-

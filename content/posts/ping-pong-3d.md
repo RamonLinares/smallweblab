@@ -5,7 +5,7 @@ description: "A compact 3D table-tennis game kept in the lab as a playable brows
 date: "2026-05-18"
 category: "lab"
 tags: ["3D Gameplay", "Mini-site", "Auto-synced", "Prototype"]
-coverImage: "/lab/ping-pong-3d/img/arena.webp"
+coverImage: "/content/images/ping-pong-3d-arena.webp"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ The route is synced from its own repository, which makes it a useful reference p
 - A small 3D game surface that can be embedded as a static route.
 - Independent prototype development with central-site publication.
 - Keeping rougher experiments playable without giving each one a separate domain.
-

@@ -5,7 +5,7 @@ description: "A daily photography and videography digest built for search, readi
 date: "2026-05-21"
 category: "products"
 tags: ["SEO", "Photography", "Editorial UX", "Static Site"]
-coverImage: "/assets/lensdigest-hero.png"
+coverImage: "/content/images/lensdigest-hero.png"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ The interesting part is the operating system around the site. The product needs 
 - High-frequency publishing without making the site feel disposable.
 - Clear page structure for camera, video, creator, and gear topics.
 - A lightweight static delivery model that can keep up with daily updates.
-

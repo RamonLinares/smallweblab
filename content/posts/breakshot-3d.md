@@ -5,7 +5,7 @@ description: "A playable 3D pool game in the browser with local matches, CPU pla
 date: "2026-05-20"
 category: "games"
 tags: ["3D", "Browser Game", "Game Physics", "Search Capture"]
-coverImage: "/assets/breakshot3d-cover.jpg"
+coverImage: "/content/images/breakshot3d-cover.jpg"
 draft: false
 ---
 
@@ -20,4 +20,3 @@ The product is not just the game loop. It also tests whether useful search pages
 - Browser-based 3D gameplay that loads quickly enough to be approachable.
 - A rules and guide layer that supports players outside the main game canvas.
 - The boundary between a game prototype and a standalone product domain.
-
