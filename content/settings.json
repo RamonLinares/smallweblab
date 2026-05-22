@@ -102,7 +102,7 @@
       "order": 2,
       "placeholderText": "",
       "actionUrl": "",
-      "htmlContent": "<ul class=\"recent-posts-list\"><li><a href=\"https://lensdigest.com/\" target=\"_blank\" rel=\"noopener\">LensDigest</a></li><li><a href=\"https://breakshot3d.com/\" target=\"_blank\" rel=\"noopener\">Breakshot 3D</a></li><li><a href=\"https://arcanamuse.com/\" target=\"_blank\" rel=\"noopener\">Arcana Muse</a></li><li><a href=\"/lab/ping-pong-3d/\">Ping Pong 3D</a></li><li><a href=\"/lab/asteroids-3d/\">Asteroids 3D</a></li><li><a href=\"/lab/rally-rush/\">Rally Rush</a></li><li><a href=\"/lab/meeting-notes/\">Meeting Notes</a></li></ul>"
+      "htmlContent": "<ul class=\"recent-posts-list\"><li><a href=\"https://lensdigest.com/\" target=\"_blank\" rel=\"noopener\">LensDigest</a></li><li><a href=\"https://breakshot3d.com/\" target=\"_blank\" rel=\"noopener\">Breakshot 3D</a></li><li><a href=\"https://arcanamuse.com/\" target=\"_blank\" rel=\"noopener\">Arcana Muse</a></li><li><a href=\"https://ramonlinares.github.io/RallyRushII/\" target=\"_blank\" rel=\"noopener\">Rally Rush II</a></li><li><a href=\"/lab/ping-pong-3d/\">Ping Pong 3D</a></li><li><a href=\"/lab/asteroids-3d/\">Asteroids 3D</a></li><li><a href=\"/lab/rally-rush/\">Rally Rush</a></li><li><a href=\"/lab/meeting-notes/\">Meeting Notes</a></li></ul>"
     },
     {
       "id": "recent-posts",
