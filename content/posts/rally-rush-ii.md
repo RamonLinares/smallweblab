@@ -2,7 +2,7 @@
 title: "Rally Rush II"
 slug: "rally-rush-ii"
 description: "A second-generation browser rally game with richer stage selection, cars, race modes, weather, assists, and a more complete 3D racing loop."
-date: "2026-05-22"
+date: "2026-05-22T06:30:53+02:00"
 category: "games"
 tags: ["Browser Game", "Three.js", "Racing", "WebGL", "AI Build"]
 coverImage: "/assets/rally-rush-ii-gameplay.png"
