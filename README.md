@@ -16,7 +16,7 @@ logic through the package dependency.
 - `scripts/sync_prototypes.py`: mirrors configured prototype repos into `lab/<slug>/`
 - `scripts/copy_site_static.js`: copies site-owned static prototype routes into `out/`
 - `.github/workflows/sync-prototypes.yml`: keeps prototype snapshots current
-- `.github/workflows/deploy-pages.yml`: builds `out/` and deploys it to GitHub Pages
+- `.github/workflows/deploy-pages.yml`: builds `out/`, applies the GitHub Pages `/smallweblab` path prefix, and deploys it
 - `favicon.ico`: legacy site favicon asset
 - `out/`: generated static website output, ignored by git
 
@@ -53,7 +53,8 @@ For Cloudflare Pages, use:
 - Build output directory: `out`
 
 For GitHub Pages, `.github/workflows/deploy-pages.yml` builds the site on pushes
-to `main` and deploys the generated `out/` artifact with GitHub Actions. In the
+to `main`, rewrites generated root-relative URLs for the `/smallweblab` project
+path, and deploys the generated `out/` artifact with GitHub Actions. In the
 repository settings, Pages should use **GitHub Actions** as its source.
 
 The compiler writes HTML, category pages, post pages, search assets, RSS,
