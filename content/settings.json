@@ -1,0 +1,130 @@
+{
+  "siteName": "Small Web Lab",
+  "siteSubtitle": "Shipped sites, games, and AI experiments.",
+  "authorName": "SmallWebLab",
+  "authorBio": "I build small internet products, browser games, and AI-assisted web experiments, ship them live, and refine what proves useful.",
+  "authorAvatar": "/assets/lensdigest-mark.png",
+  "siteUrl": "https://smallweblab.com",
+  "seoDescription": "Small Web Lab is a home for shipped web products: editorial sites, browser games, AI experiments, and practical browser prototypes.",
+  "seoKeywords": "small web lab, browser games, AI experiments, web products, static sites, product lab",
+  "seoImage": "/assets/breakshot3d-cover.jpg",
+  "allowIndexing": true,
+  "socialLinks": {
+    "github": "https://github.com/RamonLinares",
+    "twitter": "",
+    "linkedin": "",
+    "instagram": ""
+  },
+  "selectedTemplate": "nordic-minimal",
+  "locale": "en",
+  "features": {
+    "search": true,
+    "newsletter": false,
+    "about": true,
+    "rss": true,
+    "categories": true
+  },
+  "categories": [
+    {
+      "slug": "products",
+      "name": "Products",
+      "description": "Standalone domains and public web products.",
+      "color": "#0f766e"
+    },
+    {
+      "slug": "games",
+      "name": "Games",
+      "description": "Playable browser games and interactive experiments.",
+      "color": "#2563eb"
+    },
+    {
+      "slug": "ai",
+      "name": "AI",
+      "description": "AI product experiments and prompt-shaped interfaces.",
+      "color": "#7c3aed"
+    },
+    {
+      "slug": "lab",
+      "name": "Lab",
+      "description": "Small prototypes that stay available under the lab routes.",
+      "color": "#d97706"
+    },
+    {
+      "slug": "tools",
+      "name": "Tools",
+      "description": "Practical browser utilities and local-first workflows.",
+      "color": "#475569"
+    }
+  ],
+  "analytics": {
+    "googleMeasurementId": "G-FK26SXGK9F"
+  },
+  "themeText": {
+    "searchLabel": "Search Small Web Lab",
+    "searchPlaceholder": "Search products, prototypes, tags...",
+    "searchNoResults": "No matching lab entries found.",
+    "emptyState": "No lab entries published yet.",
+    "readMoreLabel": "Open entry",
+    "backLinkLabel": "Back to Small Web Lab",
+    "statusLabel": "",
+    "editionLabel": "",
+    "terminalTitle": "",
+    "footerTerminalTitle": "",
+    "newsletterDescription": "",
+    "newsletterSubmitLabel": "",
+    "newsletterPlaceholder": "",
+    "newsletterDisabledPlaceholder": "",
+    "newsletterDisabledLabel": "",
+    "newsletterEmailLabel": "",
+    "footerRights": "Built as a static product lab.",
+    "footerCreditLabel": "Powered by",
+    "footerCreditText": "BlogSystem",
+    "footerCreditUrl": "https://github.com/RamonLinares/BlogSystem"
+  },
+  "widgets": [
+    {
+      "id": "bio",
+      "name": "About The Lab",
+      "type": "bio",
+      "enabled": true,
+      "position": "sidebar",
+      "order": 1,
+      "placeholderText": "",
+      "actionUrl": "",
+      "htmlContent": ""
+    },
+    {
+      "id": "live-links",
+      "name": "Live Links",
+      "type": "custom-html",
+      "enabled": true,
+      "position": "sidebar",
+      "order": 2,
+      "placeholderText": "",
+      "actionUrl": "",
+      "htmlContent": "<ul class=\"recent-posts-list\"><li><a href=\"https://lensdigest.com/\" target=\"_blank\" rel=\"noopener\">LensDigest</a></li><li><a href=\"https://breakshot3d.com/\" target=\"_blank\" rel=\"noopener\">Breakshot 3D</a></li><li><a href=\"https://arcanamuse.com/\" target=\"_blank\" rel=\"noopener\">Arcana Muse</a></li><li><a href=\"/lab/ping-pong-3d/\">Ping Pong 3D</a></li><li><a href=\"/lab/asteroids-3d/\">Asteroids 3D</a></li><li><a href=\"/lab/rally-rush/\">Rally Rush</a></li><li><a href=\"/lab/meeting-notes/\">Meeting Notes</a></li></ul>"
+    },
+    {
+      "id": "recent-posts",
+      "name": "Recent Entries",
+      "type": "recent-posts",
+      "enabled": true,
+      "position": "sidebar",
+      "order": 3,
+      "placeholderText": "",
+      "actionUrl": "",
+      "htmlContent": ""
+    },
+    {
+      "id": "tag-cloud",
+      "name": "Topics",
+      "type": "tag-cloud",
+      "enabled": true,
+      "position": "sidebar",
+      "order": 4,
+      "placeholderText": "",
+      "actionUrl": "",
+      "htmlContent": ""
+    }
+  ]
+}

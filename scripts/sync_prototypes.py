@@ -12,8 +12,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LAB_ROOT = REPO_ROOT / "lab"
 CATALOG_PATH = LAB_ROOT / "catalog.json"
-SITEMAP_PATH = REPO_ROOT / "sitemap.xml"
-SITE_ROOT_URL = "https://smallweblab.com"
 IGNORE_PATTERNS = shutil.ignore_patterns(
     ".git",
     ".github",
@@ -47,25 +45,6 @@ def load_sources() -> list[dict[str, str]]:
         raise SystemExit(f"Prototype catalog must be a list: {CATALOG_PATH}")
 
     return catalog
-
-
-def build_sitemap(catalog: list[dict[str, object]]) -> str:
-    urls = [f"{SITE_ROOT_URL}/"]
-
-    for entry in catalog:
-        path = str(entry.get("path", "")).strip()
-        if not path.startswith("/"):
-            continue
-        urls.append(f"{SITE_ROOT_URL}{path}")
-
-    lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for url in urls:
-        lines.append("  <url>")
-        lines.append(f"    <loc>{url}</loc>")
-        lines.append("  </url>")
-    lines.append("</urlset>")
-    lines.append("")
-    return "\n".join(lines)
 
 
 def sync_source(entry: dict[str, object]) -> None:
@@ -104,8 +83,6 @@ def main() -> int:
 
     for source in catalog:
         sync_source(source)
-
-    SITEMAP_PATH.write_text(build_sitemap(catalog), encoding="utf-8")
 
     return 0
 

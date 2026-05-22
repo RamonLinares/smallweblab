@@ -1,29 +1,98 @@
 # Small Web Lab
 
-Static portfolio hub for `smallweblab.com`.
+Static product-lab site for `smallweblab.com`, now powered by the
+`RamonLinares/BlogSystem` codebase.
 
-## Files
+The public site is generated from Markdown content into `out/`. The local
+admin dashboard is a Vite/React app served by the Express backend.
 
-- `index.html`: homepage
-- `styles.css`: layout, typography, motion, and responsive styles
-- `script.js`: scroll progress, reveal animations, and subtle tilt interactions
-- `assets/`: project imagery pulled from the live sites
-- `lab/`: synced prototype microsites served from `/lab/<slug>/`
-- `PROPOSAL.md`: original direction and platform recommendation
+## Project Shape
+
+- `content/settings.json`: site identity, SEO, analytics, categories, widgets, and theme choice
+- `content/posts/`: published Markdown entries for products and lab prototypes
+- `templates/`: BlogSystem EJS themes and shared public assets
+- `src/`: local React admin dashboard
+- `server.js`: local API, static compiler, deploy helper, and admin server
+- `assets/`: Small Web Lab imagery copied into `out/assets/` on publish
+- `lab/`: synced prototype microsites copied into `out/lab/` on publish
+- `scripts/sync_prototypes.py`: mirrors configured prototype repos into `lab/<slug>/`
+- `out/`: generated static website output, ignored by git
+- `dist/`: generated admin dashboard bundle, ignored by git
+
+## Local Setup
+
+```bash
+npm install
+npm run build
+python3 -m http.server 4173 --directory out
+```
+
+Then open `http://localhost:4173/`.
+
+To run the BlogSystem server and admin dashboard locally:
+
+```bash
+npm run build:admin
+ADMIN_PASSWORD='replace-this' npm run start
+```
+
+Default local endpoints:
+
+- Public generated site: `http://localhost:3001/`
+- Admin dashboard: `http://localhost:3001/admin`
+
+## Publishing
+
+For Cloudflare Pages, use:
+
+- Install command: `npm ci`
+- Build command: `npm run build`
+- Build output directory: `out`
+
+The `build` script runs the static compiler without starting the admin server.
+It writes HTML, category pages, post pages, search assets, RSS, `robots.txt`,
+`sitemap.xml`, `llms.txt`, and `llms-full.txt`.
+
+The compiler also copies:
+
+- `assets/` to `out/assets/`
+- `lab/` to `out/lab/`
+- `favicon.ico` to `out/favicon.ico`
+
+## Content Workflow
+
+Add or edit posts in `content/posts/`.
+
+Each post uses front matter:
+
+```yaml
+---
+title: "Example"
+slug: "example"
+description: "Short summary for cards and SEO."
+date: "2026-05-21"
+category: "products"
+tags: ["Static Site", "Product"]
+coverImage: "/assets/example.jpg"
+draft: false
+---
+```
+
+Site-level settings live in `content/settings.json`. The current public
+configuration uses:
+
+- site URL: `https://smallweblab.com`
+- selected template: `nordic-minimal`
+- GA4 measurement ID: `G-FK26SXGK9F`
+- categories: Products, Games, AI, Lab, Tools
 
 ## Prototype Sync
 
-Prototype sites can live in their own repositories and still be published under
-`smallweblab.com/lab/<slug>/`.
+`lab/catalog.json` remains the source of truth for synced prototypes.
 
-- `lab/catalog.json` is the source of truth for lab entries.
-- The homepage prototype cards, hero count, and prototype live links all render from `lab/catalog.json`.
-- `scripts/sync_prototypes.py` reads the same catalog and mirrors each configured repo into `lab/<slug>/`.
-- The same script also rewrites `sitemap.xml` so lab routes are indexed without a separate manual step.
-- `.github/workflows/sync-prototypes.yml` runs hourly and can also be triggered manually.
-- The sync workflow also runs on pushes that change `lab/catalog.json` or the sync script.
-- The workflow also accepts a `repository_dispatch` event named `prototype-updated`
-  if you later want upstream repos to trigger immediate syncs on push.
+`scripts/sync_prototypes.py` mirrors each configured source repository into
+`lab/<slug>/`. The BlogSystem compiler then copies those lab folders into
+`out/lab/` and adds the lab routes to the generated sitemap.
 
 Current prototype routes:
 
@@ -32,15 +101,8 @@ Current prototype routes:
 - `rally-rush` -> `/lab/rally-rush/`
 - `meeting-notes` -> `/lab/meeting-notes/`
 
-## Adding A New Lab Prototype
-
-1. Add a new entry to `lab/catalog.json`.
-2. Commit and push that catalog change.
-3. Let the `Sync prototypes` GitHub Action mirror the source repo into `lab/<slug>/`.
-4. The homepage section and sitemap will update from the same catalog-driven flow.
-
-If a future Codex thread needs context, point it to `lab/catalog.json`, `lab/README.md`,
-and `scripts/sync_prototypes.py` first.
+Do not hand-edit generated prototype folders unless you intend to replace the
+next sync result.
 
 ## Branch Policy
 
@@ -50,29 +112,3 @@ This repo is the live deploy source for `smallweblab.com`.
 - Do not leave lab additions only on a side branch or draft PR unless the user explicitly asks for PR workflow.
 - Use a PR branch only when the user asks to review changes before merge.
 - If a side branch already contains the desired change, merge it into `main` before calling the task done.
-
-## Cloudflare Pages Setup
-
-For the current static version:
-
-1. Create a GitHub repository from this folder.
-2. Push the contents to your default branch, ideally `main`.
-3. In Cloudflare Pages, create a new project and connect the GitHub repo.
-4. Use the static HTML setup:
-   - Framework preset: `None`
-   - Build command: `exit 0`
-   - Build output directory: `/`
-5. After the first deploy, attach:
-   - `smallweblab.com`
-   - `www.smallweblab.com`
-6. Set a redirect rule so only one canonical hostname remains live.
-
-## Local Preview
-
-From this folder:
-
-```bash
-python3 -m http.server 4173
-```
-
-Then open `http://localhost:4173/`.

@@ -1,16 +1,15 @@
 # Prototype Lab
 
-Start with `lab/catalog.json`. It is the source of truth for both:
+Start with `lab/catalog.json`. It is the source of truth for synced prototype
+routes under `/lab/<slug>/`.
 
-- homepage rendering in `index.html` + `script.js`
-- prototype syncing via `scripts/sync_prototypes.py`
-
-This folder is managed by `scripts/sync_prototypes.py` and the
-`Sync prototypes` GitHub Actions workflow.
+This folder is managed by `scripts/sync_prototypes.py` and the `Sync prototypes`
+GitHub Actions workflow.
 
 - Add or edit entries in `lab/catalog.json`.
 - Each entry can define a `sync` block that mirrors a source repo into `lab/<slug>/`.
-- The homepage reads the same catalog and renders prototype cards automatically.
+- The BlogSystem compiler copies this folder into `out/lab/` during `npm run build`.
+- The BlogSystem compiler also adds catalog routes to the generated `out/sitemap.xml`.
 - Do not hand-edit synced prototype folders because the next sync will overwrite them.
 
 Future Codex threads should read:
@@ -19,6 +18,7 @@ Future Codex threads should read:
 - `lab/README.md`
 - `scripts/sync_prototypes.py`
 - `.github/workflows/sync-prototypes.yml`
+- `server.js`
 
 Branch policy for this repo:
 

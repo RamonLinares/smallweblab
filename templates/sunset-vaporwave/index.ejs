@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="<%= locale %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <%- helpers.seoHead(pageMeta) %>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <% if (features.search) { %>
+  <link rel="stylesheet" href="/search.css">
+  <% } %>
+  <% if (features.categories) { %>
+  <link rel="stylesheet" href="/taxonomy.css">
+  <% } %>
+</head>
+<body class="vaporwave-theme">
+  <!-- Vaporwave Sun Background Grid & Scanline overlays -->
+  <div class="synth-sky">
+    <div class="synth-sun"></div>
+  </div>
+  <div class="neon-grid"></div>
+  <div class="scanlines"></div>
+
+  <header class="blog-header vapor-panel">
+    <div class="header-container">
+      <h1 class="logo"><a href="/index.html"><%= siteName %></a></h1>
+      <p class="subtitle">// <%= siteSubtitle %></p>
+    </div>
+  </header>
+
+  <div class="main-layout animate-fade-in">
+    <main class="posts-feed">
+      <% if (features.search) { %>
+      <section class="search-panel" role="search" data-search-panel data-search-empty="<%= helpers.copy('searchNoResults', 'No matching posts found.') %>">
+        <label class="search-label" for="site-search"><%= helpers.copy('searchLabel', 'Search Archive') %></label>
+        <input id="site-search" class="search-input" type="search" data-search-input placeholder="<%= helpers.copy('searchPlaceholder', 'Search posts, categories, or tags...') %>" autocomplete="off">
+        <div class="search-results" data-search-results aria-live="polite"></div>
+      </section>
+      <% } %>
+      <%- helpers.categoryArchiveHeader(currentCategory) %>
+
+      <% if (posts.length === 0) { %>
+        <div class="empty-state vapor-panel">
+          <p><%= helpers.copy('emptyState', 'NO STATIC DATA SECTORS DETECTED.') %></p>
+        </div>
+      <% } else { %>
+        <% posts.forEach((post, index) => { %>
+          <article class="post-card vapor-panel" data-search-card data-search-text="<%= [post.title, post.description, post.categoryName, ...((post.tags || []))].join(' ') %>">
+            <% if (post.coverImage) { %>
+              <div class="post-image-container">
+                <a href="/posts/<%= post.slug %>/index.html">
+                  <img src="<%= post.coverImage %>" alt="<%= post.title %>" class="post-cover" loading="<%= index === 0 ? 'eager' : 'lazy' %>" decoding="async" fetchpriority="<%= index === 0 ? 'high' : 'auto' %>">
+                </a>
+              </div>
+            <% } %>
+            <div class="post-card-content">
+              <div class="post-meta">
+                <%- helpers.categoryLink(post, { upper: true }) %>
+                <span class="meta-divider">//</span>
+                <time class="post-date" datetime="<%= helpers.isoDate(post.date) %>"><%= helpers.date(post.date) %></time>
+              </div>
+              <h2 class="post-title">
+                <a href="/posts/<%= post.slug %>/index.html"><%= post.title %></a>
+              </h2>
+              <p class="post-excerpt"><%= post.description %></p>
+              <a href="/posts/<%= post.slug %>/index.html" class="read-more"><%= helpers.copy('readMoreLabel', 'LOAD ARTICLE_') %></a>
+            </div>
+          </article>
+        <% }) %>
+      <% } %>
+    </main>
+
+    <aside class="blog-sidebar">
+      <%- helpers.categoryNav(categories, currentCategory, { className: 'widget widget-categories vapor-panel' }) %>
+      <% widgets.filter(w => w.enabled && w.position === 'sidebar').forEach(widget => { %>
+        <div class="widget widget-<%= widget.type %> vapor-panel" id="widget-<%= widget.id %>">
+          <h3 class="widget-title"><%= widget.name %></h3>
+          
+          <% if (widget.type === 'bio') { %>
+            <div class="bio-content">
+              <% if (authorAvatar) { %>
+                <div class="avatar-neon">
+                  <img src="<%= authorAvatar %>" alt="<%= authorName %>" class="bio-avatar" loading="lazy" decoding="async">
+                </div>
+              <% } %>
+              <h4 class="bio-name"><%= authorName %></h4>
+              <p class="bio-text"><%= authorBio %></p>
+              <div class="bio-socials">
+                <% if (socialLinks.github) { %><a href="<%= socialLinks.github %>" target="_blank" rel="noopener">[GITHUB]</a><% } %>
+                <% if (socialLinks.twitter) { %><a href="<%= socialLinks.twitter %>" target="_blank" rel="noopener">[TWITTER]</a><% } %>
+                <% if (socialLinks.linkedin) { %><a href="<%= socialLinks.linkedin %>" target="_blank" rel="noopener">[LINKEDIN]</a><% } %>
+                <% if (socialLinks.instagram) { %><a href="<%= socialLinks.instagram %>" target="_blank" rel="noopener">[INSTAGRAM]</a><% } %>
+              </div>
+            </div>
+          <% } else if (widget.type === 'recent-posts') { %>
+            <ul class="recent-posts-list">
+              <% posts.slice(0, 5).forEach(p => { %>
+                <li>
+                  <a href="/posts/<%= p.slug %>/index.html" class="recent-post-link">> <%= p.title %></a>
+                  <time class="recent-post-date" datetime="<%= helpers.isoDate(p.date) %>">// <%= helpers.date(p.date) %></time>
+                </li>
+              <% }) %>
+            </ul>
+          <% } else if (widget.type === 'tag-cloud') { %>
+            <div class="tag-cloud">
+              <% 
+                const tags = {};
+                posts.forEach(p => {
+                  if (p.tags) p.tags.forEach(t => { tags[t] = (tags[t] || 0) + 1 })
+                });
+              %>
+              <% Object.keys(tags).forEach(tag => { %>
+                <span class="tag-chip"><%= String(tag || '').toUpperCase() %> [<%= tags[tag] %>]</span>
+              <% }) %>
+            </div>
+          <% } else if (widget.type === 'custom-html') { %>
+            <div class="custom-html-content">
+              <%- widget.htmlContent || '' %>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    </aside>
+  </div>
+
+  <footer class="blog-footer vapor-panel">
+    <div class="footer-container">
+      <div class="footer-widgets">
+        <% widgets.filter(w => w.enabled && w.position === 'footer').forEach(widget => { %>
+          <div class="widget widget-<%= widget.type %>" id="widget-<%= widget.id %>">
+            <h4 class="widget-title"><%= widget.name %></h4>
+            <% if (widget.type === 'newsletter') { %>
+              <div class="newsletter-content">
+                <p><%= helpers.copy('newsletterDescription', 'Subscribe to transmit the latest digital aesthetic logs directly to your matrix terminal.') %></p>
+                <% if (widget.actionUrl) { %>
+                  <form class="newsletter-form" action="<%= widget.actionUrl %>" method="post">
+                    <input type="email" name="email" placeholder="<%= widget.placeholderText || helpers.copy('newsletterPlaceholder', 'SYSTEM@DOMAIN.EXE') %>" required aria-label="<%= helpers.copy('newsletterEmailLabel', 'Neon Email Terminal') %>">
+                    <button type="submit"><%= helpers.copy('newsletterSubmitLabel', 'TRANSMIT') %></button>
+                  </form>
+                <% } else { %>
+                  <form class="newsletter-form">
+                    <input type="email" placeholder="<%= helpers.copy('newsletterDisabledPlaceholder', 'CONFIGURE_ENDPOINT.EXE') %>" disabled aria-label="<%= helpers.copy('newsletterEmailLabel', 'Neon Email Terminal') %>">
+                    <button type="button" disabled><%= helpers.copy('newsletterDisabledLabel', 'CONFIG') %></button>
+                  </form>
+                <% } %>
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <%= new Date().getFullYear() %> <%= String(siteName || '').toUpperCase() %>. <%= helpers.copy('footerRights', 'ALL PROTOCOLS SECURED.') %></p>
+        <p class="credit"><%= helpers.copy('footerCreditLabel', 'SYSTEM_ENGINE:') %> <a href="<%= helpers.copy('footerCreditUrl', '#') %>" class="footer-link"><%= helpers.copy('footerCreditText', '[ZENITH_PRESS]') %></a></p>
+      </div>
+    </div>
+  </footer>
+  <% if (features.search) { %>
+  <script src="/search.js" defer></script>
+  <% } %>
+  <%- helpers.consentDialog() %>
+</body>
+</html>
