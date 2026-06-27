@@ -9,18 +9,18 @@ coverImage: "/content/images/fluffy-vibe-coding-comparison-cover.png"
 draft: false
 ---
 
-I wanted to learn something concrete, so I gave four coding setups the same game idea and then pushed each result until it became playable enough to inspect with a straight face.
+I wanted a small comparison that would teach me something practical. Same prompt, four coding setups, one afternoon of pushing each result past the screenshot stage.
 
-The prompt was intentionally dense:
+The prompt:
 
 > make a mobile first but desktop playable too website in 3d, using react and threejs, font-awesome, webgl that is a procedurally generated planet and the user can move a character that is a fluffy ball. the game is relaxed, but the goal is to have five quests in each planet and once achieved it got transported to another different planet with another five quests. The achievement is stored in localstorage but we also give a code to the user so they can enter it in another device and reach the same planet. It should be anime style, pastel colors, light shadows, a bit ethereal
 
-That prompt is useful because it hits several layers at once. It asks for a mood, a character, spherical movement, generated worlds, five goals per planet, persistence, portable codes, mobile controls, desktop controls, WebGL, React, Three.js, and Font Awesome. A model can bluff one or two of those. It has to make architectural choices when all of them appear together.
+It is a good stress prompt because it mixes mood, controls, state, geometry, UI, persistence, and deployment. A model can fake a pastel sphere easily. It has a harder time making spherical movement, five quests, local storage, travel codes, mobile controls, and WebGL all coexist without becoming soup.
 
 The four builds:
 
 - `FluffyGPT55xhigh`: Codex with GPT-5.5 x-high.
-- `FluffyGLM52`: opencode with GLM 5.2, with one later Codex / GPT-5.5 assist for a compass bug.
+- `FluffyGLM52`: opencode with GLM 5.2, plus one later Codex / GPT-5.5 repair for a compass bug.
 - `FluffyClaude`: Claude Code with Opus 4.8.
 - `FluffyGemini35Flash`: Antigravity with Gemini Flash 3.5.
 
@@ -31,26 +31,26 @@ The four builds:
 - Claude Code / Opus 4.8: [play the game](https://ramonlinares.github.io/FluffyClaude/) and [open the repository](https://github.com/RamonLinares/FluffyClaude).
 - Antigravity / Gemini Flash 3.5: [play the game](https://ramonlinares.github.io/FluffyGemini35Flash/) and [open the repository](https://github.com/RamonLinares/FluffyGemini35Flash).
 
-## Ground Rules
+## How I Read The Results
 
-This is a field note, not a lab-grade benchmark. I did not stop after one generation. I did not normalize token counts. I did not force every tool through the same number of turns. I cared about the thing I care about when I build: can I get from prompt to a playable artifact, can I understand the code afterward, and does the result contain ideas worth stealing?
+Benchmark police can relax. I let the projects evolve after the first answer because that is how I actually use these tools. I cared about the working artifact, the code I would inherit, and the amount of expensive attention needed to get there.
 
-Cost matters in that frame. Some models and harnesses are comfortable to use for long, messy iteration because they are cheap or fast. Others feel like bringing a very expensive lens to a small shoot: sometimes justified, sometimes absurd, often educational. I did not use exact dollar accounting here, so the cost comments are practical rather than financial. The question is value for iteration: how much usable structure, taste, and bug-fixing leverage came back for the model class I was paying to use?
+Cost is part of the taste test. A cheap or fast model can be excellent if it gives me a system I can steer. An expensive model earns its keep when it saves me from slow debugging, produces a cleaner shape, or gets the hard spatial reasoning right. I did not track exact dollars for this run, so the cost notes are about practical value during iteration.
 
-One attribution detail is important. The GLM version was primarily built with opencode and GLM 5.2. Later, when its compass got stuck pointing the wrong way near a collectible, I used Codex with GPT-5.5 to diagnose and patch that bug. So I treat the GLM result as GLM-originated with one premium-model repair, not as a sealed GLM-only specimen.
+The GLM attribution needs a footnote. The project mostly came from opencode with GLM 5.2. Later, the compass pointed the wrong way when I was beside a collectible. I used Codex with GPT-5.5 to inspect the geometry and patch it. The GLM build still tells me a lot about GLM, but the final shipped version includes that one premium-model assist.
 
 ## What I Checked
 
-I built all four projects on June 27, 2026, served their production `dist` folders locally, checked desktop and phone-sized viewports, then verified the public GitHub Pages deployments.
+I built all four projects on June 27, 2026, served their production `dist` folders locally, checked desktop and phone-sized viewports, and then verified the public GitHub Pages deployments.
 
-The useful checks were mundane:
+My checklist was plain:
 
-- Does production build without hand edits?
-- Does the hosted page load its assets from a GitHub Pages subpath?
-- Does a WebGL canvas render?
-- Is there enough UI to understand the next goal?
-- Does mobile still look like a game, or does the HUD eat the planet?
-- Can I see the shape of the code after the model leaves?
+- Production build passes.
+- Hosted assets load correctly from a GitHub Pages subpath.
+- A WebGL canvas appears.
+- The player can understand the next action.
+- Mobile keeps enough planet visible to feel playable.
+- The code still makes sense after the model is gone.
 
 ![Mobile comparison of the four fluffy planet games](/content/images/fluffy-vibe-coding-mobile-strip.png)
 
@@ -58,89 +58,89 @@ The useful checks were mundane:
 
 ![GPT-5.5 x-high Codex fluffy planet game](/content/images/fluffy-vibe-gpt55xhigh-gameplay.png)
 
-The Codex build goes straight to the game. No intro card, no theatrical pause. You get a small planet, a fluffy character, five quest slots, an active objective, code and audio buttons, pause, and a live readout with FPS, draw calls, and triangle count.
+The Codex build opens directly into play. Small planet, fluffy character, five quest slots, active objective, code button, audio, pause, and a live FPS/draw-call/triangle readout.
 
-That directness is its best quality. It feels like somebody wanted the first playable loop on screen before decorating the hallway. The implementation follows the same instinct. It is built around a compact custom Three.js game class rather than a wide React Three Fiber component forest. That makes the code easy to inspect. You can find the render loop, world generation, player behavior, and save mechanics without spelunking through too many layers.
+I liked the lack of ceremony. The first playable loop is visible immediately. The source has the same compactness: a custom Three.js game class, no broad React Three Fiber tree. Render loop, world generation, player movement, quests, and save logic are easy to find.
 
-Taste-wise, it has a nice character read. The white fluffball has a face, volume, and silhouette. The planet is bright and legible. The world does not have the richest fiction, but the main object of play is clear.
+The character has a good read. White fluff, face, paws, soft volume. The planet is bright and clean. The world fiction is thinner than in the other versions, but the object of play is obvious.
 
-The problem is interface pressure. The top HUD behaves like a developer cockpit. It is useful, but the game asks for calm and the UI answers with instrumentation. On mobile it remains playable, but it feels closer to a debugging build than a finished toy.
+The weak spot is the HUD. It has developer cockpit energy. Useful, clear, a little too busy for a relaxed game. On mobile it works, but it feels like a prototype with its diagnostics still pinned to the glass.
 
-The cost note is favorable if you care about engineering leverage. A high-reasoning model is expensive, but this version returned a compact, legible, shippable slice with the smallest production JavaScript bundle in my pass, around 775 KB before gzip and 210 KB gzipped. The premium model did not spend its effort on a giant architecture. It spent it on getting a coherent loop into a small shape. That is a good trade when the goal is to learn quickly.
+The cost/value trade looked good here. GPT-5.5 x-high is an expensive choice, but it returned a compact playable slice with the smallest production JavaScript bundle in my pass, around 775 KB before gzip and 210 KB gzipped. I would pay premium-model prices for this kind of concentrated engineering shape when I am trying to learn quickly.
 
 ## opencode / GLM 5.2: The Systems Surprise
 
 ![GLM 5.2 opencode fluffy planet game](/content/images/fluffy-vibe-glm52-gameplay.png)
 
-The GLM version surprised me. It looks and behaves like a real prototype, not a novelty screenshot. It has React Three Fiber, Zustand state, separate modules for codec, decorations, planet generation, quests, random generation, and shared types. The HUD is tidy. The planet palette is gentle. The compass and quest list make the next action readable.
+The GLM version was the pleasant surprise. It looks like a real prototype. React Three Fiber handles the scene. Zustand handles game state. Codec, decorations, planet generation, quests, random generation, and shared types each get their own place. The HUD is tidy, the palette is gentle, and the compass makes the current objective readable.
 
-This is the build I would show someone who believes cheaper models can only make disposable scaffolds. It has the right decomposition for the prompt. Persistence and journey codes live away from rendering. Quest generation is its own concern. The scene components do not feel randomly dumped into one file. Those are boring choices, which is exactly why they matter.
+I would show this build to someone who underestimates cheaper models. The decomposition is sensible. Persistence and journey codes stay away from rendering. Quest generation has its own module. The scene components have names that match the game. Boring structure, in the good sense.
 
-The mobile read is also strong. The top controls stay compact, the quest panel has a clean hierarchy, and the planet keeps enough screen real estate to feel playable. The art direction is not the most expensive-looking of the set, but it is disciplined. Pastel without becoming beige fog. Low-poly without becoming empty.
+The mobile layout holds together well. Top controls stay compact, the quest panel has a clean hierarchy, and the planet still gets enough screen space. The art direction is disciplined too: pastel without turning into beige fog, low-poly without looking empty.
 
-The caveat is the compass bug. In one later session, I was standing beside a collectible and the compass pointed the wrong way. Codex with GPT-5.5 audited the bug and fixed two details: an extra inversion in the projected tangent direction, and the Font Awesome arrow's base rotation. That is a meaningful footnote. GLM produced the systems-heavy body of the game, but a premium model helped repair a subtle spatial UI bug.
+The compass bug matters. In a later session, I stood next to a collectible and the compass pointed somewhere else. Codex with GPT-5.5 found the issue: an extra inversion in the projected tangent direction, plus a Font Awesome arrow rotation that did not match the angle convention. GLM built the body of the game; Codex fixed a spatial UI bug that needed careful browser verification.
 
-That footnote is also the cost lesson. A cheaper model plus a targeted expensive debugging pass can be a very attractive workflow. You do not always need the most expensive model to write every line. Sometimes the right economic shape is: let the cheaper model build the bulk of the system, then bring in the expensive model when the bug requires geometry, browser evidence, and careful reasoning.
+That mix feels economically sane. Let the cheaper model build the bulk of the system. Bring in the expensive model when the bug needs geometry, screenshots, and a debugger mindset. I would use that workflow again.
 
-The downside is asset and dependency weight. Font Awesome arrives as font files and a larger CSS footprint. The JavaScript bundle is also large. For a one-off prototype I can live with that. For a serious browser game, I would put it on a diet early.
+The main cleanup item is weight. Font Awesome ships font files and a larger CSS payload. The JS bundle is large too. Fine for an experiment, worth cutting down before treating this as a serious browser game.
 
 ## Claude Code / Opus 4.8: World-Building Appetite
 
 ![Claude Opus 4.8 Claude Code fluffy planet game](/content/images/fluffy-vibe-claude-opus48-gameplay.png)
 
-The Claude version has the most world-building appetite. The file tree is large and granular: audio, colliders, compass, input, noise, planet, quests, share codes, storage, theme, plus separate scene components for atmosphere, aurora, clouds, comets, floating islets, landmarks, moons, particles, portal, rings, sky dome, starfield, suns, and the fluffball.
+The Claude version wants to build a world. The file tree is large and granular: audio, colliders, compass, input, noise, planet, quests, share codes, storage, theme, plus separate scene components for atmosphere, aurora, clouds, comets, floating islets, landmarks, moons, particles, portal, rings, sky dome, starfield, suns, and the fluffball.
 
-That can be good. The world has presence. The start screen has color selection, clear control hints, and a nice sense of invitation. The planet behind it has terrain details, crystals, trees, floating pieces, and atmospheric dressing. This build understands that "ethereal" is not a material setting. It is composition, softness, depth, and a bit of restraint.
+The upside is visible. The start screen has color selection and clear controls. The planet behind it has terrain detail, crystals, trees, floating pieces, and soft atmospheric dressing. The word "ethereal" comes through as composition and layering, with more care than a single shader setting would provide.
 
-It also shows the risk of expensive abundance. Opus-class work can give you a lot of architecture very quickly. Some of it is tasteful. Some of it becomes surface area you now own. More modules mean more places where state can get sticky, where first-run behavior can depend on the wrong subsystem, where a beautiful intro can hide a broken transition.
+The cost is ownership. Opus-class output can hand you a lot of tasteful architecture very quickly, and then you own all of it. More modules, more state edges, more places where first-run behavior can depend on the wrong subsystem.
 
-That happened here in my production browser check. The start button accepted pointer and keyboard activation, but the game stayed on the intro layer under automation. Reading the code, the likely culprit is that `beginPlay()` waits for Web Audio startup before changing the phase from `start` to `playing`. A browser game should not make the first click hostage to audio policy. Flip the game state, let audio resume if it can, and keep playing if it cannot.
+I hit that problem in the production browser check. The start button accepted pointer and keyboard activation, but the game stayed on the intro layer under automation. The likely cause is `beginPlay()` waiting for Web Audio startup before changing the phase from `start` to `playing`. For a browser game, I would flip the game state first and let audio resume separately.
 
-The cost read is mixed. The expensive model gave the richest sense of place and the broadest future game skeleton. It also produced the most architecture to audit. If I were exploring art direction, mood, and world language, I would pay attention to this version. If I needed a lean production path, I would start cutting immediately.
+The expensive model earned points for atmosphere and future-game vocabulary. It also created the largest audit surface. I would reach for this kind of output when exploring mood, characters, and world language. I would start pruning before turning it into a product.
 
 ## Antigravity / Gemini Flash 3.5: Quest Clarity Per Dollar
 
 ![Gemini Flash 3.5 Antigravity fluffy planet game](/content/images/fluffy-vibe-gemini35flash-gameplay.png)
 
-The Gemini Flash version is the clearest about quests. It names the five activities: Starflower Gathering, Ancient Beacons, Lost Friend, High Summit Altar, and Song of the Cosmos. That matters. Relaxed games still need verbs. "Collect five tokens" is a mechanic. "Guide a lost mini-fluffy home" is a tiny story.
+The Gemini Flash build is best at quests. Starflower Gathering, Ancient Beacons, Lost Friend, High Summit Altar, Song of the Cosmos. Those names matter. "Guide a lost mini-fluffy home" gives the player a better first minute than another anonymous pickup counter.
 
-The guidance layer is also strong. The circular radar, collapsible quest panel, and per-quest progress counters make the objective state obvious. On mobile the quest panel collapses into a bottom control, and the paw jump button stays reachable. It is the most tutorial-minded build, in a good way.
+The guidance layer is strong too. Circular radar, collapsible quest panel, per-quest progress counts. On mobile the quest panel folds into a bottom control, and the paw jump button stays reachable.
 
-The character reads more like a chibi bear than a pure abstract ball. I like that choice. The prompt asked for a fluffy ball, but the emotional brief asked for anime, pastel, and ethereal. A face, ears, blush, and soft body language do more work than a perfect sphere would.
+The character reads more like a chibi bear than a pure ball, which I like. The prompt said fluffy ball, but the emotional brief said anime, pastel, soft, ethereal. Face, ears, blush, and body language carry that brief better than mathematical purity.
 
-The cost angle is interesting because Flash-class models are usually attractive for iteration. You expect speed and lower cost, and here the result has plenty of player-facing design. The model did not merely make scenery. It authored quest concepts and HUD affordances.
+For cost, this is the interesting Flash result: plenty of player-facing design at a cheaper/faster model class. The player-facing layer had actual work in it: quest concepts, HUD affordances, and navigation cues.
 
-The tradeoff is production hygiene. This build had the largest single JavaScript bundle in my pass, and it emitted a Three.js `Clock` deprecation warning. The expanded desktop quest panel is also heavy. The information design is useful, but the screen could breathe more.
-
-I would use this version as a reminder that cheaper or faster models can be very good at player guidance. I would not assume they will make the leanest bundle or the cleanest technical baseline without supervision.
+The cleanup list is technical. Largest single JS bundle in my pass. A Three.js `Clock` deprecation warning. Desktop quest panel too heavy when expanded. The design instincts are useful; the production discipline needs supervision.
 
 ## Cost And Taste
 
-The interesting pattern is not "expensive model wins" or "cheap model catches up." The pattern is more useful than that.
+My notes after running the builds:
 
-- Codex / GPT-5.5 x-high gave the cleanest small playable slice. Expensive, but efficient in code shape.
-- GLM 5.2 gave the best cost-surprise: solid systems, good mobile read, and one subtle bug that benefited from a premium assist.
-- Claude / Opus 4.8 gave the richest world and the biggest ownership surface.
-- Gemini Flash 3.5 gave the clearest quest language and guidance, with bundle and HUD cleanup left on the table.
+- Codex / GPT-5.5 x-high gave me the cleanest small playable slice. Expensive, but tight.
+- GLM 5.2 gave me the best price surprise. Solid structure, good mobile layout, one spatial bug later fixed with Codex.
+- Claude / Opus 4.8 gave me the richest atmosphere and the most code to own.
+- Gemini Flash 3.5 gave me the best quest language and guidance, with bundle cleanup waiting afterward.
 
-Taste showed up in different places. Codex had engineering taste. GLM had systems taste. Claude had atmosphere taste. Gemini had objective-design taste.
+Taste appeared in different layers. Codex felt strongest at engineering shape. GLM felt strongest at system decomposition for the money. Claude cared most about place. Gemini cared most about player verbs.
 
-That is the part I wanted to learn. The model choice changes the default bias of the build. It changes what you get for free, what you must correct, and where your own judgment has to enter.
+My notebook has this underlined: the model choice changed the default mess I had to clean up.
 
 ## What I Would Steal
 
-From Codex, I would steal the direct-to-game opening, the compact custom loop, and the willingness to expose performance numbers while the prototype is young.
+From Codex: direct-to-game opening, compact loop, performance readout while the prototype is young.
 
-From GLM, I would steal the state model, the codec separation, the mobile HUD, and the idea that a cheaper model can own the main system if the human keeps pressure on correctness.
+From GLM: state model, codec separation, mobile HUD, and the reminder that a cheaper model can own the main system if I keep checking correctness.
 
-From Claude, I would steal the world-language modules, the start-screen taste, and the richer environmental vocabulary. I would also move the first-play state transition away from audio startup before doing anything else.
+From Claude: world modules, start-screen taste, environmental vocabulary. I would fix the first-play audio coupling before doing anything else.
 
-From Gemini, I would steal the named quests, the radar, the progress clarity, and the instinct to make each goal feel like a small event rather than a pickup counter.
+From Gemini: named quests, radar, progress clarity, and goals that feel like small events instead of counters.
 
-The best version is a composite: Codex's immediacy, GLM's structure, Claude's atmosphere, and Gemini's player guidance.
+If I merged the best parts, the game would start from Codex's immediacy, use GLM's structure, borrow Claude's atmosphere, and take Gemini's quest design.
 
 ## Takeaway
 
-The same prompt did not produce four interchangeable games. It produced four biases.
+I came out of this with a more concrete model map than I had going in.
 
-That is what makes this kind of comparison useful. A model is not only a code generator. It is a taste vector, an architecture prior, a cost profile, and a debugging partner. The productive question is not which one is smartest in the abstract. The useful question is where each one bends the project, and whether that bend is worth the money.
+For a lean first playable, I would start with Codex. For cheaper bulk systems work, GLM deserves more respect than I expected. For mood and world texture, Claude gave me the most material. For player guidance and quest naming, Gemini Flash punched above its price class.
+
+The next time I start a small WebGL game, I will choose the model based on the mess I am willing to clean up afterward. That feels more useful than arguing about which model is "best."
