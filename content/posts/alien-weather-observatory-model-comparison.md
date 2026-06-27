@@ -43,7 +43,7 @@ The release checklist was simple:
 - localStorage receives the expected project key.
 - Desktop and mobile layouts avoid horizontal overflow.
 
-The live screenshot pixel checks all passed. The browser console checks were more informative than the screenshots. OpenCode had a real shader compile error before repair. Antigravity shipped with nonfatal Three.js and WebGL warnings. Claude shipped with deprecation warnings. Codex was clean apart from Chromium GPU readback warnings caused by screenshot capture.
+The live screenshot pixel checks all passed. The browser console checks were more informative than the screenshots. OpenCode had a real shader compile error before repair. Antigravity shipped with nonfatal WebGL warnings. Claude shipped with deprecation warnings. Codex was clean apart from Chromium GPU readback warnings caused by screenshot capture.
 
 ![Mobile comparison of the four alien weather observatories](/content/images/alien-weather-observatory-mobile-strip.jpg)
 
@@ -146,7 +146,7 @@ The UI has a strong instrument fantasy. It is less pastel and quiet than the pro
 
 The harness had two important behaviors. First, it stopped after about `50s` with an implementation plan and required a `Proceed` click. I treated that as a harness gate, not a prompt improvement. Second, after about `11m` of implementation it reported that its browser subagent could not run because Chromium automation was only supported on Linux in its sandbox. I did the external Playwright QA myself.
 
-The code is less tidy than the best parts of Claude or GLM. Much of the core implementation sits in a large `App.tsx`, with generated assets and template leftovers around it. Font Awesome is loaded from a CDN rather than installed as a local dependency. The build passes, but the live browser console reports Three.js deprecations and WebGL `texImage3D` warnings.
+The code is less tidy than the best parts of Claude or GLM. Much of the core implementation sits in a large `App.tsx`, with generated assets and template leftovers around it. Font Awesome is loaded from a CDN rather than installed as a local dependency. After the first deployment, a small generated component diff appeared in the working tree. I treated it as part of the Antigravity run, committed it, rebuilt, and redeployed. It replaced `THREE.Clock` timing with capped `performance.now()` timing, which removed the Three.js deprecation warning. The final live browser console still reports WebGL `texImage3D` warnings.
 
 Observable latency and cost notes: the visible harness timing was the clearest of the GUI tools, roughly `50s` to plan plus `11m` to implementation. I did not see a dollar number. It felt fast relative to the amount of player-facing UI it produced.
 
@@ -161,7 +161,7 @@ Cleanup work:
 
 - Exact GitHub Pages base path.
 - External browser QA because its browser subagent could not run.
-- Future cleanup would split the large app file and investigate WebGL warnings.
+- Future cleanup would split the large app file and investigate the remaining WebGL warnings.
 
 ## Cost, Latency, And Where Attention Went
 
@@ -177,7 +177,7 @@ Intervention effort was not evenly distributed:
 
 - Codex needed one release edit.
 - Claude needed one release edit.
-- Antigravity needed one release edit and external QA.
+- Antigravity needed one release edit, one late source fold-in, and external QA.
 - OpenCode needed release edits plus two real runtime/usability fixes.
 
 That is the part I care about. The model choice changed the initial screenshot, and it also changed the kind of cleanup I had to do afterward.
