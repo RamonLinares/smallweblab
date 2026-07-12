@@ -1,0 +1,153 @@
+/*
+ * Site-owned refinements for the LensDigest Magazine template.
+ * Quiremark remains an unmodified dependency; these rules are appended after publish.
+ */
+
+/* Keep the masthead expressive without letting it dominate the first viewport. */
+.magazine-logo {
+  font-size: clamp(2.6rem, 4.6vw, 4.75rem);
+}
+
+/* Give the lead story a calmer editorial hierarchy and fewer headline wraps. */
+.magazine-front-grid {
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.magazine-lead-story {
+  grid-template-columns: minmax(0, 0.95fr) minmax(20rem, 1.15fr);
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.lead-copy {
+  padding-top: 1.25rem;
+}
+
+.magazine-lead-story h2 {
+  max-width: 13ch;
+  font-size: clamp(2.25rem, 3.45vw, 3.25rem);
+  line-height: 0.99;
+}
+
+.lead-summary {
+  margin: 1rem 0;
+  font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+  line-height: 1.58;
+}
+
+.lead-summary::first-letter {
+  padding-right: 0.3rem;
+  font-size: 2.8rem;
+  line-height: 0.82;
+}
+
+/* Make section labels guide the eye instead of competing with story titles. */
+.magazine-section,
+.magazine-card-grid,
+.opinion-band {
+  margin-bottom: 3rem;
+}
+
+.section-heading {
+  margin-bottom: 1.5rem;
+}
+
+.section-heading h2 {
+  font-size: clamp(1.75rem, 2.35vw, 2.35rem);
+}
+
+.notebook-feature h3 {
+  font-size: clamp(1.8rem, 2.75vw, 2.6rem);
+  line-height: 1.02;
+}
+
+.magazine-card-grid,
+.week-grid {
+  gap: 1.5rem;
+  padding-top: 2rem;
+}
+
+/* Reduce the visual weight of utility links in the front-page rail. */
+.rail-story-list {
+  gap: 1.25rem;
+}
+
+.magazine-widget {
+  gap: 0.6rem;
+  padding: 0.9rem;
+}
+
+.widget-links {
+  gap: 0.55rem;
+}
+
+.widget-links a {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.28;
+}
+
+@media (max-width: 1040px) {
+  .magazine-lead-story {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .magazine-logo {
+    font-size: clamp(2.45rem, 11vw, 3.25rem);
+  }
+
+  .magazine-shell {
+    padding-top: 1rem;
+  }
+
+  .magazine-front-grid {
+    margin-bottom: 2.5rem;
+  }
+
+  .magazine-lead-story {
+    gap: 1.1rem;
+  }
+
+  .lead-copy {
+    padding-top: 0.75rem;
+  }
+
+  .magazine-lead-story h2 {
+    max-width: none;
+    font-size: clamp(1.9rem, 8vw, 2.15rem);
+    line-height: 1.01;
+  }
+
+  .lead-summary {
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .lead-summary::first-letter {
+    float: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+  }
+
+  .section-heading h2,
+  .opinion-band .section-heading h2 {
+    font-size: clamp(1.65rem, 7vw, 1.9rem);
+  }
+
+  .notebook-feature h3 {
+    font-size: clamp(1.7rem, 7.4vw, 2rem);
+  }
+
+  .magazine-section,
+  .magazine-card-grid,
+  .opinion-band {
+    margin-bottom: 2.5rem;
+  }
+}
