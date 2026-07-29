@@ -89,6 +89,65 @@
   line-height: 1.28;
 }
 
+/* Keep long, search-focused article headlines readable in the first viewport. */
+.article-hero {
+  max-width: 66rem;
+}
+
+.article-hero h1 {
+  font-size: clamp(2.7rem, 5vw, 5.35rem);
+  line-height: 0.97;
+  text-wrap: balance;
+}
+
+/* Turn a post's opening link group into a clear action rail. */
+.article-content > p:first-child:has(a) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  background: var(--paper-panel);
+}
+
+.article-content > p:first-child:has(a)::first-letter {
+  float: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.article-content > p:first-child:has(a) br {
+  display: none;
+}
+
+.article-content > p:first-child:has(a) a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.article-content > p:first-child:has(a) a:first-child {
+  color: #fff;
+  background: var(--ink);
+}
+
+.article-content > p:first-child:has(a) a:hover {
+  color: #fff;
+  background: var(--accent-dark);
+}
+
 @media (max-width: 1040px) {
   .magazine-lead-story {
     grid-template-columns: 1fr;
@@ -143,6 +202,18 @@
 
   .notebook-feature h3 {
     font-size: clamp(1.7rem, 7.4vw, 2rem);
+  }
+
+  .article-hero h1 {
+    font-size: clamp(2.35rem, 11vw, 3.5rem);
+  }
+
+  .article-content > p:first-child:has(a) {
+    display: grid;
+  }
+
+  .article-content > p:first-child:has(a) a {
+    justify-content: center;
   }
 
   .magazine-section,

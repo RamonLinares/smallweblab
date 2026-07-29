@@ -66,7 +66,9 @@ The compiler writes HTML, category pages, post pages, search assets, RSS,
 `robots.txt`, `sitemap.xml`, `llms.txt`, and `llms-full.txt`.
 
 `npm run build` runs the Quiremark publish command and then copies the
-site-owned `lab/` prototype routes and `favicon.ico` into `out/`.
+site-owned `lab/` and `play/` routes plus `favicon.ico` into `out/`. The static
+copy step also hoists any authored `application/ld+json` block from a post's
+Markdown source into the generated article `<head>`.
 
 `QUIREMARK_DATA_DIR` is the Quiremark data-directory environment variable. This
 external-site workflow normally uses `--site-root .`; set `QUIREMARK_DATA_DIR`
@@ -110,6 +112,7 @@ snapshots.
 
 Current prototype routes referenced by site content:
 
+- `horizon-drive` -> `/play/horizon-drive/` (full-screen wrapper around the public GitHub Pages game)
 - `ping-pong-3d` -> `/lab/ping-pong-3d/`
 - `asteroids-3d` -> `/lab/asteroids-3d/`
 - `rally-rush` -> `/lab/rally-rush/`

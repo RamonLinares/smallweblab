@@ -6,6 +6,7 @@ const outDir = path.join(siteRoot, 'out');
 
 const entries = [
   { source: 'lab', target: 'lab' },
+  { source: 'play', target: 'play' },
   { source: 'favicon.ico', target: 'favicon.ico' }
 ];
 
@@ -34,4 +35,44 @@ if (fs.existsSync(styleOverride) && fs.existsSync(publishedStyle)) {
   const css = fs.readFileSync(styleOverride, 'utf8').trim();
   fs.appendFileSync(publishedStyle, `\n\n/* Small Web Lab site overrides */\n${css}\n`);
   console.log('Appended content/site-overrides.css to out/style.css');
+}
+
+const postsDir = path.join(siteRoot, 'content', 'posts');
+
+if (fs.existsSync(postsDir)) {
+  const jsonLdPattern = /<script\s+type=["']application\/ld\+json["']\s*>([\s\S]*?)<\/script>/gi;
+
+  for (const filename of fs.readdirSync(postsDir)) {
+    if (path.extname(filename) !== '.md') {
+      continue;
+    }
+
+    const source = fs.readFileSync(path.join(postsDir, filename), 'utf8');
+    const slug = source.match(/^slug:\s*["']?([^"'\n]+)["']?\s*$/m)?.[1]?.trim();
+    const blocks = [...source.matchAll(jsonLdPattern)];
+
+    if (!slug || blocks.length === 0) {
+      continue;
+    }
+
+    const publishedPost = path.join(outDir, 'posts', slug, 'index.html');
+
+    if (!fs.existsSync(publishedPost)) {
+      continue;
+    }
+
+    const scripts = blocks.map((match) => {
+      const data = JSON.parse(match[1]);
+      const json = JSON.stringify(data, null, 2).replaceAll('<', '\\u003c');
+      return `<script type="application/ld+json">${json}</script>`;
+    }).join('\n  ');
+    const html = fs.readFileSync(publishedPost, 'utf8');
+
+    if (!html.includes('</head>')) {
+      throw new Error(`Missing </head> in out/posts/${slug}/index.html`);
+    }
+
+    fs.writeFileSync(publishedPost, html.replace('</head>', `  ${scripts}\n</head>`), 'utf8');
+    console.log(`Injected authored JSON-LD into out/posts/${slug}/index.html`);
+  }
 }

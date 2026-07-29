@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Play Horizon Drive Full Screen | Free Browser Racing Game</title>
+  <meta name="description" content="Play Horizon Drive full screen: a free eight-car procedural Three.js racing game built with Claude Opus 5 and Fable 5. No download or account required.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#080d17">
+  <link rel="canonical" href="https://smallweblab.com/posts/horizon-drive/">
+  <link rel="preconnect" href="https://ramonlinares.github.io" crossorigin>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Small Web Lab">
+  <meta property="og:title" content="Horizon Drive — Play Full Screen">
+  <meta property="og:description" content="Race eight cars across four procedural circuits in this free Three.js browser racing game.">
+  <meta property="og:url" content="https://smallweblab.com/play/horizon-drive/">
+  <meta property="og:image" content="https://smallweblab.com/content/images/horizon-drive-race.jpg">
+  <meta property="og:image:width" content="1440">
+  <meta property="og:image:height" content="900">
+  <meta property="og:image:alt" content="Horizon Drive eight-car race at the Ashcombe Circuit starting grid">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Horizon Drive — Play Full Screen">
+  <meta name="twitter:description" content="A free procedural Three.js racing game with four circuits and an eight-car grid.">
+  <meta name="twitter:image" content="https://smallweblab.com/content/images/horizon-drive-race.jpg">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #080d17;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body,
+    main,
+    iframe {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+      background: #080d17;
+    }
+
+    main {
+      position: fixed;
+      inset: 0;
+      isolation: isolate;
+    }
+
+    iframe {
+      display: block;
+      border: 0;
+      background: #080d17;
+    }
+
+    .player-tools {
+      position: fixed;
+      z-index: 10;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      display: flex;
+      gap: 7px;
+      padding: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 13px;
+      background: rgba(7, 12, 21, 0.76);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: background 160ms ease, opacity 160ms ease;
+    }
+
+    .player-tools:hover,
+    .player-tools:focus-within {
+      background: rgba(7, 12, 21, 0.94);
+    }
+
+    .player-tools a,
+    .player-tools button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 8px;
+      color: #eaf7ff;
+      background: transparent;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.04em;
+      line-height: 36px;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .player-tools a:hover,
+    .player-tools button:hover {
+      color: #06101a;
+      background: #53c9ff;
+    }
+
+    .player-tools a:focus-visible,
+    .player-tools button:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .player-tools .primary {
+      color: #06101a;
+      background: #53c9ff;
+    }
+
+    .player-menu-toggle {
+      display: none;
+    }
+
+    .loading-note {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: rgba(255, 255, 255, 0.72);
+      background:
+        radial-gradient(circle at 65% 35%, rgba(45, 109, 161, 0.28), transparent 38%),
+        #080d17;
+      font-size: clamp(0.78rem, 1.4vw, 0.95rem);
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 620px) {
+      .player-tools {
+        top: max(8px, env(safe-area-inset-top));
+        right: max(8px, env(safe-area-inset-right));
+        bottom: auto;
+        left: auto;
+        display: grid;
+        min-width: 44px;
+        padding: 4px;
+      }
+
+      .player-tools a,
+      .player-tools button {
+        width: 100%;
+        padding-inline: 11px;
+        text-align: center;
+      }
+
+      .player-menu-toggle {
+        display: block;
+        font-size: 1rem;
+        letter-spacing: 0.12em;
+      }
+
+      .player-tools:not(.open) .tool-action {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .player-tools {
+        transition: none;
+      }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Horizon Drive",
+    "url": "https://smallweblab.com/play/horizon-drive/",
+    "mainEntityOfPage": "https://smallweblab.com/posts/horizon-drive/",
+    "image": "https://smallweblab.com/content/images/horizon-drive-race.jpg",
+    "description": "A free eight-car procedural 3D racing game with four circuits, generated entirely in code and playable in a web browser.",
+    "genre": ["Racing", "Driving", "Arcade simulation"],
+    "gamePlatform": ["Web browser", "Desktop", "Mobile"],
+    "playMode": "SinglePlayer",
+    "isAccessibleForFree": true,
+    "sameAs": [
+      "https://ramonlinares.github.io/horizon-drive/",
+      "https://github.com/RamonLinares/horizon-drive"
+    ]
+  }
+  </script>
+</head>
+<body>
+  <main id="player-shell">
+    <p class="loading-note" aria-hidden="true">Loading Horizon Drive</p>
+    <iframe
+      id="horizon-drive"
+      src="https://ramonlinares.github.io/horizon-drive/"
+      title="Play Horizon Drive"
+      allow="autoplay; fullscreen; gamepad"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+    <nav class="player-tools" aria-label="Horizon Drive player controls">
+      <button class="player-menu-toggle" id="player-menu" type="button" aria-label="Show player controls" aria-expanded="false">•••</button>
+      <a class="tool-action" href="/posts/horizon-drive/" aria-label="Read about how Horizon Drive was built">About</a>
+      <button class="tool-action" id="copy-link" type="button">Copy link</button>
+      <a class="tool-action" href="https://ramonlinares.github.io/horizon-drive/" target="_blank" rel="noopener">Original</a>
+      <button class="primary tool-action" id="fullscreen" type="button">Full screen</button>
+    </nav>
+  </main>
+  <noscript>
+    <p><a href="https://ramonlinares.github.io/horizon-drive/">Open Horizon Drive directly</a></p>
+  </noscript>
+  <script>
+    const playerShell = document.querySelector('#player-shell');
+    const playerTools = document.querySelector('.player-tools');
+    const menuButton = document.querySelector('#player-menu');
+    const fullscreenButton = document.querySelector('#fullscreen');
+    const copyButton = document.querySelector('#copy-link');
+
+    menuButton.addEventListener('click', () => {
+      const isOpen = playerTools.classList.toggle('open');
+      menuButton.setAttribute('aria-expanded', String(isOpen));
+      menuButton.setAttribute('aria-label', isOpen ? 'Hide player controls' : 'Show player controls');
+    });
+
+    function updateFullscreenLabel() {
+      fullscreenButton.textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen';
+    }
+
+    fullscreenButton.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else {
+          await playerShell.requestFullscreen({ navigationUI: 'hide' });
+        }
+      } catch {
+        window.open('https://ramonlinares.github.io/horizon-drive/', '_blank', 'noopener');
+      }
+    });
+
+    copyButton.addEventListener('click', async () => {
+      const shareUrl = 'https://smallweblab.com/play/horizon-drive/';
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        const input = document.createElement('input');
+        input.value = shareUrl;
+        document.body.append(input);
+        input.select();
+        document.execCommand('copy');
+        input.remove();
+      }
+
+      copyButton.textContent = 'Copied';
+      window.setTimeout(() => {
+        copyButton.textContent = 'Copy link';
+      }, 1600);
+    });
+
+    document.addEventListener('fullscreenchange', updateFullscreenLabel);
+  </script>
+</body>
+</html>
