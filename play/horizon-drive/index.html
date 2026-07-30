@@ -7,8 +7,10 @@
   <meta name="description" content="Play Horizon Drive full screen: a free eight-car procedural Three.js racing game built with Claude Opus 5 and Fable 5. No download or account required.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="theme-color" content="#080d17">
+  <meta name="google-analytics-id" content="G-FK26SXGK9F">
   <link rel="canonical" href="https://smallweblab.com/posts/horizon-drive/">
   <link rel="preconnect" href="https://ramonlinares.github.io" crossorigin>
+  <link rel="stylesheet" href="/consent.css">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Small Web Lab">
   <meta property="og:title" content="Horizon Drive — Play Full Screen">
@@ -215,6 +217,29 @@
   <noscript>
     <p><a href="https://ramonlinares.github.io/horizon-drive/">Open Horizon Drive directly</a></p>
   </noscript>
+  <button class="consent-preferences-button" type="button" data-open-consent hidden>
+    Privacy preferences
+  </button>
+  <div class="consent-backdrop" data-consent-backdrop hidden></div>
+  <section
+    class="consent-modal"
+    data-consent-modal
+    role="dialog"
+    aria-modal="false"
+    aria-hidden="true"
+    aria-labelledby="analytics-consent-title"
+    hidden
+  >
+    <div class="consent-modal__panel">
+      <h2 id="analytics-consent-title">Analytics preferences</h2>
+      <p class="consent-modal__copy">We use Google Analytics in a privacy-first mode to understand aggregate traffic, popular links, and page performance.</p>
+      <p class="consent-modal__note">Reject optional keeps the game fully playable without analytics cookies. Google may still receive cookieless, aggregate measurement signals. You can change this later from Privacy preferences.</p>
+      <div class="consent-modal__actions">
+        <button class="consent-button consent-button--ghost" type="button" data-consent-action="decline">Reject optional</button>
+        <button class="consent-button consent-button--solid" type="button" data-consent-action="accept">Accept optional</button>
+      </div>
+    </div>
+  </section>
   <script>
     const playerShell = document.querySelector('#player-shell');
     const playerTools = document.querySelector('.player-tools');
@@ -265,5 +290,6 @@
 
     document.addEventListener('fullscreenchange', updateFullscreenLabel);
   </script>
+  <script src="/consent.js" defer></script>
 </body>
 </html>
