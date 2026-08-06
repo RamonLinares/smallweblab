@@ -13,7 +13,7 @@ on:
     types:
       - prototype-updated
   schedule:
-    - cron: "17 * * * *"
+    - cron: "17 3 * * *"
 
 permissions:
   contents: write
