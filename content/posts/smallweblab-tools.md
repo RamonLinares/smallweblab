@@ -1,11 +1,11 @@
 ---
-title: "SmallWebLab Tools"
+title: "Free Private Video, GIF and WebP Converters"
 slug: "smallweblab-tools"
 description: "A privacy-first collection of browser media converters for video, GIF, WebP, PNG, and JPG files."
 date: "2026-08-07"
 category: "tools"
 tags: ["Media Conversion", "Privacy", "WebAssembly", "FFmpeg", "WebM", "MP4", "GIF", "WebP"]
-coverImage: "https://tools.smallweblab.com/og.png"
+coverImage: "/content/images/smallweblab-tools-converters.png"
 draft: false
 ---
 

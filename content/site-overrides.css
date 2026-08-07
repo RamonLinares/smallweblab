@@ -107,9 +107,26 @@
   }
 }
 
-/* Keep the Tools title card on listings without repeating it below the article title. */
-.article-page:has(.article-media img[src="https://tools.smallweblab.com/og.png"]) .article-media {
-  display: none;
+/* Preserve the complete converter overview instead of applying editorial cover crops. */
+.lead-media:has(img[src="/content/images/smallweblab-tools-converters.png"]),
+.article-media:has(img[src="/content/images/smallweblab-tools-converters.png"]) {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: 2940 / 1604;
+  align-self: center;
+  background: transparent;
+}
+
+.lead-media img[src="/content/images/smallweblab-tools-converters.png"],
+.article-media img[src="/content/images/smallweblab-tools-converters.png"] {
+  filter: grayscale(0%);
+  max-height: none;
+  object-fit: contain;
+}
+
+.lead-media:hover img[src="/content/images/smallweblab-tools-converters.png"] {
+  transform: none;
 }
 
 /* Turn a post's opening link group into a clear action rail. */
