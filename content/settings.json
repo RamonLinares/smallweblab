@@ -125,6 +125,17 @@
       "placeholderText": "",
       "actionUrl": "",
       "htmlContent": ""
+    },
+    {
+      "id": "smallweblab-tools",
+      "name": "Media Tools",
+      "type": "custom-html",
+      "enabled": true,
+      "position": "footer",
+      "order": 1,
+      "placeholderText": "",
+      "actionUrl": "https://tools.smallweblab.com/",
+      "htmlContent": "<p>Private, on-device media conversion. <a href=\"https://tools.smallweblab.com/\" target=\"_blank\" rel=\"noopener\">Open SmallWebLab Tools &rarr;</a></p>"
     }
   ]
 }

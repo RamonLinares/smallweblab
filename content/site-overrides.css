@@ -148,6 +148,34 @@
   background: var(--accent-dark);
 }
 
+/* Give the companion tools site a clear, site-wide home in the footer. */
+#widget-smallweblab-tools {
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+#widget-smallweblab-tools .custom-html-content p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: none;
+}
+
+#widget-smallweblab-tools a {
+  flex: 0 0 auto;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#widget-smallweblab-tools a:hover {
+  color: var(--accent);
+}
+
 @media (max-width: 1040px) {
   .magazine-lead-story {
     grid-template-columns: 1fr;
@@ -214,6 +242,15 @@
 
   .article-content > p:first-child:has(a) a {
     justify-content: center;
+  }
+
+  #widget-smallweblab-tools {
+    grid-template-columns: 1fr;
+  }
+
+  #widget-smallweblab-tools .custom-html-content p {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .magazine-section,
