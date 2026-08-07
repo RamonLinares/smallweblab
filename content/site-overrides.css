@@ -100,6 +100,18 @@
   text-wrap: balance;
 }
 
+/* The desktop masthead already provides the article-page return action. */
+@media (min-width: 761px) {
+  .article-shell > .article-back {
+    display: none;
+  }
+}
+
+/* Keep the Tools title card on listings without repeating it below the article title. */
+.article-page:has(.article-media img[src="https://tools.smallweblab.com/og.png"]) .article-media {
+  display: none;
+}
+
 /* Turn a post's opening link group into a clear action rail. */
 .article-content > p:first-child:has(a) {
   display: flex;
