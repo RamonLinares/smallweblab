@@ -10,14 +10,77 @@
 
 /* Give the lead story a calmer editorial hierarchy and fewer headline wraps. */
 .magazine-front-grid {
+  grid-template-areas:
+    "lead rail"
+    "features rail";
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
 
 .magazine-lead-story {
+  grid-area: lead;
   grid-template-columns: minmax(0, 0.95fr) minmax(20rem, 1.15fr);
   gap: 1.5rem;
   padding-bottom: 1.5rem;
+}
+
+.front-rail {
+  grid-area: rail;
+}
+
+.homepage-feature-grid {
+  grid-area: features;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.homepage-feature-card {
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.homepage-feature-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: #ece5db;
+}
+
+.homepage-feature-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 360ms ease;
+}
+
+.homepage-feature-card:hover .homepage-feature-media img {
+  transform: scale(1.025);
+}
+
+.homepage-feature-copy {
+  padding: 1rem 0 1.25rem;
+}
+
+.homepage-feature-copy .magazine-category {
+  margin-bottom: 0.45rem;
+}
+
+.homepage-feature-copy h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.25vw, 2.05rem);
+  font-weight: 900;
+  line-height: 1.03;
+}
+
+.homepage-feature-copy h3 a:hover {
+  color: var(--accent-dark);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
 }
 
 .lead-copy {
@@ -206,6 +269,13 @@
 }
 
 @media (max-width: 1040px) {
+  .magazine-front-grid {
+    grid-template-areas:
+      "lead"
+      "features"
+      "rail";
+  }
+
   .magazine-lead-story {
     grid-template-columns: 1fr;
   }
@@ -226,6 +296,15 @@
 
   .magazine-lead-story {
     gap: 1.1rem;
+  }
+
+  .homepage-feature-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .homepage-feature-copy h3 {
+    font-size: clamp(1.55rem, 7vw, 1.9rem);
   }
 
   .lead-copy {
