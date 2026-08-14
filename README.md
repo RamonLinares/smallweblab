@@ -79,6 +79,31 @@ directory.
 
 Add or edit posts in `content/posts/`.
 
+### Editorial Voice
+
+Write Small Web Lab entries as calm, factual field notes. Explain what was
+built, how it was tested, what needed repair, and what the result suggests.
+Let the evidence carry the interest instead of trying to make every sentence
+sound surprising.
+
+- Prefer a clear chronology and straightforward descriptions.
+- Use specific observations, test results, and examples instead of slogans or
+  broad abstractions.
+- Avoid repeated dramatic contrasts such as “not X, but Y,” especially when
+  the contrast only restates the previous sentence.
+- Avoid strings of punchy fragments and one-line conclusions designed to make
+  each paragraph feel like a reveal.
+- Do not inflate ordinary product details with phrases such as “changes the
+  economics of curiosity.” State the practical effect directly.
+- Reserve emphasis for the few findings that genuinely need it. Most sentences
+  should simply move the account forward.
+- Be candid about bugs, model assistance, limitations, and uncertainty without
+  turning each qualification into a rhetorical twist.
+
+Use `content/posts/gemini-37-flash-zx-spectrum.md` as a current reference for
+this register: first-person, concrete, measured, and easy to read over a full
+article.
+
 Each post uses front matter:
 
 ```yaml
