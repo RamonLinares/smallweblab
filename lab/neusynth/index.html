@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuSynth Prime • Modern Neumorphic 6-Op FM Workstation</title>
+  <meta name="description" content="A bespoke Neumorphic 6-Operator FM Synthesizer Workstation with real-time OLED visualizer, 16-step chase sequencer, effects rack, and Web MIDI.">
+  <link rel="stylesheet" href="css/neumorphism.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Studio Command Bar -->
+  <header class="app-header">
+    <!-- Brand -->
+    <div class="brand-section">
+      <div class="brand-badge">⌘</div>
+      <div>
+        <div class="brand-logo">NEUSYNTH PRIME</div>
+        <div class="brand-sub">6-OP FM WORKSTATION</div>
+      </div>
+    </div>
+
+    <!-- Center Preset Selector Module -->
+    <div class="preset-browser-pill">
+      <button class="preset-nav-btn" id="btnPresetPrev" title="Previous Preset">◀</button>
+      <span class="preset-current-display" id="headerPresetName" title="Click to Open Preset Browser">001 • EURO ANTHEM LEAD</span>
+      <button class="preset-nav-btn" id="btnPresetNext" title="Next Preset">▶</button>
+      <button class="preset-browse-btn" id="btnOpenPresetBrowser" title="Open Sound Library & Genre Scenes">
+        <span>☰</span> BROWSE
+      </button>
+    </div>
+
+    <!-- Right Actions: VU Meter, Audio, Theme -->
+    <div class="header-actions">
+      <!-- Mini VU Meter -->
+      <div class="vu-meter-mini" title="Master Output Level">
+        <div class="vu-bar"><div class="vu-bar-fill" id="vuFillL"></div></div>
+        <div class="vu-bar"><div class="vu-bar-fill" id="vuFillR"></div></div>
+      </div>
+
+      <!-- Activate Audio Button -->
+      <button class="neu-btn btn-audio-wake" id="btnStartAudio">
+        <span>⚡</span> ACTIVATE AUDIO
+      </button>
+
+      <!-- Theme Switcher -->
+      <button class="neu-btn" id="btnThemeToggle" title="Toggle Neumorphic Theme">
+        🌙 OBSIDIAN
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Console Workstation Unit -->
+  <main class="synth-unit neu-chassis" role="region" aria-label="NeuSynth Prime Synthesizer">
+
+    <!-- Upper Deck: 3 Modular Bays -->
+    <section class="synth-deck-upper">
+
+      <!-- Bay 1: Performance & FM Core -->
+      <div class="neu-bay bay-core">
+        <div class="bay-header">
+          <span class="bay-title">FM ARCHITECTURE</span>
+          <span class="bay-badge" id="algoValue">ALGO 5 / 8</span>
+        </div>
+
+        <!-- Master Volume & Algorithm Knobs -->
+        <div class="core-knobs-row">
+          <!-- Master Hero Knob -->
+          <div class="core-knob-wrapper">
+            <span class="core-knob-label">MASTER</span>
+            <div class="neu-knob-socket">
+              <div class="neu-knob hero-knob" id="knobMaster" data-name="Master"></div>
+            </div>
+            <span class="core-knob-value" id="masterValue">75%</span>
+          </div>
+
+          <!-- Algorithm Knob -->
+          <div class="core-knob-wrapper">
+            <span class="core-knob-label">ALGORITHM</span>
+            <div class="neu-knob-socket">
+              <div class="neu-knob" id="knobAlgorithm" data-name="Algorithm"></div>
+            </div>
+            <span class="core-knob-value" id="algoNumberDisplay">#5</span>
+          </div>
+        </div>
+
+        <!-- Voice Mode & Octave Switches -->
+        <div class="core-switches-grid">
+          <!-- Voice Mode Switch -->
+          <div class="switch-group-row">
+            <span class="switch-group-label">VOICE</span>
+            <div class="switch-buttons-pair">
+              <button class="mini-switch-btn active" id="btnVoicePoly">POLY</button>
+              <button class="mini-switch-btn" id="btnVoiceMono">MONO</button>
+            </div>
+          </div>
+
+          <!-- Octave Switch -->
+          <div class="switch-group-row">
+            <span class="switch-group-label">OCTAVE</span>
+            <div class="switch-buttons-pair">
+              <button class="mini-switch-btn" id="btnOctDown">OCT -</button>
+              <span class="octave-readout" id="octaveDisplay">+0</span>
+              <button class="mini-switch-btn" id="btnOctUp">OCT +</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bay 2: Panoramic Cyber-OLED Multi-Display -->
+      <div class="bay-screen">
+        <div class="oled-container" id="synthScreen">
+          <!-- Screen content rendered dynamically by screen.js -->
+        </div>
+      </div>
+
+      <!-- Bay 3: Dynamic Macro Deck & Studio Transport -->
+      <div class="neu-bay bay-macro">
+        <div class="bay-header">
+          <span class="bay-title">DYNAMIC MACROS</span>
+          <span class="bay-badge" id="macroModeBadge">MACRO</span>
+        </div>
+
+        <!-- 2x2 Macro Encoders -->
+        <div class="macro-grid-2x2">
+          <div class="macro-knob-wrapper">
+            <span class="macro-label" id="knobLabel1">MACRO 1</span>
+            <div class="neu-knob-socket">
+              <div class="neu-knob" id="paramKnob1" data-name="Macro 1"></div>
+            </div>
+          </div>
+          <div class="macro-knob-wrapper">
+            <span class="macro-label" id="knobLabel2">MACRO 2</span>
+            <div class="neu-knob-socket">
+              <div class="neu-knob" id="paramKnob2" data-name="Macro 2"></div>
+            </div>
+          </div>
+          <div class="macro-knob-wrapper">
+            <span class="macro-label" id="knobLabel3">MACRO 3</span>
+            <div class="neu-knob-socket">
+              <div class="neu-knob" id="paramKnob3" data-name="Macro 3"></div>
+            </div>
+          </div>
+          <div class="macro-knob-wrapper">
+            <span class="macro-label" id="knobLabel4">MACRO 4</span>
+            <div class="neu-knob-socket">
+              <div class="neu-knob" id="paramKnob4" data-name="Macro 4"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Studio Transport & Performance Tools -->
+        <div class="transport-cluster">
+          <div class="transport-row-upper">
+            <button class="neu-btn transport-btn" id="btnArpToggle">⚡ ARP</button>
+            <button class="neu-btn transport-btn" id="btnSavePreset" title="Save or Load presets from your local computer">💾 FILE</button>
+          </div>
+          <div class="transport-row-lower">
+            <button class="neu-btn transport-btn transport-rec" id="btnRecToggle">● REC</button>
+            <button class="neu-btn transport-btn transport-play btn-hero-play" id="btnPlayStop">▶ PLAY</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Lower Deck: 16-Step Sequencer Strip & Pro Piano Keyboard Bed -->
+    <section class="synth-deck-lower">
+
+      <!-- 1. Dedicated 16-Step Sequencer Strip -->
+      <div class="sequencer-strip-container neu-well">
+        <div class="seq-strip-header">
+          <div class="seq-track-nav">
+            <span class="seq-strip-title">16-STEP SEQUENCER</span>
+            <div class="seq-track-tabs" id="seqTrackTabs">
+              <button class="seq-track-btn active" data-track="synth">SYNTH</button>
+              <button class="seq-track-btn" data-track="kick">KICK</button>
+              <button class="seq-track-btn" data-track="snare">SNARE</button>
+              <button class="seq-track-btn" data-track="hihat">CH</button>
+              <button class="seq-track-btn" data-track="openhat">OH</button>
+              <button class="seq-track-btn" data-track="clap">CLAP</button>
+              <button class="seq-track-btn" data-track="perc">PERC</button>
+            </div>
+          </div>
+          <div class="seq-header-stats">
+            <span class="bay-badge" id="seqTrackBadge">TRACK: SYNTH</span>
+            <div class="seq-rec-controls" id="seqRecControls" style="display:none;" title="Step Recording Controls">
+              <span class="bay-badge seq-rec-badge" id="seqRecBadge">● REC STEP 1: C3</span>
+              <button class="seq-step-nav-btn" id="btnRecPrevStep" title="Previous Step (Left Arrow)">◀</button>
+              <button class="seq-step-nav-btn seq-rec-skip-btn" id="btnRecSkipStep" title="Rest / Skip Step (Right Arrow or Tab)">REST / SKIP ❯</button>
+              <button class="seq-step-nav-btn" id="btnRecNextStep" title="Next Step">▶</button>
+              <button class="seq-step-nav-btn seq-rec-clear-btn" id="btnRecClearStep" title="Clear Step (Delete / Backspace)">CLEAR</button>
+            </div>
+            <div class="seq-bpm-controller" id="seqBpmController" title="Tempo Control: Stepper, Wheel/Drag, Edit or Tap">
+              <button class="seq-bpm-btn" id="btnBpmDown" title="Decrease Tempo (-1 BPM, Shift: -5)">−</button>
+              <div class="seq-bpm-display-wrap" id="seqBpmDisplayWrap" title="Click to edit, scroll or drag to adjust">
+                <span class="seq-bpm-val" id="seqBpmVal">124</span>
+                <span class="seq-bpm-unit">BPM</span>
+                <input type="number" id="seqBpmInput" class="seq-bpm-input" min="40" max="260" value="124" style="display:none;" aria-label="BPM Input">
+              </div>
+              <button class="seq-bpm-btn" id="btnBpmUp" title="Increase Tempo (+1 BPM, Shift: +5)">+</button>
+              <button class="seq-bpm-tap-btn" id="btnTapTempo" title="Tap in rhythm to set tempo">TAP</button>
+            </div>
+          </div>
+        </div>
+        <div class="seq-strip-grid" id="seqStripGrid">
+          <!-- 16 step pads generated dynamically -->
+        </div>
+      </div>
+
+      <!-- 2. Live Percussion Trigger Performance Pads -->
+      <div class="drum-pads-strip neu-well">
+        <div class="drum-pads-header">
+          <div class="drum-pads-title-group">
+            <span class="drum-pads-title">LIVE PERCUSSION TRIGGER PADS</span>
+            <span class="bay-badge drum-bus-badge">ANALOG / FM DRUM BUS</span>
+          </div>
+          <span class="drum-pads-sub">HOTKEYS 1 – 6 OR TOUCH / CLICK PADS</span>
+        </div>
+        <div class="drum-pads-grid" id="drumPadsGrid">
+          <button class="neu-btn drum-pad-btn" data-drum="kick" title="Trigger Kick (Key: 1)">
+            <span class="drum-pad-num">1</span>
+            <span class="drum-pad-name">KICK</span>
+            <span class="drum-pad-desc">909 BOOM</span>
+            <div class="drum-pad-led"></div>
+          </button>
+          <button class="neu-btn drum-pad-btn" data-drum="snare" title="Trigger Snare (Key: 2)">
+            <span class="drum-pad-num">2</span>
+            <span class="drum-pad-name">SNARE</span>
+            <span class="drum-pad-desc">808 SNAP</span>
+            <div class="drum-pad-led"></div>
+          </button>
+          <button class="neu-btn drum-pad-btn" data-drum="hihat" title="Trigger Closed Hat (Key: 3)">
+            <span class="drum-pad-num">3</span>
+            <span class="drum-pad-name">CH</span>
+            <span class="drum-pad-desc">METALLIC</span>
+            <div class="drum-pad-led"></div>
+          </button>
+          <button class="neu-btn drum-pad-btn" data-drum="openhat" title="Trigger Open Hat (Key: 4)">
+            <span class="drum-pad-num">4</span>
+            <span class="drum-pad-name">OH</span>
+            <span class="drum-pad-desc">SIZZLE</span>
+            <div class="drum-pad-led"></div>
+          </button>
+          <button class="neu-btn drum-pad-btn" data-drum="clap" title="Trigger Hand Clap (Key: 5)">
+            <span class="drum-pad-num">5</span>
+            <span class="drum-pad-name">CLAP</span>
+            <span class="drum-pad-desc">ANALOG</span>
+            <div class="drum-pad-led"></div>
+          </button>
+          <button class="neu-btn drum-pad-btn" data-drum="perc" title="Trigger Perc/Tom (Key: 6)">
+            <span class="drum-pad-num">6</span>
+            <span class="drum-pad-name">PERC</span>
+            <span class="drum-pad-desc">FM TOM</span>
+            <div class="drum-pad-led"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Pro 25-Key Neumorphic Piano Keyboard Bed -->
+      <div class="keyboard-bed-container neu-well">
+        <!-- Left Wing: Operator Selectors / Mutes -->
+        <div class="keyboard-wing">
+          <div class="wing-btn-cluster">
+            <button class="neu-btn wing-btn op-wing-btn" data-op="1">OP1</button>
+            <button class="neu-btn wing-btn op-wing-btn" data-op="2">OP2</button>
+            <button class="neu-btn wing-btn op-wing-btn" data-op="3">OP3</button>
+          </div>
+          <div class="wing-btn-cluster">
+            <button class="neu-btn wing-btn op-wing-btn" data-op="4">OP4</button>
+            <button class="neu-btn wing-btn op-wing-btn" data-op="5">OP5</button>
+            <button class="neu-btn wing-btn op-wing-btn" data-op="6">OP6</button>
+          </div>
+        </div>
+
+        <!-- Center: 25-Key Piano Keyboard -->
+        <div class="piano-surface" id="pianoSurface">
+          <!-- White keys layer (15 natural notes: C3 to C5) -->
+          <div class="white-keys-layer" id="whiteKeysLayer"></div>
+          <!-- Black keys layer (10 accidentals) -->
+          <div class="black-keys-layer" id="blackKeysLayer"></div>
+        </div>
+
+        <!-- Right Wing: Pitch Bend & Performance Controls -->
+        <div class="keyboard-wing">
+          <div class="wing-btn-cluster">
+            <button class="neu-btn wing-btn" id="btnGlideToggle">GLIDE</button>
+            <button class="neu-btn wing-btn" id="btnHoldToggle">HOLD</button>
+          </div>
+          <div class="mod-strip" id="modStrip" title="Modulation Wheel (Filter Cutoff & Brightness Sweep)">
+            <div class="mod-strip-track">
+              <div class="mod-strip-fill" id="modStripFill"></div>
+            </div>
+            <div class="mod-strip-thumb" id="modStripThumb">
+              <span class="mod-thumb-ridge"></span>
+            </div>
+            <span class="mod-strip-label">MOD</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Controls Guide Footer -->
+  <footer class="synth-guide-footer">
+    <div class="guide-keys">
+      <span>Drums (1-6):</span>
+      <kbd class="kbd-badge">1</kbd> Kick <kbd class="kbd-badge">2</kbd> Snare <kbd class="kbd-badge">3</kbd> CH <kbd class="kbd-badge">4</kbd> OH <kbd class="kbd-badge">5</kbd> Clap <kbd class="kbd-badge">6</kbd> Perc
+      <span>| Play Notes:</span>
+      <kbd class="kbd-badge">A</kbd> <kbd class="kbd-badge">S</kbd> <kbd class="kbd-badge">D</kbd> <kbd class="kbd-badge">F</kbd> <kbd class="kbd-badge">G</kbd> <kbd class="kbd-badge">H</kbd> <kbd class="kbd-badge">J</kbd> <kbd class="kbd-badge">K</kbd> <kbd class="kbd-badge">L</kbd>
+    </div>
+    <div class="guide-keys">
+      <span>Play/Stop:</span> <kbd class="kbd-badge">SPACE</kbd>
+      <span>Octave:</span> <kbd class="kbd-badge">Z</kbd> / <kbd class="kbd-badge">X</kbd>
+      <span>Presets:</span> <kbd class="kbd-badge">◀ / ▶</kbd>
+      <span>Web MIDI:</span> <kbd class="kbd-badge">Plug & Play</kbd>
+    </div>
+  </footer>
+
+  <!-- Neumorphic Preset & Genre Scene Browser Modal -->
+  <div class="preset-modal-backdrop" id="presetModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="presetModalTitle" hidden>
+    <div class="preset-modal-window neu-chassis">
+      <!-- Modal Header -->
+      <div class="preset-modal-header">
+        <div class="preset-modal-title-group">
+          <div class="brand-badge">⚡</div>
+          <div>
+            <h2 class="preset-modal-title" id="presetModalTitle">SOUND LIBRARY & GENRE SCENES</h2>
+            <div class="preset-modal-subtitle">PRO-CRAFTED FM PRESETS, DRUM KITS & MELODIC ARPS</div>
+          </div>
+        </div>
+        <button class="neu-btn preset-modal-close" id="btnClosePresetBrowser" aria-label="Close Preset Browser">✕</button>
+      </div>
+
+      <!-- Controls Row: Category Filters, Search & Groove Toggle -->
+      <div class="preset-modal-toolbar">
+        <div class="preset-genre-pills" id="presetGenrePills">
+          <button class="preset-genre-btn active" data-genre="ALL">ALL</button>
+          <button class="preset-genre-btn" data-genre="EURO TRANCE">EURO TRANCE</button>
+          <button class="preset-genre-btn" data-genre="DARK BEATS">DARK BEATS</button>
+          <button class="preset-genre-btn" data-genre="TECHNO">TECHNO</button>
+          <button class="preset-genre-btn" data-genre="SYNTHWAVE">SYNTHWAVE</button>
+          <button class="preset-genre-btn" data-genre="CLASSICS">CLASSICS</button>
+        </div>
+
+        <div class="preset-toolbar-actions">
+          <div class="preset-file-actions">
+            <button class="neu-btn preset-quick-file-btn" id="btnQuickImportFile" title="Load a .json preset from your computer">📂 LOAD FILE</button>
+            <button class="neu-btn preset-quick-file-btn" id="btnQuickExportFile" title="Save current preset to a .json file">💾 SAVE FILE</button>
+          </div>
+          <div class="preset-search-box">
+            <span class="preset-search-icon">🔍</span>
+            <input type="text" id="inputPresetSearch" class="preset-search-input" placeholder="Search presets, styles..." aria-label="Search Presets">
+          </div>
+          <label class="neu-switch-label" title="When active, selecting a preset automatically loads its authentic drum beat, arpeggio, and tempo">
+            <input type="checkbox" id="chkAutoLoadGroove" checked>
+            <span class="neu-switch-track"><span class="neu-switch-thumb"></span></span>
+            <span class="neu-switch-text">AUTO-LOAD GROOVE</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Preset Cards Grid -->
+      <div class="preset-cards-container">
+        <div class="preset-cards-grid" id="presetCardsGrid">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="preset-modal-footer">
+        <span class="preset-count-label" id="presetCountLabel">SHOWING 24 OF 24 PRESETS</span>
+        <span class="preset-hint">PRO TIP: "LOAD FULL GROOVE" SETS MATCHING BPM, DRUM BEAT & MELODIC ARPEGGIO</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Neumorphic Save & Load Storage Modal -->
+  <div class="preset-modal-backdrop file-modal-backdrop" id="fileModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="fileModalTitle" hidden>
+    <div class="preset-modal-window file-modal-window neu-chassis">
+      <!-- Header -->
+      <div class="preset-modal-header">
+        <div class="preset-modal-title-group">
+          <div class="brand-badge">💾</div>
+          <div>
+            <h2 class="preset-modal-title" id="fileModalTitle">SAVE & LOAD PRESETS</h2>
+            <div class="preset-modal-subtitle">EXPORT & IMPORT PATCHES ON YOUR LOCAL MACHINE (.JSON)</div>
+          </div>
+        </div>
+        <button class="neu-btn preset-modal-close" id="btnCloseFileModal" aria-label="Close File Modal">✕</button>
+      </div>
+
+      <!-- Body: 2 Main Cards -->
+      <div class="file-modal-body">
+        <!-- Card 1: Save Current Preset to File -->
+        <div class="file-card neu-well">
+          <div class="file-card-header">
+            <span class="file-card-icon">📥</span>
+            <div>
+              <div class="file-card-title">SAVE TO LOCAL MACHINE</div>
+              <div class="file-card-sub">Export current sound, effects & groove kit as .json</div>
+            </div>
+          </div>
+          <div class="file-input-group">
+            <label class="file-input-label" for="inputExportFilename">PRESET NAME / FILENAME</label>
+            <input type="text" id="inputExportFilename" class="file-text-input" placeholder="My_Custom_Patch" value="Euro Euphoria 99">
+          </div>
+          <div class="file-options-row">
+            <label class="neu-checkbox-label">
+              <input type="checkbox" id="chkIncludeGrooveInExport" checked>
+              <span>Include Drum Kit & Sequencer Arpeggio</span>
+            </label>
+          </div>
+          <button class="neu-btn file-action-btn file-btn-download" id="btnDownloadPresetFile">
+            <span>💾</span> DOWNLOAD PRESET FILE (.json)
+          </button>
+        </div>
+
+        <!-- Card 2: Load Preset from File -->
+        <div class="file-card neu-well">
+          <div class="file-card-header">
+            <span class="file-card-icon">📂</span>
+            <div>
+              <div class="file-card-title">LOAD FROM LOCAL MACHINE</div>
+              <div class="file-card-sub">Import any .json preset file from your computer</div>
+            </div>
+          </div>
+          <div class="file-dropzone" id="fileDropzone" title="Click to choose a file or drag & drop here">
+            <div class="dropzone-icon">⬆</div>
+            <div class="dropzone-text">DRAG & DROP A .JSON PRESET HERE</div>
+            <div class="dropzone-sub">OR CLICK TO CHOOSE FROM LOCAL DISK</div>
+            <input type="file" id="fileInputPreset" accept=".json,application/json" style="display:none;">
+          </div>
+          <button class="neu-btn file-action-btn file-btn-upload" id="btnBrowseLocalFile">
+            <span>📂</span> CHOOSE FILE FROM DISK
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Bank Backup Row -->
+      <div class="file-bank-section neu-well">
+        <div class="file-bank-info">
+          <span class="file-bank-title">FULL SOUND BANK ARCHIVE</span>
+          <span class="file-bank-sub">Backup or restore your entire collection of custom presets</span>
+        </div>
+        <div class="file-bank-btns">
+          <button class="neu-btn file-bank-btn" id="btnExportFullBank">📦 BACKUP ALL PRESETS</button>
+          <button class="neu-btn file-bank-btn" id="btnImportFullBank">📥 RESTORE BANK</button>
+          <input type="file" id="fileInputBank" accept=".json,application/json" style="display:none;">
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="preset-modal-footer">
+        <span class="preset-hint">100% LOCAL & PRIVATE. PRESETS ARE PROCESSED ENTIRELY IN YOUR BROWSER.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Hidden File Input for Direct Imports -->
+  <input type="file" id="globalFileInputPreset" accept=".json,application/json" style="display:none;">
+
+  <!-- Full Window Drag & Drop Overlay -->
+  <div class="window-drop-overlay" id="windowDropOverlay">
+    <div class="window-drop-content">
+      <span class="window-drop-icon">📥</span>
+      <span class="window-drop-title">DROP PRESET FILE HERE</span>
+      <span class="window-drop-sub">Release to immediately load into NeuSynth</span>
+    </div>
+  </div>
+
+  <!-- Toast Notification Alert -->
+  <div class="neu-toast" id="neuToast" role="status" aria-live="polite"></div>
+
+  <!-- Main Application Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

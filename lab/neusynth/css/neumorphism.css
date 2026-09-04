@@ -1,0 +1,248 @@
+/**
+ * Neumorphism Design System for NeuSynth Prime
+ * Studio Workstation Soft UI Design System
+ * Features refined dual drop shadows, metallic accents, tactile deboss sockets,
+ * smooth convex/concave keys, and dual Dark (Obsidian) & Light (Porcelain) themes.
+ */
+
+:root {
+  /* Dark Obsidian Theme (Default) */
+  --bg-color: #121519;
+  --chassis-bg: #1e2228;
+  --surface-color: #242932;
+  --surface-light: #2d333e;
+  --surface-dark: #181c22;
+  --surface-deep: #111418;
+
+  /* Neumorphic Shadows */
+  --shadow-light: rgba(255, 255, 255, 0.06);
+  --shadow-dark: rgba(0, 0, 0, 0.7);
+  --shadow-dark-deep: rgba(0, 0, 0, 0.88);
+
+  --neu-chassis: 20px 20px 45px #0a0c0f, -12px -12px 35px rgba(255, 255, 255, 0.04);
+  --neu-flat: 6px 6px 14px var(--shadow-dark), -5px -5px 12px var(--shadow-light);
+  --neu-convex: 5px 5px 12px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  --neu-concave: inset 4px 4px 8px var(--shadow-dark-deep), inset -3px -3px 6px var(--shadow-light);
+  --neu-pressed: inset 3px 3px 6px var(--shadow-dark-deep), inset -2px -2px 5px var(--shadow-light);
+  --neu-well: inset 5px 5px 12px var(--shadow-dark-deep), inset -3px -3px 8px var(--shadow-light);
+  --neu-ridge: 1px solid rgba(255, 255, 255, 0.05);
+
+  /* Luminous Accents */
+  --accent-cyan: #00f0ff;
+  --accent-cyan-glow: rgba(0, 240, 255, 0.65);
+  --accent-amber: #ffaa00;
+  --accent-amber-glow: rgba(255, 170, 0, 0.7);
+  --accent-emerald: #00e676;
+  --accent-emerald-glow: rgba(0, 230, 118, 0.75);
+  --accent-crimson: #ff1744;
+  --accent-crimson-glow: rgba(255, 23, 68, 0.75);
+  --accent-purple: #b388ff;
+  --accent-purple-glow: rgba(179, 136, 255, 0.6);
+
+  /* Text & Labels */
+  --text-main: #e2e8f0;
+  --text-muted: #8290a2;
+  --text-dim: #546274;
+  --text-highlight: #ffffff;
+
+  /* Panoramic Cyber-OLED Display */
+  --oled-bezel: #0e1115;
+  --oled-glass: #0b1016;
+  --oled-inner-border: #1a2330;
+  --oled-text: #c0d8e8;
+  --oled-highlight: #00f0ff;
+  --oled-tab-bg: #141b24;
+  --oled-tab-active: #1d2836;
+  --oled-tab-border: #243447;
+
+  /* Piano Key Surfaces */
+  --key-white-bg: linear-gradient(180deg, #2b313c 0%, #232831 60%, #1c2027 100%);
+  --key-white-text: #8c9cb0;
+  --key-black-bg: linear-gradient(180deg, #14161a 0%, #101215 70%, #0b0d0f 100%);
+  --key-black-text: #606d7e;
+}
+
+/* Light Porcelain Theme */
+body.light-theme {
+  --bg-color: #dce3ed;
+  --chassis-bg: #e9eff7;
+  --surface-color: #ebf1f8;
+  --surface-light: #ffffff;
+  --surface-dark: #cdd8e6;
+  --surface-deep: #bcc9da;
+
+  --shadow-light: rgba(255, 255, 255, 0.95);
+  --shadow-dark: rgba(154, 172, 196, 0.55);
+  --shadow-dark-deep: rgba(135, 154, 180, 0.75);
+
+  --neu-chassis: 22px 22px 48px #bdc9d8, -16px -16px 40px #ffffff;
+  --neu-flat: 6px 6px 14px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  --neu-convex: 5px 5px 12px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  --neu-concave: inset 4px 4px 8px var(--shadow-dark-deep), inset -4px -4px 8px var(--shadow-light);
+  --neu-pressed: inset 3px 3px 6px var(--shadow-dark-deep), inset -3px -3px 6px var(--shadow-light);
+  --neu-well: inset 6px 6px 14px var(--shadow-dark-deep), inset -4px -4px 10px var(--shadow-light);
+  --neu-ridge: 1px solid rgba(255, 255, 255, 0.8);
+
+  --text-main: #212936;
+  --text-muted: #5e6f86;
+  --text-dim: #8b9bb2;
+  --text-highlight: #0b1017;
+
+  /* OLED Display in Light Theme (High Contrast Obsidian Core) */
+  --oled-bezel: #252e3b;
+  --oled-glass: #0b1118;
+  --oled-inner-border: #1a2533;
+  --oled-text: #c0d8e8;
+  --oled-highlight: #00f0ff;
+  --oled-tab-bg: #121922;
+  --oled-tab-active: #1a2533;
+  --oled-tab-border: #26364a;
+
+  /* Piano Keys in Light Theme */
+  --key-white-bg: linear-gradient(180deg, #ffffff 0%, #f4f7fb 60%, #e8edf5 100%);
+  --key-white-text: #526277;
+  --key-black-bg: linear-gradient(180deg, #2b333f 0%, #1e242d 70%, #13171d 100%);
+  --key-black-text: #8fa0b5;
+}
+
+/* -------------------------------------------------------------
+ * Neumorphic Primitives
+ * ----------------------------------------------------------- */
+
+.neu-chassis {
+  background: var(--chassis-bg);
+  box-shadow: var(--neu-chassis);
+  border: var(--neu-ridge);
+  border-radius: 28px;
+  transition: all 0.3s ease;
+}
+
+.neu-bay {
+  background: var(--surface-color);
+  box-shadow: var(--neu-convex);
+  border: 1px solid var(--shadow-light);
+  border-radius: 20px;
+  padding: 18px;
+  position: relative;
+}
+
+.neu-well {
+  background: var(--surface-dark);
+  box-shadow: var(--neu-well);
+  border-radius: 16px;
+}
+
+.neu-knob-socket {
+  padding: 5px;
+  border-radius: 50%;
+  background: var(--surface-dark);
+  box-shadow: inset 3px 3px 6px var(--shadow-dark-deep), inset -2px -2px 4px var(--shadow-light);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.neu-knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--surface-light) 0%, var(--surface-color) 60%, var(--surface-dark) 100%);
+  box-shadow: var(--neu-convex);
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  border: 1px solid var(--shadow-light);
+  transition: box-shadow 0.15s ease;
+}
+
+.neu-knob.hero-knob {
+  width: 68px;
+  height: 68px;
+}
+
+.neu-knob:active {
+  cursor: grabbing;
+  box-shadow: var(--neu-concave);
+}
+
+.neu-knob::after {
+  content: "";
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--surface-color) 0%, var(--surface-dark) 100%);
+  box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -1px -1px 3px var(--shadow-light);
+  pointer-events: none;
+}
+
+.knob-indicator {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 10px;
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Tactile Buttons */
+.neu-btn {
+  background: var(--surface-color);
+  box-shadow: var(--neu-convex);
+  border: 1px solid var(--shadow-light);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 8px 14px;
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.neu-btn:hover {
+  filter: brightness(1.06);
+}
+
+.neu-btn:active,
+.neu-btn.pressed {
+  box-shadow: var(--neu-pressed);
+  transform: translateY(1px);
+}
+
+.neu-btn.active {
+  box-shadow: var(--neu-pressed);
+  color: var(--accent-cyan);
+  border-color: rgba(0, 240, 255, 0.35);
+}
+
+.neu-btn.transport-play.playing {
+  box-shadow: var(--neu-pressed), 0 0 12px var(--accent-emerald-glow);
+  color: var(--accent-emerald);
+  border-color: rgba(0, 230, 118, 0.5);
+  animation: pulse-emerald 1s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-emerald {
+  0% { box-shadow: var(--neu-pressed), 0 0 4px var(--accent-emerald-glow); }
+  100% { box-shadow: var(--neu-pressed), 0 0 16px var(--accent-emerald-glow); }
+}
+
+.neu-btn.transport-rec.active {
+  box-shadow: var(--neu-pressed), 0 0 12px var(--accent-crimson-glow);
+  color: var(--accent-crimson);
+  border-color: rgba(255, 23, 68, 0.5);
+}

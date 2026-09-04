@@ -142,6 +142,7 @@ Current prototype routes referenced by site content:
 - `asteroids-3d` -> `/lab/asteroids-3d/`
 - `rally-rush` -> `/lab/rally-rush/`
 - `meeting-notes` -> `/lab/meeting-notes/`
+- `neusynth` -> `/lab/neusynth/`
 
 Do not hand-edit synced prototype folders unless you intend to replace the next
 sync result.

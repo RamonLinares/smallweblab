@@ -86,5 +86,28 @@
       "ref": "main",
       "source": "."
     }
+  },
+  {
+    "slug": "neusynth",
+    "title": "NeuSynth Prime",
+    "path": "/lab/neusynth/",
+    "eyebrow": "FM workstation / Lab route",
+    "badge": "Playable in browser",
+    "previewImage": "/content/images/neusynth-prime-workstation.png",
+    "previewAlt": "NeuSynth Prime six-operator FM workstation with sequencer and drum pads",
+    "summary": "A desktop browser workstation combining six-operator FM synthesis, a 16-step melodic sequencer, six synthesized drum voices, effects, and complete groove presets.",
+    "note": "Gemini 3.8 Flash created the zero-dependency app and its initial walkthrough. The source stays in its own repository and syncs into this lab route from `main`.",
+    "tags": [
+      "FM synthesis",
+      "Web Audio API",
+      "Gemini 3.8 Flash",
+      "Auto-synced"
+    ],
+    "repoUrl": "https://github.com/RamonLinares/NeuSynth",
+    "sync": {
+      "repo": "https://github.com/RamonLinares/NeuSynth.git",
+      "ref": "main",
+      "source": "."
+    }
   }
 ]

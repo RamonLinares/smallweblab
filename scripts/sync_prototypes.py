@@ -15,6 +15,7 @@ CATALOG_PATH = LAB_ROOT / "catalog.json"
 IGNORE_PATTERNS = shutil.ignore_patterns(
     ".git",
     ".github",
+    ".claude",
     ".DS_Store",
     ".gitignore",
     ".vscode",
