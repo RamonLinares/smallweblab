@@ -10,7 +10,7 @@ draft: false
 ---
 
 [Explore the FORGE repository](https://github.com/RamonLinares/atlas-09)  
-[Open the live 3D viewer](https://ramonlinares.github.io/atlas-09/)  
+[Open the live 3D viewer](https://mechas.smallweblab.com/)  
 [Read the CC0 asset licence](https://github.com/RamonLinares/atlas-09/blob/main/ASSET-LICENSE.md)
 
 The first robot looked convincing until it moved. Some geometry around its thighs had been assigned to the arm bones, so raising an arm could pull pieces of the legs along with it.
@@ -129,7 +129,7 @@ All seven mecha asset collections are released under **CC0 1.0**. Their models, 
 
 The public repository makes the visible models available together with the history behind them. The failed thigh assignment became an anatomical isolation test. Weak attacks became rules about timing and whole-body movement. A laptop camera crop produced the upper-body tracking mode. The final asset collection is useful, but those recorded corrections are the part I expect to reuse most often.
 
-[Open FORGE and inspect the animations](https://ramonlinares.github.io/atlas-09/)  
+[Open FORGE and inspect the animations](https://mechas.smallweblab.com/)  
 [Download the models and Blender sources from GitHub](https://github.com/RamonLinares/atlas-09)
 
 <script type="application/ld+json">
@@ -140,7 +140,7 @@ The public repository makes the visible models available together with the histo
   "name": "FORGE",
   "alternateName": "atlas-09",
   "description": "A public repository of seven free CC0 rigged mecha models with editable Blender sources, animated GLB exports, 61 animation clips, and a Three.js inspection studio.",
-  "url": "https://ramonlinares.github.io/atlas-09/",
+  "url": "https://mechas.smallweblab.com/",
   "codeRepository": "https://github.com/RamonLinares/atlas-09",
   "mainEntityOfPage": "https://smallweblab.com/posts/forge-free-rigged-mecha-models/",
   "image": "https://smallweblab.com/content/images/forge-seraph-wings-open.webp",
