@@ -1,10 +1,10 @@
 ---
-title: "GridPunk: Three Cities, Two Circuits"
+title: "GridPunk: Three Worlds, Eight Circuits"
 slug: "gridpunk"
-description: "GridPunk is a free browser racing game with Cyberpunk, Solarpunk, and Steampunk stages, two city circuits in each, two cars, five AI rivals, and a cinematic graphics mode."
+description: "GridPunk is a free browser racing game with Cyberpunk, Solarpunk, and Steampunk worlds, eight circuits in each — six of them with real hills — two cars, five AI rivals, and a cinematic graphics mode."
 date: "2026-09-20"
 category: "games"
-tags: ["GridPunk", "Browser Racing Game", "Cyberpunk", "Solarpunk", "Steampunk", "Three.js", "AI Game Development"]
+tags: ["GridPunk", "Browser Racing Game", "Cyberpunk", "Solarpunk", "Steampunk", "Three.js", "Claude Opus 5.5", "AI Game Development"]
 coverImage: "/content/images/gridpunk-neon-race.png"
 draft: false
 ---
@@ -12,84 +12,108 @@ draft: false
 [Play GridPunk](https://gridpunk.smallweblab.com/)  
 [Explore the source on GitHub](https://github.com/RamonLinares/GridPunk)
 
-GridPunk is a browser racing game set in fictional cities. You choose a stage, a circuit, and a car, then race five AI rivals over three laps. There is no account or separate installation.
+GridPunk is a browser racing game set in fictional cities. You choose a world, a circuit, and a car, then race five AI rivals over three laps. There is no account or separate installation.
 
-When this entry was first published on 20 September, the game had one circuit: Neon District, a rainy cyberpunk city at night. Two days of work later, it has three stages — **Cyberpunk**, **Solarpunk**, and **Steampunk** — and each one contains two road layouts. That makes six circuit and scenery combinations, each with its own lap records. This update describes what was added and what needed fixing along the way.
+When this entry was first published on 20 September, the game had one circuit: Neon District, a rainy cyberpunk city at night. Two days later it had three worlds — **Cyberpunk**, **Solarpunk**, and **Steampunk** — with two road layouts in each. Since 22 September, almost all of the work has been done with **Claude Opus 5.5**, and the game now has **eight layouts in every world**: 24 circuit and scenery combinations, six of them on layouts with real elevation changes of up to 96 metres. This update describes what was added, what I asked for, and what still needed fixing after I drove it.
 
-## Stages And Circuits
+## Worlds And Circuits
 
-The menu separates the world theme from the road layout. The stage decides the city, lighting, weather, signage, and HUD styling. The circuit decides the road:
+The menu separates the world from the road layout. The world decides the city, lighting, weather, signage, and HUD styling. The circuit decides the road:
 
-- **Neon District** is 3.744 kilometres long, with twelve corners, banked turns, elevated sections, and a tunnel.
-- **Kairo Loop** is 5.807 kilometres long, with eighteen corners and a figure-eight layout that crosses itself on an 8-metre flyover.
+- **Neon District** — 3.744 km, 12 corners, banked turns, elevated sections, and a tunnel.
+- **Kairo Loop** — 5.807 km, 18 corners, a figure-eight that crosses itself on an 8-metre flyover.
+- **Mirage Streets** — 3.337 km, 19 corners. Walls within reach, a hairpin at walking pace, and a 40-metre climb through the old town.
+- **Cinder Bend** — 3.602 km, 11 corners. Short and steep: a 55-metre climb to a crest, then a blind drop.
+- **Sable Ring** — 4.657 km, 14 corners. A long opening straight and flowing mid-speed corners.
+- **Orbit Bowl** — 5.414 km, 22 corners. Stop-start streets wrapped around a steeply banked sweep.
+- **Zenith Park** — 5.513 km, 20 corners. A steep climb into turn one and fast esses.
+- **Talon Run** — 7.004 km, 19 corners. A dive into a valley, a climb to a ridge, and long high-speed sweeps.
 
-Switching stage keeps the selected layout and car, so it is easy to drive the same corners through different scenery. Personal bests and replay files are stored separately for each combination.
+Switching world keeps the selected layout and car, so it is easy to drive the same corners through different scenery. Personal bests and replay files are stored separately for all 24 combinations.
 
-![GridPunk's session menu with the Steampunk stage, Neon District circuit, car, rivals, and graphics settings](/content/images/gridpunk-stage-select.webp)
+![GridPunk's race-select screen in the Steampunk world, with all eight circuits, the track map and the start button](/content/images/gridpunk-race-select.webp)
 
-Neon District's geometry is shared exactly across all three stages. An automated check compares the sampled position and orientation of the road at every point, including the banked turns, against the original. The tunnel keeps its 7.2 metres of clearance in each version, but it is dressed differently: a planted-roof underpass in the Solarpunk city and a passage lined with copper service mains and iron ribs in the Steampunk one.
+## What Claude Opus 5.5 Built
+
+Opus 5.5 co-authored the work below over about two days. I described what I wanted, played the result, and sent back screenshots whenever something looked wrong. Much of the interesting part is in those second rounds.
+
+### A menu that feels like a game
+
+A first stage-selection screen already existed, but it didn't have the feel of a AAA racing game. I asked Opus 5.5 to improve it or start again, and it rebuilt it from scratch. The backdrop art was re-shot in the game's own Cinematic mode with a low, long-lens camera. Each world has its own rain, pollen, or ember particles, and the screen plays an intro sequence and a light streak when you switch world. There are synthesised menu sounds, keyboard and gamepad navigation, and an animated map with a dot lapping the circuit. The old green terminal loading screen became a title card for the race you picked, with the circuit drawing itself in. I also pointed out that the race toolbar's dark square buttons didn't match the HUD, and they became line icons on thin rules with captions.
+
+![The loading card: the circuit name, world and conditions over the world's artwork, with staged progress and the track map](/content/images/gridpunk-loading.webp)
+
+### A building from a single picture
+
+I gave Opus 5.5 one reference image of a steampunk factory and asked for it to be as close as possible. The result is **Brass & Co.**, an engine house on its own railed plaza. It has a clockwork rose window with turning gears and a glazed barrel vault with a ridge walkway. A copper boiler labelled FUEL / POWER / PROGRESS feeds an arching main, and there are two banded smokestacks, a tank on a braced balcony, a domed weather-vane tower, a flywheel gantry with an outside stair, and a crane with cargo. The metalwork carries riveted plate seams and soot streaks, and the whole landmark renders in about 25 draw calls. It closes the back straight on Kairo Steam and rises beside the start straight on Neon Steam.
+
+![Brass & Co., the modelled engine house, at golden hour](/content/images/gridpunk-brass-co.webp)
+
+### Streets with character
+
+I liked Brass & Co. enough to ask for more of it: fewer "blocks of glass and bricks", more buildings with soul. Opus 5.5 built eight street set pieces in the same style and lined every Steampunk circuit with them:
+
+- a guild hall with a clock spire
+- a gasworks with a lattice-framed gasholder
+- a pumping station with a beam engine and a turning flywheel
+- an observatory with a telescope and orrery
+- an airship chandlery with a moored dirigible
+- a printing works with a round window and sawtooth roof
+- a bank with a columned front and copper dome
+- a railway depot with a locomotive and water tower
+
+Each design is modelled once and repeated. Beyond 220 metres a building switches to a simpler version, and beyond one kilometre it is left to the skyline. The street ends up with fewer draw calls than the plain blocks it replaced. I then pointed out that the windows looked unfinished and the glass was flat yellow. They were rebuilt with proper arched frames, glazing bars, stone surrounds, sky reflections, and lamp-lit rooms behind tied-back curtains, with about three in ten left dark.
+
+![An airship chandlery with a moored dirigible, between a domed observatory and brick terraces](/content/images/gridpunk-airship-chandlery.webp)
+
+### Six circuits with hills
+
+I asked for the layouts from the project GridPunk grew out of, under made-up names. Opus 5.5 imported six more layouts from mapped data (OpenStreetMap contributors, ODbL). When I found out it had planned to flatten them, I pushed back: half the fun of some circuits is the elevation. So the surveyed climbs stay in. The cities of all three worlds now sit on terrain that follows the road, with buildings seated on the slope, retaining walls where a higher part of the lap passes close by, and masonry shading on steep faces.
+
+![Cinder Solar, climbing towards the crest between planted walls and street trees](/content/images/gridpunk-cinder-climb.webp)
+
+This part took the most rounds, and each one came from me driving the game:
+
+- **Mountains over the road.** The first terrain rose through the asphalt on steep sections, and several things floated. The ground is now carved below the road everywhere. Grandstands, flags, pedestrians, lamps and bridge legs were all seated properly, and every road point on all 18 new races is checked by casting rays down onto it.
+- **Walls folding across hairpins.** Some mapped hairpins were tighter than the barriers' 12-metre offset, so the inner wall folded over the road. The import now eases any corner tighter than 16.5 metres while keeping its full turn and the lap length.
+- **A skytrain floating in front of me.** The Cyberpunk skytrain's 110-metre beam was designed for flat streets. On hills it hung low over the other leg of a hairpin and ended in mid-air. On hilly circuits the transit portals are now gantries on their own columns and are skipped wherever the lap passes beneath them.
+- **Vines hanging off nothing.** On Talon Solar, facade vines, terrace trees and printed slogans still used flat-city heights, so they hung beside their buildings. They now share the building's ground offset. A new audit checks that every plant and raised object across all 24 races touches the ground or something solid.
+
+### Earlier in the same run
+
+Before the menu work, Opus 5.5 had already given the Solarpunk and Steampunk worlds their own Cinematic looks: a golden-hour sun with shafts and lit gas lamps for Steampunk, an afternoon film-print grade and aerial haze for Solarpunk. It overhauled the Solarpunk cities with twisting vertical-forest towers, terraced hill blocks, sail towers, glasshouse domes, and a 300-metre Arbor Spire with a waterfall. Races gained rain spray thrown off every car's rear tyres, over-run backfires, rival tyre smoke, and contact debris. Rivals got team liveries. The HUD gained a live delta to your best lap, a running order, position-change feedback, a final-lap banner, and shift lights.
 
 ## Kairo Loop
 
-Kairo's centreline and corner order were adapted from mapped data of a real racing circuit, which OpenStreetMap contributors made available under the ODbL. The survey elevations were flattened to city level, apart from a smooth 8-metre flyover where the figure-eight crosses. The flyover has roughly 180-metre ramps, and the physics filters contacts by deck so that a car on the bridge cannot collide with one passing underneath. In a two-lap simulation with all six cars, no car hit a wall, left the road, or jumped between decks.
+Kairo's centreline and corner order were adapted from the same kind of mapped data. On Kairo the elevations are flattened to city level, apart from a smooth 8-metre flyover where the figure-eight crosses. The physics filters contacts by deck, so a car on the bridge cannot collide with one passing underneath.
 
-The Cyberpunk version keeps the night setting from Neon District and adds several landmarks. A 198-metre Ferris wheel with pink rim lights stands beyond the first turn and completes one rotation every nine minutes. Floating holograms show ramen and bonsai footage, and a Mars travel advert plays on a large screen with a processed public-address voice.
-
-Two of these needed a second attempt. The Mars screen was first mounted on the side of a building, where it was hard to read at racing speed. It now sits on a dedicated media building beyond Turn 1, facing straight down the opening straight. The bonsai music was initially masked by the engines. I raised its level and extended its audible range, then lowered it again after hearing it in the game. The final track is a 10-second excerpt from a shamisen recording I supplied, looped quietly near the two bonsai holograms.
-
-The underside of the flyover also received more detail after I noticed how plain it looked from the lower road: steel webs, crossmembers, service pipes, and maintenance lights, all generated in code and batched to keep the draw-call cost low.
-
-## Solarpunk: A Garden City In Daylight
-
-The Solarpunk stage moves the race into daylight. Its buildings have planted terraces, rooftop solar arrays, hanging vines, and glazing on every side. Street trees, hedges, and flower beds line the road, and mountains and a bay frame the skyline.
-
-On Kairo Solar, three civic districts mark different parts of the lap: **Helios Grove**, with copper towers carrying photovoltaic canopies; **The Glasshouse**, a ribbed botanical conservatory; and **Harvest Commons**, a terraced vertical farm with a market. Three wind turbines turn beside the road, and three zeppelins drift above the towers.
+The Cyberpunk version adds a 198-metre Ferris wheel with pink rim lights beyond the first turn, floating holograms showing ramen and bonsai footage, and a Mars travel advert with a processed public-address voice.
 
 ![Kairo Solar, with Helios Grove's solar towers, a zeppelin, and planted buildings ahead of the player's car](/content/images/gridpunk-kairo-solar.webp)
 
-This stage needed several repairs after I looked at the first version. The grandstands had been built with their rows turned 90 degrees from the direction the spectators were facing, leaving stair walls sideways and some spectators floating. They are now built in a single coordinate frame and checked against every road segment. A pale strip also appeared along the edge of the flyover at a distance and disappeared as the car came closer. It was caused by a depth offset on the verge material, and removing it fixed the problem on both Kairo circuits.
-
-## Steampunk: A Foundry City At Sunset
-
-The Steampunk stage uses warm sunset lighting, dry and worn asphalt, sandstone barriers, and brass lettering. The city is made of brick terraces, sawtooth-roofed foundries, glass market halls, copper-domed observatories, and mills. Water towers, loading cranes, fire escapes, and gas lanterns fill the rooftops and streets, while chimneys and pressure valves release steam.
-
-Kairo Steam has its own three landmarks: the **Clockworks** tower with moving hands and large brass flywheels, the copper vessels and banded chimneys of **Boiler Works**, and the **Royal Kairo Aerodrome**, where cargo dirigibles are moored.
+On Kairo Solar, three civic districts mark the lap: **Helios Grove**, **The Glasshouse**, and **Harvest Commons**. On Kairo Steam, the **Clockworks** tower, **Boiler Works**, the **Royal Kairo Aerodrome**, and now Brass & Co. do the same.
 
 ![Kairo Steam, with the Clockworks tower and its brass flywheels at the end of a straight](/content/images/gridpunk-kairo-steam.webp)
 
-The first version of this city repeated one red-brick factory block too often. A second pass introduced six distinct building types, so the approaches to each landmark now read differently. A later inspection found rooftop water tanks whose legs stopped short of sloping roofs. The legs are now anchored to the roof surface, and a check raycasts 72 legs across 18 roof configurations to confirm they make contact.
-
-All three stages use procedural geometry and textures written in the repository. No models or images were downloaded or generated for the scenery.
+All scenery uses procedural geometry and textures written in the repository. No models or images were downloaded or generated for the cities.
 
 ## Cars, Rivals, And Settings
 
-The garage still offers the **Shinsei ND-01**, an armoured prototype, and the **Kurogane K89-R**, an open-cockpit car. The Shinsei wears different sponsor plates on the Solarpunk and Steampunk stages.
+The garage offers the **Shinsei ND-01**, an armoured prototype, and the **Kurogane K89-R**, an open-cockpit car. Driver assists are fixed at Rookie. Rival difficulty can be Rookie, Sport, or Expert, and rivals use the same physics, grip, and engine as your car, with no position-dependent speed boosts. On every new layout, six AI cars complete two valid laps without touching a wall or leaving the road.
 
-Driver assists are now fixed at Rookie, which provides forgiving, speed-weighted steering and traction control. The separate rival difficulty remains: Rookie, Sport, or Expert. I found Expert too easy on Kairo, where my own lap had been 1:54 with wall contact. The rivals were retuned to brake later and carry more speed through corners, using the same physics, grip, and engine as the player's car. There are no position-dependent speed boosts. In the benchmark, the Expert field averages about 108 seconds per lap on Kairo, and every rival finished ahead of a scripted reference driver that completed a clean 111.9-second lap.
-
-The graphics settings gained a **Cinematic** tier above Extreme. It adds distance mist, a film-style colour grade, anamorphic light streaks, a subtle analogue-tape texture, and depth-of-field in replays. The same update fixed street lamps that appeared to switch on only as the car arrived: more lights now serve the nearest lamps and fade in gradually from 140 metres away.
-
-The menu was also simplified into a single panel that fits on one screen on desktop and phone. Loading now shows a green phosphor terminal with scanlines, a shadow mask, and a short boot log.
-
-## Cameras And Replays
-
-One of the first playtesting changes was the close chase camera. It had moved farther away as the car accelerated, and its field of view widened with speed, making the car appear small. The follow distance changed from 9.2 metres to 5.4 metres, and the speed-based pullback and widening lens were removed from that view. A regression check varies speed and frame duration to confirm the framing stays steady.
-
-Replays had a different problem: on some circuits, a trackside camera could end up behind a wall, hiding the car. The replay director now tests whether barriers, bridge decks, or tunnel walls block the car's body. If they do, it switches to one of several car-relative angles and widens the lens enough to keep the whole car in frame, including in portrait exports.
-
-The close camera also exposed problems on the Shinsei's rear wing, including rivets outside the plate edges and a blocky finish on the upper flap. Those were fixed in the Blender export pipeline, and the upper wing now uses a dedicated texture baked from the car's worn crimson paint.
+The **Cinematic** graphics tier adds distance mist, a film-style colour grade, anamorphic light streaks, and depth of field in replays, with a different look in each world.
 
 ## Implementation And Verification
 
-GridPunk uses TypeScript, Three.js, and Vite. Vehicle simulation runs on a fixed 120 Hz step. The public repository includes the source, asset credits, authoring files, build scripts, and notes for each circuit and repair. Claude Fable 5.1 was co-author on the Cinematic tier and the menu redesign. Codex handled the original camera and material work described above.
+GridPunk uses TypeScript, Three.js, and Vite. Vehicle simulation runs on a fixed 120 Hz step. The public repository includes the source, asset credits, authoring files, build scripts, and notes for each circuit and repair. Claude Opus 5.5 co-authored everything from 22 September onwards except the first stage-selection screen. Claude Fable 5.1 co-authored the original Cinematic tier and an earlier menu design, and Codex handled the original camera and material work.
 
-Each addition came with its own browser checks at 1440 × 900 and at a 390 × 844 touch-emulated phone size. The production test suite drives every stage with real keyboard and touch input: acceleration, braking, camera changes, pause, recovery, restart, car switching, and graphics presets. The stage release passed twelve production tests, including exact layout equality across the three versions of Neon District and independent lap records. Other scripts check scenery clearance from the road, landmark visibility, audio levels during drive-bys, and the replay camera's visibility logic. The final runs reported no browser errors or failed asset requests.
+The production suite now runs 64 browser tests at 1440 × 900 and at a 390 × 844 touch-emulated phone size. They drive every world with real keyboard and touch input, launch the new layouts from the menu, and check layout identity, keyboard navigation, and independent lap records. Alongside them are scripts that raycast every road point for anything covering it, audit every object for being attached to something, measure draw calls and triangles against the previous version, and simulate six-car races on every layout. When I found a problem in play, the fix usually came with a new check for the whole class of problem, not just the spot I had reported.
 
-Some limits remain. Mobile testing uses browser emulation, so it does not measure performance on physical phones. The Solarpunk stage is the heaviest scene, and the renderer counts recorded during testing are observations rather than frame-rate guarantees. Gamepad hardware, the complete replay-export workflow, and subjective audio quality have not been assessed by automated tests. The main JavaScript bundle is also large enough to trigger Vite's size warning.
+Some limits remain. Mobile testing uses browser emulation, not physical phones. The Solarpunk world is the heaviest scene, and renderer counts are observations rather than frame-rate guarantees. On the tightest hilly circuit, Mirage Streets, the retaining walls are large and still plain. Gamepad hardware, the full replay-export workflow, and subjective audio quality are not covered by automated tests.
 
 ## How To Play
 
-Open [GridPunk](https://gridpunk.smallweblab.com/), choose a stage, circuit, car, and settings, then press **Start race**. You can also link directly to a combination, for example [Kairo Solar](https://gridpunk.smallweblab.com/?circuit=solar) or [Neon District in the Steampunk stage](https://gridpunk.smallweblab.com/?stage=steampunk&circuit=neon).
+Open [GridPunk](https://gridpunk.smallweblab.com/), choose a world with **Q / E** or the arrow keys, a circuit with **↑ / ↓**, and press **Enter**. You can also link directly to a combination, for example [Talon Run in the Steampunk world](https://gridpunk.smallweblab.com/?circuit=talon-steam) or [Cinder Bend by day](https://gridpunk.smallweblab.com/?circuit=cinder-solar).
 
 - **WASD or arrow keys** control the car; **S or Down** brakes and reverses at rest.
 - **Space** brakes.
@@ -97,9 +121,9 @@ Open [GridPunk](https://gridpunk.smallweblab.com/), choose a stage, circuit, car
 - **R** recovers the car to the track.
 - **Escape** pauses or resumes the race.
 
-On a gamepad, use the left stick and triggers; Start pauses, X changes the camera, and Y recovers the car. Touch devices show on-screen driving controls.
+On a gamepad, use the left stick and triggers; LB / RB and the D-pad work in the menu, Start pauses, X changes the camera, and Y recovers the car. Touch devices show on-screen driving controls.
 
-GridPunk joins [Horizon Drive](/posts/horizon-drive/) and [Bumper Hearts](/posts/bumper-hearts/) in the lab's browser games collection. Neon District at night is still a good place to start. Kairo is longer and more demanding, and the daylight stages make its corners easier to learn.
+GridPunk joins [Horizon Drive](/posts/horizon-drive/) and [Bumper Hearts](/posts/bumper-hearts/) in the lab's browser games collection. Neon District at night is still a good place to start. For elevation, try Talon Run, which drops into a valley and climbs 96 metres to a ridge.
 
 <script type="application/ld+json">
 {
@@ -107,7 +131,7 @@ GridPunk joins [Horizon Drive](/posts/horizon-drive/) and [Bumper Hearts](/posts
   "@type": "VideoGame",
   "@id": "https://smallweblab.com/posts/gridpunk/#game",
   "name": "GridPunk",
-  "description": "A free browser racing game with Cyberpunk, Solarpunk, and Steampunk stages, two city circuits per stage, three-lap races, two selectable cars, and five AI rivals.",
+  "description": "A free browser racing game with Cyberpunk, Solarpunk, and Steampunk worlds, eight circuits per world including six with real elevation changes, three-lap races, two selectable cars, and five AI rivals.",
   "url": "https://gridpunk.smallweblab.com/",
   "mainEntityOfPage": "https://smallweblab.com/posts/gridpunk/",
   "image": "https://smallweblab.com/content/images/gridpunk-neon-race.png",
