@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WALKABOUT · Face blurring and photo tools for Resolve and Premiere</title>
+<meta name="description" content="Automatic face blurring for DaVinci Resolve and Premiere Pro, plus photo tools for POV photo-walk videos. Runs entirely on your Mac.">
+<link rel="canonical" href="https://smallweblab.com/walkabout/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WALKABOUT · Automatic face blurring for Resolve and Premiere">
+<meta property="og:description" content="Automatic face blurring for DaVinci Resolve and Premiere Pro, plus photo tools for POV photo-walk videos. Runs entirely on your Mac.">
+<meta property="og:url" content="https://smallweblab.com/walkabout/">
+<meta property="og:image" content="https://smallweblab.com/walkabout/media/poster-final.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; }
+  img, video { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #EEF0EC;
+    --surface: #FFFFFF;
+    --ink: #171B20;
+    --muted: #57606A;
+    --line: #D3D8D2;
+    --signal: #E59A12;
+    --signal-ink: #171B20;
+    --detect: #0E9FAD;
+    --manual: #EE6A2C;
+    --keep: #3FA45B;
+    --soft: #E3E7E1;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #101316;
+      --surface: #171B1F;
+      --ink: #E8EBE7;
+      --muted: #9AA3AA;
+      --line: #2A3036;
+      --signal: #F2B233;
+      --detect: #2CC4D1;
+      --manual: #FF8547;
+      --keep: #5CC477;
+      --soft: #1C2126;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #101316;
+    --surface: #171B1F;
+    --ink: #E8EBE7;
+    --muted: #9AA3AA;
+    --line: #2A3036;
+    --signal: #F2B233;
+    --detect: #2CC4D1;
+    --manual: #FF8547;
+    --keep: #5CC477;
+    --soft: #1C2126;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-inline: 20px;
+  }
+  .wrap { max-width: 1120px; margin-inline: auto; }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  h1 {
+    font-stretch: 125%;
+    font-weight: 850;
+    font-size: clamp(2rem, 4.2vw, 3.2rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  h2 {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+  h3 { font-stretch: 110%; font-weight: 700; font-size: 1.2rem; line-height: 1.2; }
+  p { margin: 0; }
+  .mono { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.04em; }
+  .label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .lede { font-size: 1.12rem; color: var(--muted); max-width: 60ch; }
+  section { padding-block: clamp(56px, 8vw, 96px); border-top: 1px solid var(--line); }
+
+  /* Header */
+  header.top {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding-block: 18px;
+  }
+  .brand { font-family: var(--display); font-stretch: 125%; font-weight: 900; letter-spacing: 0.02em; font-size: 1.05rem; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 22px; height: 22px; border-radius: 50%; background: var(--signal); position: relative; flex: none; }
+  .brand-mark::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--ground); }
+  nav.links { display: flex; gap: 22px; font-size: 0.92rem; }
+  nav.links a { text-decoration: none; color: var(--muted); }
+  nav.links a:hover { color: var(--ink); }
+  @media (max-width: 640px) { nav.links a:not(.nav-cta) { display: none; } }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--body); font-weight: 600; font-size: 1rem;
+    padding: 13px 22px; border-radius: 6px; border: 1px solid transparent;
+    text-decoration: none; cursor: pointer; transition: transform .15s ease, background .15s ease;
+  }
+  .btn-primary { background: var(--signal); color: var(--signal-ink); }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+  .btn-ghost:hover { border-color: var(--muted); }
+  .btn:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 3px solid var(--detect); outline-offset: 2px;
+  }
+  .nav-cta { color: var(--ink) !important; font-weight: 600; border-bottom: 2px solid var(--signal); }
+
+  /* Hero */
+  .hero { display: grid; gap: 40px; padding-block: 36px 72px; align-items: center; }
+  @media (min-width: 940px) { .hero { grid-template-columns: 0.9fr 1.1fr; gap: 56px; } }
+  .hero-copy { display: flex; flex-direction: column; gap: 22px; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .hero-note { color: var(--muted); }
+  .hl { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--signal) 55%, transparent) 62%); padding-inline: 2px; }
+
+  /* Demo */
+  .demo { display: flex; flex-direction: column; gap: 12px; }
+  .viewer {
+    background: #0B0D10; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 24px 60px -30px rgba(0,0,0,.55);
+  }
+  .viewer-bar {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 9px 14px; color: #A7B0B7; font-family: var(--mono); font-size: 0.72rem; letter-spacing: .06em;
+    border-bottom: 1px solid #1F252B;
+  }
+  .rec { display: inline-flex; align-items: center; gap: 7px; }
+  .rec::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #E5484D; }
+  .clip { position: relative; aspect-ratio: 1280 / 534; background: #0B0D10; }
+  .clip video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .25s ease; }
+  #v-mask { opacity: 0; }
+  .viewer[data-view="mask"] #v-mask { opacity: 1; }
+  .views { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; background: var(--surface); align-self: flex-start; flex-wrap: wrap; }
+  .views button {
+    font: 500 0.88rem var(--body); color: var(--muted); background: transparent; border: 0;
+    padding: 7px 14px; border-radius: 5px; cursor: pointer;
+  }
+  .views button[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 0.86rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 12px; height: 12px; border-radius: 2px; border: 2px solid; }
+
+  /* Facts strip */
+  .facts { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  @media (min-width: 720px) { .facts { grid-template-columns: repeat(4, 1fr); } }
+  .fact { background: var(--ground); padding: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .fact strong { font-family: var(--display); font-stretch: 110%; font-size: 1.02rem; }
+  .fact p { color: var(--muted); font-size: 0.92rem; }
+
+  /* Section heads */
+  .head { display: grid; gap: 16px; margin-bottom: 40px; }
+  @media (min-width: 900px) { .head { grid-template-columns: 1fr 1fr; align-items: end; gap: 48px; } }
+
+
+  /* Why section */
+  .why { display: grid; gap: 20px; }
+  @media (min-width: 900px) { .why { grid-template-columns: 1.25fr 1fr; gap: 28px; } }
+  .risks { display: grid; gap: 0; border-top: 3px solid var(--ink); }
+  .risk { display: grid; gap: 6px; padding-block: 18px; border-bottom: 1px solid var(--line); }
+  .risk p { color: var(--muted); font-size: 0.95rem; max-width: 62ch; }
+  .manual { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 14px; align-self: start; }
+  .manual p { color: var(--muted); font-size: 0.95rem; }
+  .frames { font-family: var(--display); font-stretch: 125%; font-weight: 850; font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .frames small { display: block; font-family: var(--mono); font-stretch: 100%; font-weight: 400; font-size: 0.75rem; letter-spacing: .06em; color: var(--muted); margin-top: 6px; }
+  .manual-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.93rem; display: grid; gap: 4px; }
+
+  .problem { border-left: 3px solid var(--signal); padding-left: 12px; color: var(--ink) !important; }
+  .problem strong { font-weight: 600; }
+
+  /* Steps */
+  .steps { display: grid; gap: 16px; }
+  @media (min-width: 720px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1040px) { .steps { grid-template-columns: repeat(4, 1fr); } }
+  .step { border-top: 3px solid var(--ink); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .step-n { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); letter-spacing: .08em; }
+  .step p { color: var(--muted); font-size: 0.95rem; }
+  .step ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.92rem; display: grid; gap: 4px; }
+
+  .review-fig { margin: 40px 0 0; display: grid; gap: 10px; }
+  .review-fig img { width: 100%; height: auto; border-radius: 10px; display: block; }
+
+  .note {
+    margin-top: 36px; display: flex; gap: 14px; align-items: flex-start;
+    background: var(--soft); border-radius: 8px; padding: 18px 20px; max-width: 820px;
+  }
+  .note-icon { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--manual); color: var(--manual); font: 700 13px/18px var(--mono); text-align: center; }
+  .note p { font-size: 0.95rem; }
+
+  /* Tools */
+  .tools { display: grid; gap: 20px; }
+  .tool {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 22px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .tool p { color: var(--muted); font-size: 0.95rem; }
+  .tool .where { margin-top: auto; }
+  .fig { background: var(--soft); border-radius: 6px; padding: 16px; min-height: 190px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+  /* Tool rows */
+  .tool.wide { display: grid; gap: 24px; align-items: center; }
+  @media (min-width: 900px) {
+    .tool.wide { grid-template-columns: 1.35fr 1fr; gap: 36px; padding: 28px; }
+    .tool.wide.flip .fig { order: 2; }
+  }
+  .tool-text { display: flex; flex-direction: column; gap: 14px; }
+  .tool-text p { color: var(--muted); font-size: 0.95rem; }
+  .fig { min-height: 0; }
+
+  /* Arrange figure */
+  .arrange { display: grid; gap: 10px; padding: 18px 16px 14px; align-items: stretch; flex-direction: column; }
+  .arr-row { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; }
+  .arr-label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .th { height: 44px; width: auto; border-radius: 2px; display: block; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+  .arr-before { display: flex; gap: 2px; overflow: hidden; background: color-mix(in srgb, var(--ink) 7%, transparent); border-radius: 3px; padding: 4px; }
+  .arr-before .th { height: 34px; }
+  .arr-after { position: relative; height: 156px; background: color-mix(in srgb, var(--ink) 7%, transparent); border-radius: 3px; }
+  .pin { position: absolute; left: calc(var(--x) * 0.86%); bottom: 0; top: 0; }
+  .pin i { position: absolute; left: 0; width: 2px; bottom: 0; background: var(--signal); }
+  .pin .th { position: absolute; left: 0; }
+  .lane0 .th { top: 6px; } .lane0 i { top: 50px; }
+  .lane1 .th { top: 56px; } .lane1 i { top: 100px; }
+  .lane2 .th { top: 106px; } .lane2 i { top: 150px; }
+  .arr-ruler { position: relative; height: 16px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
+  .arr-ruler span { position: absolute; left: calc(var(--x) * 0.86%); top: 3px; white-space: nowrap; }
+  @media (max-width: 520px) {
+    .th { height: 32px; } .arr-before .th { height: 22px; }
+    .arr-after { height: 120px; }
+    .lane0 .th { top: 4px; } .lane0 i { top: 36px; }
+    .lane1 .th { top: 42px; } .lane1 i { top: 74px; }
+    .lane2 .th { top: 80px; } .lane2 i { top: 112px; }
+    .arr-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  /* Photo Presentation figure */
+  .pp { background: #121417; display: flex; gap: 14px; align-items: center; justify-content: center; padding: 22px; }
+  .pp img { height: auto; display: block; box-shadow: 0 14px 30px -18px rgba(0,0,0,.8); }
+  .pp img:first-child { width: 62%; }
+  .pp img:last-child { width: 28%; }
+
+  /* Contact figure */
+  .contact { padding: 0; background: #0B0D10; overflow: hidden; }
+  .contact video { width: 100%; height: auto; display: block; aspect-ratio: 16 / 9; }
+
+  /* Compatibility */
+  .compat-wrap { overflow-x: auto; }
+  table.compat { width: 100%; border-collapse: collapse; min-width: 560px; }
+  .compat th, .compat td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 0.95rem; }
+  .compat th { font-weight: 600; width: 30%; }
+  .pill { display: inline-block; font-family: var(--mono); font-size: 0.7rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; border: 1px solid; margin-right: 8px; white-space: nowrap; }
+  .pill.ok { color: var(--keep); }
+  .pill.wip { color: var(--signal); }
+  .pill.no { color: var(--muted); }
+
+  /* Pricing */
+  .prices { display: grid; gap: 20px; }
+  @media (min-width: 900px) { .prices { grid-template-columns: repeat(3, 1fr); } }
+  .price { border: 1px solid var(--line); border-radius: 10px; padding: 26px; display: flex; flex-direction: column; gap: 14px; background: var(--ground); }
+  .price.now { background: var(--surface); border: 2px solid var(--signal); }
+  .amount { font-family: var(--display); font-stretch: 125%; font-weight: 850; font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .amount small { font-family: var(--body); font-stretch: 100%; font-weight: 500; font-size: 0.9rem; color: var(--muted); margin-left: 6px; }
+  .btn[aria-disabled="true"] { opacity: .55; cursor: default; transform: none; }
+  .dl-buttons { display: grid; gap: 10px; }
+  .install { margin-top: 40px; max-width: 820px; display: grid; gap: 12px; }
+  .install ol { margin: 0; padding-left: 22px; display: grid; gap: 10px; color: var(--muted); }
+  .install strong { color: var(--ink); font-weight: 600; }
+  .price ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.94rem; display: grid; gap: 6px; }
+  .price .btn { margin-top: auto; }
+
+  /* Download */
+  .signup { display: grid; gap: 32px; }
+  @media (min-width: 900px) { .signup { grid-template-columns: 0.9fr 1.1fr; gap: 56px; } }
+  .updates { display: grid; gap: 0; border-top: 3px solid var(--ink); align-self: start; }
+  .update-item { display: grid; gap: 6px; padding-block: 18px; border-bottom: 1px solid var(--line); }
+  .update-item p { color: var(--muted); font-size: 0.95rem; }
+  .update-item a { color: var(--ink); text-decoration-color: var(--signal); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .update-item strong { color: var(--ink); font-weight: 600; }
+
+  /* FAQ */
+  .faq { display: grid; gap: 0; max-width: 820px; }
+  .faq details { border-bottom: 1px solid var(--line); padding-block: 18px; }
+  .faq summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-family: var(--mono); color: var(--muted); }
+  .faq details[open] summary::after { content: "−"; }
+  .faq details p { color: var(--muted); margin-top: 10px; max-width: 68ch; }
+
+  footer { border-top: 1px solid var(--line); padding-block: 32px 48px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 0.88rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>WALKABOUT</a>
+    <nav class="links" aria-label="Sections">
+      <a href="#why">Why blur</a>
+      <a href="#face-privacy">Face Privacy</a>
+      <a href="#photo-tools">Photo tools</a>
+      <a href="#download">Download</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-cta" href="#download">Get it free</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <div class="hero-copy">
+        <span class="label">Plugins for DaVinci Resolve and Premiere Pro · Apple Silicon Mac</span>
+        <h1>Automatic face blurring for <span class="hl">Resolve and Premiere</span></h1>
+        <p class="lede">Blurring every stranger in a street video by hand can take hours. Face Privacy finds the faces in your footage and blurs them for you, right inside DaVinci Resolve or Premiere Pro. You check the result, fix anything it missed, and export. You can also leave yourself or your friends unblurred. Everything runs on your Mac.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#download">Download for free</a>
+          <a class="btn btn-ghost" href="#photo-tools">See the photo-walk tools</a>
+        </div>
+        <p class="mono hero-note">Free · No account · No watermark</p>
+      </div>
+
+      <figure class="demo" style="margin:0">
+        <div class="views" role="group" aria-label="Review view">
+          <button type="button" data-view="final" aria-pressed="true">Final output</button>
+          <button type="button" data-view="mask" aria-pressed="false">Mask overlay</button>
+        </div>
+        <div class="viewer" id="viewer" data-view="final">
+          <div class="viewer-bar"><span class="rec">HONG KONG · FOOTBRIDGE</span><span id="tc">00:00:00:00</span></div>
+          <div class="clip">
+            <video id="v-final" src="media/hk-final.mp4" poster="media/poster-final.jpg" autoplay muted loop playsinline preload="auto" aria-label="Street footage from a Hong Kong footbridge with every face blurred"></video>
+            <video id="v-mask" src="media/hk-mask.mp4" poster="media/poster-mask.jpg" muted loop playsinline preload="auto" aria-label="The same footage with the blurred areas highlighted in cyan"></video>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i class="swatch" style="border-color:var(--detect);background:var(--detect)"></i>Mask overlay shows every area Face Privacy covers</span>
+        </div>
+        <figcaption class="fine">Real output from WA Face Privacy in DaVinci Resolve. My own footage, analyzed once, no manual fixes.</figcaption>
+      </figure>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><strong>Nothing is uploaded</strong><p>Your footage stays on your computer. No account needed.</p></div>
+      <div class="fact"><strong>Works inside your editor</strong><p>It's a normal effect in Resolve and Premiere. You don't need any other app.</p></div>
+      <div class="fact"><strong>One installer</strong><p>Installs all four tools. Look for WALKABOUT in your effects list.</p></div>
+      <div class="fact"><strong>Made for street footage</strong><p>Long handheld clips with lots of people walking past.</p></div>
+    </div>
+
+    <section id="why">
+      <div class="head">
+        <div style="display:grid;gap:14px">
+          <span class="label">Why blur faces</span>
+          <h2>The people in your video didn't ask to be in it</h2>
+        </div>
+        <p class="lede">If you film in the street, you film strangers. Most won't mind, but leaving their faces visible can cause real problems for them and for you.</p>
+      </div>
+      <div class="why">
+        <div class="risks">
+          <div class="risk">
+            <h3>Your video can be taken down</h3>
+            <p>On YouTube, anyone who can be recognized in a video can file a privacy complaint. If you don't blur them or cut them out, YouTube can remove the video. Other platforms have similar rules.</p>
+          </div>
+          <div class="risk">
+            <h3>The law may be on their side</h3>
+            <p>In the EU, a recognizable face counts as personal data, and countries like Spain and France give people a right over their own image. Publishing strangers' faces can get you into trouble, and more easily if the video earns money.</p>
+          </div>
+          <div class="risk">
+            <h3>Children and sensitive places</h3>
+            <p>Kids, and people outside hospitals, clinics, shelters, places of worship or at protests, need the most care. Being recognized in one of these places can hurt someone.</p>
+          </div>
+          <div class="risk">
+            <h3>Some people can't afford to be found</h3>
+            <p>You don't know who walks past your camera. Someone may be hiding from an abusive ex, or simply not want their family, boss or neighbours to see where they were.</p>
+          </div>
+          <p class="fine" style="padding-top:14px">This is general information, not legal advice. Rules are different in each country and platform.</p>
+        </div>
+        <aside class="manual">
+          <span class="label">Doing it by hand</span>
+          <div class="frames">36,000 frames<small>A 20-minute walk filmed at 30 fps</small></div>
+          <p>To blur a face by hand, you draw a mask around it and track it through the shot. Then you fix it every time the tracker slips, which happens a lot:</p>
+          <ul class="manual-list">
+            <li>when someone turns their head</li>
+            <li>when they walk behind another person</li>
+            <li>when they come in or go out of the frame</li>
+            <li>when the camera shakes as you walk</li>
+          </ul>
+          <p>A busy street can have hundreds of faces. Blurring them all by hand can easily take longer than the walk itself, so many creators end up skipping it.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="face-privacy">
+      <div class="head">
+        <div style="display:grid;gap:14px">
+          <span class="label">WA Face Privacy</span>
+          <h2>How it works</h2>
+        </div>
+        <p class="lede">You analyze the clip once, check the result and fix anything it missed. The controls follow these four steps.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">STEP 1</span>
+          <h3>Find the faces</h3>
+          <p>Click Analyze clip. It goes through every frame and saves what it finds in your project. You can cancel at any point and keep what's done.</p>
+          <ul><li>Adjust sensitivity and minimum face size</li><li>A slower, more thorough mode for small faces in the distance</li></ul>
+        </div>
+        <div class="step">
+          <span class="step-n">STEP 2</span>
+          <h3>Pick how they're hidden</h3>
+          <p>A square or oval blur, an emoji, or an image of your own. You can change this later without analyzing again.</p>
+          <ul><li>Blur strength</li><li>How much extra area around the face to cover</li></ul>
+        </div>
+        <div class="step">
+          <span class="step-n">STEP 3</span>
+          <h3>Leave some people unblurred</h3>
+          <p>Optional. Click on yourself or a friend in a frame and save them. They stay visible for the rest of the clip. If it isn't sure it's them, it blurs them anyway.</p>
+          <ul><li>Off unless you set it up</li><li>Saved as a file on your Mac</li></ul>
+        </div>
+        <div class="step">
+          <span class="step-n">STEP 4</span>
+          <h3>Check and fix</h3>
+          <p>Show the blur boxes on top of the video to see what's covered. If it missed someone, draw a box on their face and it follows them through the shot.</p>
+          <ul><li>Fills short gaps where a face was lost for a moment</li><li>Keeps covering faces as they leave the frame</li></ul>
+        </div>
+      </div>
+      <figure class="review-fig">
+        <img src="media/review-mask.jpg" alt="Mask overlay view: cyan shapes over every face on a busy footbridge" width="1280" height="534" loading="lazy">
+        <figcaption class="fine">Step 4, Mask overlay. Cyan shows what's covered, so a missed face stands out straight away.</figcaption>
+      </figure>
+      <div class="note">
+        <span class="note-icon" aria-hidden="true">!</span>
+        <p><strong>Please watch the result before you publish.</strong> It can miss faces that are very small, blurry, turned sideways or partly hidden. The overlay view makes those easy to spot, and fixing one takes a few clicks.</p>
+      </div>
+    </section>
+
+    <section id="photo-tools">
+      <div class="head">
+        <div style="display:grid;gap:14px">
+          <span class="label">Photo-walk tools</span>
+          <h2>Tools for photo walks</h2>
+        </div>
+        <p class="lede">I make photo-walk videos myself. These three tools started as fixes for the jobs I found slow and boring, and had to repeat by hand for every video.</p>
+      </div>
+      <div class="tools">
+        <article class="tool wide">
+          <div class="fig arrange" role="img" aria-label="Ten Florence photos packed together before, and spread across 22 minutes of timeline after Arrange Photos">
+            <div class="arr-row"><span class="arr-label">Before</span><div class="arr-before"><img class="th p" src="media/arr-00613.jpg" alt=""><img class="th l" src="media/arr-00625.jpg" alt=""><img class="th p" src="media/arr-00633.jpg" alt=""><img class="th l" src="media/arr-00637.jpg" alt=""><img class="th l" src="media/arr-00648.jpg" alt=""><img class="th l" src="media/arr-00656.jpg" alt=""><img class="th p" src="media/arr-00671.jpg" alt=""><img class="th l" src="media/arr-00676.jpg" alt=""><img class="th p" src="media/arr-00681.jpg" alt=""><img class="th p" src="media/arr-00684.jpg" alt=""></div></div>
+            <div class="arr-row"><span class="arr-label">After</span><div class="arr-after"><span class="pin lane0" style="--x:0.00"><img class="th p" src="media/arr-00613.jpg" alt=""><i></i></span><span class="pin lane1" style="--x:25.70"><img class="th l" src="media/arr-00625.jpg" alt=""><i></i></span><span class="pin lane2" style="--x:33.88"><img class="th p" src="media/arr-00633.jpg" alt=""><i></i></span><span class="pin lane0" style="--x:42.04"><img class="th l" src="media/arr-00637.jpg" alt=""><i></i></span><span class="pin lane1" style="--x:51.64"><img class="th l" src="media/arr-00648.jpg" alt=""><i></i></span><span class="pin lane2" style="--x:58.73"><img class="th l" src="media/arr-00656.jpg" alt=""><i></i></span><span class="pin lane0" style="--x:84.35"><img class="th p" src="media/arr-00671.jpg" alt=""><i></i></span><span class="pin lane1" style="--x:92.21"><img class="th l" src="media/arr-00676.jpg" alt=""><i></i></span><span class="pin lane2" style="--x:95.79"><img class="th p" src="media/arr-00681.jpg" alt=""><i></i></span><span class="pin lane0" style="--x:99.45"><img class="th p" src="media/arr-00684.jpg" alt=""><i></i></span></div></div>
+            <div class="arr-row"><span></span><div class="arr-ruler"><span style="--x:0.00">0 min</span><span style="--x:22.90">5 min</span><span style="--x:45.80">10 min</span><span style="--x:68.70">15 min</span><span style="--x:91.60">20 min</span></div></div>
+          </div>
+          <div class="tool-text">
+            <h3>Arrange Photos</h3>
+            <p class="problem"><strong>The problem:</strong> after a walk I'd have the video and dozens of photos. I had to scrub through the footage to find the moment each photo was taken, then place them one at a time.</p>
+            <p>Now I select the photos and run Arrange Photos. It spaces them out using the time each one was taken. Above are ten photos from a walk in Florence. The pigeon on the river wall was taken 5 minutes 37 seconds after the first photo, so that's where it lands. Then I drag the whole group to line it up with the video.</p>
+            <span class="mono where">Resolve: Workspace → Scripts → WALKABOUT<br>Premiere: Window → UXP Plugins → WALKABOUT</span>
+          </div>
+        </article>
+
+        <article class="tool wide flip">
+          <div class="fig pp">
+            <img src="media/pp-pigeon.jpg" alt="Photo of a pigeon on a wall by the Arno, framed with the caption SONY ILCE-7CR, f/2.5, 1/80 s, ISO 64" width="900" height="679" loading="lazy">
+            <img src="media/pp-tower.jpg" alt="Photo of the Palazzo Vecchio tower, framed with the caption SONY ILCE-7CR, f/2.5, 1/400 s, ISO 64" width="440" height="726" loading="lazy">
+          </div>
+          <div class="tool-text">
+            <h3>Photo Presentation</h3>
+            <p class="problem"><strong>The problem:</strong> the most common question in the comments is "what settings did you use?" Typing the camera, lens, aperture, shutter speed and ISO onto every photo by hand takes ages.</p>
+            <p>Photo Presentation puts a frame around the photo and adds its camera settings automatically, read from the photo file. These two are straight out of the effect with its default settings. You can change where the text goes, the font and the background.</p>
+            <span class="mono where">Resolve: Open FX → WALKABOUT<br>Premiere: Video Effects → WALKABOUT</span>
+          </div>
+        </article>
+
+        <article class="tool wide">
+          <div class="fig contact">
+            <video id="v-contact" src="media/contact.mp4" poster="media/contact-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="A grid of ten Florence photos. Each photo zooms in with its camera settings, then returns to the grid."></video>
+          </div>
+          <div class="tool-text">
+            <h3>Contact Sheet / Best of the Walk</h3>
+            <p class="problem"><strong>The problem:</strong> showing the best photos at the end of a video meant building a grid and animating every zoom by hand.</p>
+            <p>Contact Sheet shows up to 12 photos in a grid, then zooms into each one with its camera settings and goes back to the grid. You pick the photos and the timing. The animation is done for you.</p>
+            <span class="mono where">Resolve: Open FX → WALKABOUT<br>Premiere: Video Effects → WALKABOUT</span>
+          </div>
+        </article>
+      </div>
+      <p class="fine" style="margin-top:20px">Everything in this section is real output from the plugins in DaVinci Resolve, using my own photos from Florence.</p>
+    </section>
+
+    <section id="compat">
+      <div class="head">
+        <div style="display:grid;gap:14px">
+          <span class="label">Requirements</span>
+          <h2>What it runs on</h2>
+        </div>
+        <p class="lede">It's only been tested on the setup below, so please check before installing.</p>
+      </div>
+      <div class="compat-wrap">
+        <table class="compat">
+          <tbody>
+            <tr><th scope="row">Mac</th><td><span class="pill ok">Supported</span>Apple Silicon (M1 or later), macOS 13 or later</td></tr>
+            <tr><th scope="row">DaVinci Resolve</th><td><span class="pill ok">Supported</span>All four tools, tested in Resolve Studio 21.1</td></tr>
+            <tr><th scope="row">Adobe Premiere Pro</th><td><span class="pill ok">Supported</span>All four tools, tested in Premiere Pro 26.5</td></tr>
+            <tr><th scope="row">Intel Mac or Windows</th><td><span class="pill no">Not yet</span>Tell me on <a href="https://github.com/RamonLinares/walkabout/issues">GitHub</a> if you need it.</td></tr>
+            <tr><th scope="row">Footage</th><td>Tested with standard (SDR) flat or reframed video. HDR, log and 360° footage haven't been tested yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="head">
+        <div style="display:grid;gap:14px">
+          <span class="label">Download</span>
+          <h2>Free to use</h2>
+        </div>
+        <p class="lede">All four tools are free. There's no trial, no account and no watermark. I made them for my own videos and I'd rather more people use them.</p>
+      </div>
+      <div class="signup">
+        <div class="price now">
+          <span class="label">Early version</span>
+          <h3>WALKABOUT for Resolve and Premiere</h3>
+          <div class="amount">Free</div>
+          <ul>
+            <li>Face Privacy, Arrange Photos, Photo Presentation and Contact Sheet</li>
+            <li>One installer for DaVinci Resolve and one for Premiere Pro</li>
+            <li>Apple Silicon Mac, macOS 13 or later</li>
+          </ul>
+          <div class="dl-buttons">
+            <a class="btn btn-primary dl" data-editor="resolve" href="#download" aria-disabled="true">Download for DaVinci Resolve</a>
+            <a class="btn btn-primary dl" data-editor="premiere" href="#download" aria-disabled="true">Download for Premiere Pro</a>
+          </div>
+          <p class="mono fine" id="dl-note">Version 0.2.0 · about 45 MB each · Available soon</p>
+          <p class="fine">Provided as is, without warranty. Always check the result before you publish a video.</p>
+        </div>
+        <div class="updates">
+          <div class="update-item">
+            <h3>Get notified about new versions</h3>
+            <p>WALKABOUT's releases are on GitHub. With a free GitHub account, open the <a href="https://github.com/RamonLinares/walkabout">WALKABOUT page on GitHub</a>, click <strong>Watch</strong>, choose <strong>Custom</strong> and tick <strong>Releases</strong>. GitHub will email you when there's a new version.</p>
+          </div>
+          <div class="update-item">
+            <h3>Report a problem</h3>
+            <p>If something doesn't work, <a href="https://github.com/RamonLinares/walkabout/issues">open an issue on GitHub</a>. Include your macOS version, your editor and its version, and what happened. Other people with the same problem can find the answer there too.</p>
+          </div>
+          <div class="update-item">
+            <h3>Tell me what you use</h3>
+            <p>Using the free version of Resolve, an Intel Mac or Windows? Add a comment to the <a href="https://github.com/RamonLinares/walkabout/issues">requests on GitHub</a>. It helps me decide what to support next.</p>
+          </div>
+        </div>
+      </div>
+      <div class="install">
+        <h3>How to install</h3>
+        <ol>
+          <li>Save your work and quit DaVinci Resolve or Premiere Pro.</li>
+          <li>Open the downloaded installer and follow the steps. It asks for your Mac's password because the effects are installed for all users.</li>
+          <li>If macOS says it can't check the installer for malware, open <strong>System Settings → Privacy &amp; Security</strong>, scroll down and click <strong>Open Anyway</strong>. This happens because WALKABOUT isn't signed with a paid Apple developer certificate.</li>
+          <li>Open your editor. In Resolve the effects are under <strong>Open FX → WALKABOUT</strong> and Arrange Photos is under <strong>Workspace → Scripts → WALKABOUT</strong>. In Premiere the effects are under <strong>Video Effects → WALKABOUT</strong> and Arrange Photos is under <strong>Window → UXP Plugins → WALKABOUT</strong>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="head">
+        <div style="display:grid;gap:14px">
+          <span class="label">Questions</span>
+          <h2>FAQ</h2>
+        </div>
+      </div>
+      <div class="faq">
+        <details open>
+          <summary>Does my footage leave my Mac?</summary>
+          <p>No. Everything happens on your computer. Nothing is uploaded and you don't need an account.</p>
+        </details>
+        <details>
+          <summary>Will it catch every face?</summary>
+          <p>Not always. It can miss faces that are very small, blurry, turned sideways or partly hidden, and now and then it blurs something that isn't a face. Turn on the overlay view to see what's covered, and draw a box on anything it missed. Watch the whole clip before you publish.</p>
+        </details>
+        <details>
+          <summary>If I leave myself unblurred, what gets saved?</summary>
+          <p>A small file on your Mac with the names you type, a few small pictures of each face, and the data it uses to recognize them. It isn't uploaded anywhere. If you don't use this feature, nothing is saved and everyone gets blurred.</p>
+        </details>
+        <details>
+          <summary>Does it work with the free version of DaVinci Resolve?</summary>
+          <p>WALKABOUT is tested in Resolve Studio 21.1. The free version hasn't been tested yet. If that's what you use, try it and tell me on <a href="https://github.com/RamonLinares/walkabout/issues">GitHub</a> whether it works.</p>
+        </details>
+        <details>
+          <summary>Does it work in Premiere Pro?</summary>
+          <p>Yes. All four tools work in Premiere Pro as well as Resolve. There's a separate installer for each editor, and you can install both.</p>
+        </details>
+        <details>
+          <summary>Why is it free?</summary>
+          <p>I built these tools to speed up editing my own photo-walk videos, and I'd rather more people get to use them. There's no catch.</p>
+        </details>
+        <details>
+          <summary>Is there any support or warranty?</summary>
+          <p>It's provided as is, without warranty. I fix bugs when I can, and new versions of Resolve or Premiere may need an update from me first. If something breaks, <a href="https://github.com/RamonLinares/walkabout/issues">open an issue on GitHub</a> so I can fix it.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>WALKABOUT · Free tools for POV walks and street photography · Provided as is, without warranty</span>
+    <span>DaVinci Resolve and Premiere Pro are trademarks of their owners. WALKABOUT is independent.</span>
+  </footer>
+</div>
+
+<script>
+  const viewer = document.getElementById("viewer");
+  const vFinal = document.getElementById("v-final");
+  const vMask = document.getElementById("v-mask");
+  const tc = document.getElementById("tc");
+  const viewButtons = document.querySelectorAll(".views button");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) {
+    vFinal.removeAttribute("autoplay"); vFinal.pause();
+    const vc = document.getElementById("v-contact"); vc.removeAttribute("autoplay"); vc.pause();
+  }
+  function syncMask() {
+    if (Math.abs(vMask.currentTime - vFinal.currentTime) > 0.08) vMask.currentTime = vFinal.currentTime;
+  }
+  vFinal.addEventListener("play", () => { syncMask(); vMask.play().catch(() => {}); });
+  vFinal.addEventListener("pause", () => vMask.pause());
+  vFinal.addEventListener("timeupdate", () => {
+    if (viewer.dataset.view === "mask") syncMask();
+    const f = Math.floor(vFinal.currentTime * 24);
+    const pad = (n) => String(n).padStart(2, "0");
+    tc.textContent = "00:00:" + pad(Math.floor(f / 24)) + ":" + pad(f % 24);
+  });
+  viewButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      viewer.dataset.view = btn.dataset.view;
+      viewButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      syncMask();
+      if (!vFinal.paused) vMask.play().catch(() => {});
+    });
+  });
+
+  // Installer links. Set RELEASE_READY to true once the files are uploaded to the GitHub release.
+  const RELEASE_READY = true;
+  const DOWNLOADS = {
+    resolve: "https://github.com/RamonLinares/walkabout/releases/download/v0.2.0/WALKABOUT-for-DaVinci-Resolve-0.2.0.pkg",
+    premiere: "https://github.com/RamonLinares/walkabout/releases/download/v0.2.0/WALKABOUT-for-Premiere-Pro-0.2.0.pkg",
+  };
+  document.querySelectorAll(".dl").forEach((a) => {
+    if (RELEASE_READY) {
+      a.href = DOWNLOADS[a.dataset.editor];
+      a.removeAttribute("aria-disabled");
+    } else {
+      a.addEventListener("click", (e) => e.preventDefault());
+    }
+  });
+  if (RELEASE_READY) document.getElementById("dl-note").textContent = "Version 0.2.0 · about 45 MB each · Apple Silicon Mac";
+
+</script>
+
+</body>
+</html>

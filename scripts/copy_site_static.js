@@ -7,6 +7,7 @@ const outDir = path.join(siteRoot, 'out');
 const entries = [
   { source: 'lab', target: 'lab' },
   { source: 'play', target: 'play' },
+  { source: 'walkabout', target: 'walkabout' },
   { source: 'favicon.ico', target: 'favicon.ico' }
 ];
 
