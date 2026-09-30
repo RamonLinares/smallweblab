@@ -57,7 +57,7 @@ Both installers require **an Apple Silicon Mac running macOS 13 or later**. The 
 
 Save your work and quit the editor before installing. After reopening it, look for WALKABOUT in the effects list. Arrange Photos appears under **Workspace → Scripts → WALKABOUT** in Resolve, sometimes inside Utility, and **Window → UXP Plugins → WALKABOUT** in Premiere.
 
-The installers are not Developer ID signed or notarized. The [download page](/walkabout/#download) explains installation and links to the packages and their checksums.
+Both installers are Developer ID signed and notarized by Apple, with stapled notarization tickets. The [download page](/walkabout/#download) explains installation and links to the packages and their checksums.
 
 ## What was checked for v0.2.0
 
