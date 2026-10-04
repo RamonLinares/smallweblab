@@ -1,7 +1,7 @@
 ---
 title: "Unsqueeze: Anamorphic Webcam Correction for Google Meet"
 slug: "unsqueeze"
-description: "A free, open-source Chrome extension that corrects anamorphic webcam video for Google Meet, with squeeze presets, custom ratios, and local processing."
+description: "Now on the Chrome Web Store: a free, open-source extension that corrects anamorphic webcam video in Google Meet, with presets, custom ratios, and local processing."
 date: "2026-09-18"
 category: "tools"
 tags: ["Chrome Extension", "Google Meet", "Anamorphic", "Webcam", "Open Source", "Codex"]
@@ -9,11 +9,13 @@ coverImage: "/content/images/unsqueeze-preview.png"
 draft: false
 ---
 
-[Download Unsqueeze for Chrome](https://github.com/RamonLinares/unsqueeze/releases/latest/download/Unsqueeze.zip) · [Source code and installation guide](https://github.com/RamonLinares/unsqueeze)
+[Install Unsqueeze from the Chrome Web Store](https://chromewebstore.google.com/detail/hooehjkkampjheeabbnopjhkegngdhgj) · [Source code on GitHub](https://github.com/RamonLinares/unsqueeze)
+
+**Updated October 4, 2026:** Unsqueeze has been approved and is now available on the Chrome Web Store. You can install it directly in Chrome without downloading a ZIP or enabling Developer mode.
 
 I wanted to use my camera with a 1.5× anamorphic lens for Google Meet calls. The camera already worked as a USB webcam, but the image arrived squeezed: faces looked too narrow, and Meet had no control to correct the proportions.
 
-I built Unsqueeze with Codex to handle that correction inside Chrome. It processes the selected camera's video before Meet sends it to the other participants. The result worked in my own call setup, and I have now released the extension on GitHub under the MIT license.
+I built Unsqueeze with Codex to handle that correction inside Chrome. It processes the selected camera's video before Meet sends it to the other participants. The result worked in my own call setup. I initially released the extension on GitHub under the MIT license, and it is now also available through the Chrome Web Store.
 
 ## Correcting the outgoing image
 
@@ -47,23 +49,31 @@ In a controlled comparison using 120 synthetic 1080p frames with 60 fps timestam
 
 For a less demanding setup, choose Low power and restart Meet's camera so the capture request can change too. Stop the standalone preview before using the camera in a call.
 
-## Install it from GitHub
+## Install it from the Chrome Web Store
 
-The release is a ready-to-use ZIP. No terminal, Git, or build tools are needed.
+The simplest installation is now through the [Unsqueeze listing on the Chrome Web Store](https://chromewebstore.google.com/detail/hooehjkkampjheeabbnopjhkegngdhgj).
 
-1. [Download Unsqueeze.zip](https://github.com/RamonLinares/unsqueeze/releases/latest/download/Unsqueeze.zip) and extract it.
-2. Move the **Unsqueeze** folder somewhere permanent, such as Documents. Keep it there while the extension is installed.
-3. Open `chrome://extensions` in desktop Chrome and turn on **Developer mode**.
-4. Click **Load unpacked** and select the Unsqueeze folder that directly contains `manifest.json`.
-5. Pin the extension, choose the squeeze factor specified for your lens, and reload any open Google Meet tabs. In Meet, select your camera as usual.
+1. Open the listing in desktop Google Chrome and click **Add to Chrome**.
+2. Review Chrome's installation prompt and confirm **Add extension**.
+3. Pin Unsqueeze from Chrome's puzzle-piece Extensions menu.
+4. Open Unsqueeze, leave **Desqueeze video** on, and choose the squeeze factor specified for your lens.
+5. Reload any open Google Meet tabs. In Meet's video settings, select your normal camera.
 
-The download includes an offline **START-HERE.html** guide. The [full installation guide](https://github.com/RamonLinares/unsqueeze/blob/main/docs/INSTALL.md) covers updates, camera permissions, and common setup problems.
+There is no ZIP to extract, folder to keep in place, or Developer mode to enable for the store version. Chrome handles updates for extensions installed through the store. A managed work or school browser may still restrict installation.
 
-This is a manual GitHub installation, so updates are manual too. Replace the files in the same folder, click Reload on the extension's Chrome card, and reload Meet. Installing a second copy can apply the correction twice. Managed work or school browsers may restrict unpacked extensions.
+### Switching from the GitHub version
+
+If you already installed the unpacked GitHub version, note your squeeze factor, framing, quality mode, and camera filter first. Open `chrome://extensions` and disable or remove that copy, then install the store version and set those preferences again. Reload Meet afterward. Keep only one copy enabled: two active copies can apply the correction twice.
+
+### Manual installation remains available
+
+The [GitHub ZIP](https://github.com/RamonLinares/unsqueeze/releases/latest/download/Unsqueeze.zip) is still available for people who prefer an unpacked installation or want to work with the source. Extract it to a permanent folder, enable Developer mode in `chrome://extensions`, and use **Load unpacked** to select the folder containing `manifest.json`.
+
+That download includes an offline **START-HERE.html** guide. The [manual installation guide](https://github.com/RamonLinares/unsqueeze/blob/main/docs/INSTALL.md) covers setup and troubleshooting. Updates to an unpacked copy remain manual: replace its files at the same folder path, click Reload on its Chrome extensions card, and reload Meet.
 
 ## What has been checked
 
-The release passed nine automated geometry and settings tests. Browser checks covered frame proportions, resolution and frame-rate caps, bypass behavior, camera cleanup, cloned tracks, audio lifetime, and a local WebRTC connection. The presets and custom values were checked for persistence and synchronization. The published ZIP was downloaded again and compared with the verified package.
+The original GitHub release passed nine automated geometry and settings tests. Browser checks covered frame proportions, resolution and frame-rate caps, bypass behavior, camera cleanup, cloned tracks, audio lifetime, and a local WebRTC connection. The presets and custom values were checked for persistence and synchronization. The published ZIP was downloaded again and compared with the verified package.
 
 My real-camera confirmation was on macOS with Google Meet in desktop Chrome. Other operating systems, browsers, calling services, and camera combinations have not been verified. This is a browser extension for Meet, not a system-wide virtual camera for desktop calling apps.
 
