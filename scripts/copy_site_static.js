@@ -8,6 +8,7 @@ const entries = [
   { source: 'lab', target: 'lab' },
   { source: 'play', target: 'play' },
   { source: 'walkabout', target: 'walkabout' },
+  { source: 'lint-roller', target: 'lint-roller' },
   { source: 'favicon.ico', target: 'favicon.ico' }
 ];
 
