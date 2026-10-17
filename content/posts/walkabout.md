@@ -53,7 +53,7 @@ The landing page includes a real ten-photo animation from the Resolve effect. Ga
 
 [WALKABOUT v0.2.0](/walkabout/#download) is free for personal and commercial use. There is no account, trial or watermark. The public [GitHub repository](https://github.com/RamonLinares/walkabout) contains the installation guide, freeware license and releases; the development source is private. Unmodified installers can be redistributed with their notices.
 
-Both installers require **an Apple Silicon Mac running macOS 13 or later**. The Resolve package requires **DaVinci Resolve Studio 21.1 or later**. The Premiere package is for **Premiere Pro 2026**, tested with **26.5.1**. Intel Mac and Windows are not supported in this release, and the free edition of Resolve has not been tested.
+Both installers require **an Apple Silicon Mac running macOS 13 or later**. The Resolve package requires **DaVinci Resolve 21.1 or later (Free or Studio)**. The Premiere package is for **Premiere Pro 2026**, tested with **26.5.1**. Intel Mac and Windows are not supported in this release. The creator confirmed compatibility with Resolve Free on October 17, 2026.
 
 Save your work and quit the editor before installing. After reopening it, look for WALKABOUT in the effects list. Arrange Photos appears under **Workspace → Scripts → WALKABOUT** in Resolve, sometimes inside Utility, and **Window → UXP Plugins → WALKABOUT** in Premiere.
 
